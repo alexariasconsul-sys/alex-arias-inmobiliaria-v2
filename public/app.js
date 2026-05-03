@@ -943,7 +943,6 @@ function setupExpand(card) {
     media.addEventListener('click', (e) => {
       if (e.target.closest('.slider-arrow') || e.target.closest('.slider-dots') || e.target.closest('.status-btn') || e.target.closest('[data-lightbox]')) return;
       if (card.classList.contains('is-open') && e.target.tagName === 'IMG') {
-        // Abrir lightbox al hacer clic en la imagen cuando la tarjeta ya está expandida
         const slider = card.querySelector('[data-slider]');
         const current = Array.from(slider?.querySelectorAll('.property-slide') || []).findIndex(s => s.classList.contains('is-active'));
         const srcs = Array.from(card.querySelectorAll('.property-slide img')).map(img => img.src || img.dataset.src).filter(Boolean);
@@ -951,6 +950,25 @@ function setupExpand(card) {
       }
       card.classList.contains('is-open') ? closeCard(card) : openCard(card);
     });
+  }
+
+  // Fix #5: swipe-down para cerrar la tarjeta en móvil
+  const scrollEl = card.querySelector('.property-details-scroll');
+  if (scrollEl) {
+    let _touchStartY = 0;
+    let _touchStartScroll = 0;
+    scrollEl.addEventListener('touchstart', (e) => {
+      _touchStartY = e.touches[0].clientY;
+      _touchStartScroll = scrollEl.scrollTop;
+    }, { passive: true });
+    scrollEl.addEventListener('touchend', (e) => {
+      if (!card.classList.contains('is-open')) return;
+      const diffY = e.changedTouches[0].clientY - _touchStartY;
+      // Cerrar si: deslizó hacia abajo > 80px Y estaba al tope del scroll
+      if (diffY > 80 && _touchStartScroll <= 4) {
+        closeCard(card);
+      }
+    }, { passive: true });
   }
 }
 
@@ -1022,6 +1040,9 @@ function showCloseHint(card) {
 }
 
 function openCard(card) {
+  // Cerrar overlay del mapa si está abierto (fix conflicto #3)
+  if (typeof closeMapOverlay === 'function') closeMapOverlay();
+
   const isMobile = window.innerWidth <= 767;
   if (!isMobile) {
     document.querySelectorAll('.property-card.is-open').forEach(c => {
@@ -1035,6 +1056,12 @@ function openCard(card) {
     card.classList.add('is-open');
     card.style.zIndex = '10';
     syncMobileHeight(card);
+    // Fix #4: expandir sidebar del mapa para que botones no queden enterrados
+    const sidebar = document.getElementById('mapSidebar');
+    if (sidebar) {
+      sidebar.classList.remove('sheet-hidden');
+      sidebar.classList.add('sheet-expanded');
+    }
   }
   // Facebook Pixel: ViewContent
   if (typeof fbq === 'function') {
@@ -1055,10 +1082,18 @@ function openCard(card) {
 }
 
 function closeCard(card) {
+  // Animación slide-down antes de cerrar (fix #5)
+  card.classList.add('is-closing');
+  setTimeout(() => card.classList.remove('is-closing'), 200);
   card.classList.remove('is-open');
   card.style.zIndex = '1';
   card.style.height = '';
   card.querySelector('.expand-toggle')?.setAttribute('aria-expanded', 'false');
+  // Si en mapa, colapsar sidebar al estado normal
+  if (window.innerWidth <= 768) {
+    const sidebar = document.getElementById('mapSidebar');
+    if (sidebar) sidebar.classList.remove('sheet-expanded');
+  }
 }
 
 // ─── FACEBOOK PIXEL: LEAD ────────────────────────────────────
@@ -2548,14 +2583,31 @@ function initMap() {
   state.mapTileLayers[state.currentMapType].addTo(map);
 
 
-  // Al mover o hacer zoom → actualiza sidebar y cierra overlay
+  // Al mover o hacer zoom → cierra overlay y oculta sidebar (fix #1)
   map.on('movestart', () => {
-    if (!state.mapPanningToMarker) closeMapOverlay();
+    if (!state.mapPanningToMarker) {
+      closeMapOverlay();
+      // En móvil: ocultar las tarjetas para dar prioridad al mapa
+      if (window.innerWidth <= 768) {
+        const sidebar = document.getElementById('mapSidebar');
+        if (sidebar) {
+          sidebar.classList.add('sheet-hidden');
+          sidebar.classList.remove('sheet-expanded');
+          // Cerrar cualquier tarjeta abierta
+          sidebar.querySelectorAll('.property-card.is-open').forEach(c => closeCard(c));
+        }
+      }
+    }
   });
   map.on('moveend zoomend', () => {
     if (state.mapPanningToMarker) {
       state.mapPanningToMarker = false;
       return; // no re-renderizar: el sidebar ya está bien
+    }
+    // Mostrar sidebar de nuevo con las propiedades visibles
+    if (window.innerWidth <= 768) {
+      const sidebar = document.getElementById('mapSidebar');
+      if (sidebar) sidebar.classList.remove('sheet-hidden');
     }
     renderMapSidebar(getVisibleProperties());
   });
@@ -2630,11 +2682,11 @@ function _getOverlayCardHTML(prop) {
           <span class="map-overlay-tipo-badge ${tipoClass}">${tipoLbl}</span>
         </div>
 
-        <!-- WhatsApp -->
-        <a class="map-overlay-wa" href="https://api.whatsapp.com/send?phone=${waPhone}&text=${waText}" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          Contactar por WhatsApp
-        </a>
+        <!-- Ver detalles -->
+        <button class="map-overlay-detail-btn" data-prop-id="${prop.id}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Ver detalles
+        </button>
       </div>
     </div>`;
 }
@@ -2644,6 +2696,8 @@ let _swipeStartX = 0;
 let _swipeStartY = 0;
 
 function showMapOverlay(prop, markerEl) {
+  // Fix #3: cerrar cualquier tarjeta expandida antes de mostrar overlay
+  document.querySelectorAll('.property-card.is-open').forEach(c => closeCard(c));
   closeMapOverlay();
 
   // Encontrar el índice de esta propiedad en la lista filtrada
@@ -2684,6 +2738,20 @@ function showMapOverlay(prop, markerEl) {
     e.stopPropagation();
     closeMapOverlay();
     deactivateAllMarkers();
+  });
+
+  // Fix #2: "Ver detalles" → abre la tarjeta completa del sidebar
+  div.querySelector('.map-overlay-detail-btn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeMapOverlay();
+    deactivateAllMarkers();
+    // Buscar la tarjeta en el sidebar del mapa
+    const list = document.getElementById('mapCardsList');
+    let card = list?.querySelector(`[data-card-id="${prop.id}"]`);
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      setTimeout(() => openCard(card), 200);
+    }
   });
 
   // Swipe detection para navegación entre propiedades
