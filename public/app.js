@@ -3087,13 +3087,18 @@ function initBottomSheet() {
 }
 
 // ─── VISTA GRID / MAPA ────────────────────────────────────────
+// Desactiva el modo favoritos: quita clase, restaura filtered, re-renderiza
 function clearFavoritesFilter() {
-  document.getElementById('btnFavorites')?.classList.remove('active');
+  const btnFav = document.getElementById('btnFavorites');
+  if (!btnFav?.classList.contains('active')) return; // ya estaba inactivo
+  btnFav.classList.remove('active');
+  state.filtered = [...state.properties];
+  renderGrid();
 }
 
 function switchView(view) {
   state.currentView = view;
-  clearFavoritesFilter(); // siempre limpia al cambiar de vista
+  clearFavoritesFilter(); // limpia favoritos (restaura estado + re-renderiza grid si era necesario)
   const gridView = document.getElementById('gridView');
   const mapView  = document.getElementById('mapView');
   const btnGrid  = document.getElementById('btnViewGrid');
@@ -3159,37 +3164,48 @@ function switchView(view) {
 function toggleFavoritesFilter() {
   const btnFav = document.getElementById('btnFavorites');
   if (!btnFav) return;
-  const isActive = btnFav.classList.contains('active');
 
-  if (!isActive) {
-    // Switch to grid view first if on map
-    if (state.currentView !== 'grid') switchView('grid');
+  if (btnFav.classList.contains('active')) {
+    // Desactivar: clearFavoritesFilter ya hace todo (quita clase, restaura filtered, renderiza)
+    clearFavoritesFilter();
+    return;
+  }
 
-    btnFav.classList.add('active');
-    const likedArr = [...state.likedIds].map(String);
-    const filtered = state.properties.filter(p => likedArr.includes(String(p.id)));
-    state.filtered = filtered;
+  // ── Activar favoritos ─────────────────────────────────────
+  // 1. Cambiar a vista grid sin usar switchView (evita conflicto con clearFavoritesFilter)
+  if (state.currentView !== 'grid') {
+    state.currentView = 'grid';
+    const gridView = document.getElementById('gridView');
+    const mapView  = document.getElementById('mapView');
+    mapView.style.display  = 'none';
+    gridView.style.display = 'block';
+    document.getElementById('btnViewGrid').classList.add('active');
+    document.getElementById('btnViewMap').classList.remove('active');
+    document.querySelector('.app-shell').style.paddingBottom = '';
+  }
 
-    if (!filtered.length) {
-      // Show friendly empty state
-      const grid = document.getElementById('propertiesGrid');
-      const countEl = document.getElementById('resultsCount');
-      if (countEl) countEl.textContent = '';
-      if (grid) grid.innerHTML = `
-        <div class="empty-state fav-empty-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" width="48" height="48" style="color:#ddd;margin-bottom:12px">
-            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <p style="font-weight:700;margin:0 0 6px;color:#444">Aún no tienes guardados</p>
-          <p style="font-size:13px;color:#888;margin:0">Toca el ❤️ en cualquier inmueble para guardarlo aquí</p>
-        </div>`;
-    } else {
-      renderGrid();
-    }
+  // 2. Marcar botón activo
+  btnFav.classList.add('active');
+
+  // 3. Filtrar propiedades liked
+  const likedArr = [...state.likedIds].map(String);
+  const filtered  = state.properties.filter(p => likedArr.includes(String(p.id)));
+  state.filtered  = filtered;
+
+  // 4. Renderizar
+  if (!filtered.length) {
+    const grid    = document.getElementById('propertiesGrid');
+    const countEl = document.getElementById('resultsCount');
+    if (countEl) countEl.textContent = '';
+    if (grid) grid.innerHTML = `
+      <div class="empty-state fav-empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" width="48" height="48" style="color:#ddd;margin-bottom:12px">
+          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p style="font-weight:700;margin:0 0 6px;color:#444">Aún no tienes guardados</p>
+        <p style="font-size:13px;color:#888;margin:0">Toca el ❤️ en cualquier inmueble para guardarlo aquí</p>
+      </div>`;
   } else {
-    btnFav.classList.remove('active');
-    // Restore the full server-filtered list and re-render
-    state.filtered = state.properties;
     renderGrid();
   }
 }
