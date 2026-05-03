@@ -2068,6 +2068,74 @@ document.getElementById('admLogoutBtn').addEventListener('click', () => {
   sessionStorage.removeItem('adm_pwd_v2');
   window.location.href = '/auth/logout';
 });
+
+// ── FAB ───────────────────────────────────────────────────────
+document.getElementById('admFab')?.addEventListener('click', () => {
+  // Mismo comportamiento que el botón principal de nueva propiedad
+  document.getElementById('admTopNewBtn')?.click();
+});
+
+// Sincronizar bottom nav con sección activa
+(function syncBottomNav() {
+  const items = document.querySelectorAll('.adm-bottom-nav-item');
+  items.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sec = btn.dataset.section;
+      // Reutilizar la lógica de navegación existente
+      document.querySelector(`.adm-nav-item[data-section="${sec}"]`)?.click();
+      // Actualizar estado visual bottom nav
+      items.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Observar cambios en adm-nav-item para mantener bottom nav sincronizado
+  const observer = new MutationObserver(() => {
+    const activeSection = document.querySelector('.adm-nav-item.active')?.dataset?.section;
+    if (!activeSection) return;
+    items.forEach(b => {
+      b.classList.toggle('active', b.dataset.section === activeSection);
+    });
+    // Mostrar/ocultar FAB solo en sección propiedades
+    const fab = document.getElementById('admFab');
+    if (fab) fab.classList.toggle('hidden', activeSection !== 'properties');
+  });
+  document.querySelectorAll('.adm-nav-item').forEach(el =>
+    observer.observe(el, { attributes: true, attributeFilter: ['class'] })
+  );
+})();
 </script>
+
+<!-- Bottom nav mobile -->
+<nav class="adm-bottom-nav" id="admBottomNav">
+  <button class="adm-bottom-nav-item active" data-section="dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Inicio
+  </button>
+  <button class="adm-bottom-nav-item" data-section="properties">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+    Inmuebles
+  </button>
+  <button class="adm-bottom-nav-item" data-section="estadísticas">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14v-4M12 14v-7M17 14v-9" stroke-linecap="round"/></svg>
+    Stats
+  </button>
+  <button class="adm-bottom-nav-item" data-section="blog">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    Blog
+  </button>
+  <button class="adm-bottom-nav-item" data-section="profile">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Perfil
+  </button>
+</nav>
+
+<!-- FAB nueva propiedad (mobile) -->
+<button class="adm-fab hidden" id="admFab" aria-label="Nueva propiedad">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+    <path d="M12 5v14M5 12h14"/>
+  </svg>
+</button>
+
 </body>
 </html>
