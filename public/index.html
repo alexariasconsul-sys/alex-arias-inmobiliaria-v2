@@ -504,14 +504,25 @@
 
     <!-- ═══ MAP VIEW ══════════════════════════════════════════════ -->
     <div class="map-view" id="mapView" style="display:none">
-      <!-- Sidebar izquierdo con tarjetas -->
+      <!-- Sidebar / Bottom sheet -->
       <div class="map-sidebar" id="mapSidebar">
-        <div class="map-sidebar-header">
-          <span class="map-sidebar-count" id="mapSidebarCount">0 inmuebles</span>
+        <div class="map-sidebar-header" id="mapSheetHandle">
+          <!-- Handle pill -->
+          <div class="map-sheet-pill"></div>
+          <!-- Contador + chevron -->
+          <div class="map-sheet-label">
+            <span class="map-sidebar-count" id="mapSidebarCount">0 inmuebles</span>
+            <svg class="map-sheet-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
         </div>
         <div class="map-cards-list" id="mapCardsList"></div>
       </div>
-      <!-- Mapa derecho -->
+      <!-- Botón flotante "Ver lista" — aparece cuando sheet está colapsado -->
+      <button class="map-list-fab" id="mapListFab" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        <span id="mapListFabCount">Ver lista</span>
+      </button>
+      <!-- Mapa -->
       <div class="map-pane" id="mapPane">
         <div id="leafletMap"></div>
       </div>

@@ -2466,6 +2466,11 @@ function renderMapSidebar(props) {
   if (!list) return;
 
   if (count) count.textContent = `${props.length} inmueble${props.length !== 1 ? 's' : ''} en esta zona`;
+  // Actualizar también el FAB
+  const fab = document.getElementById('mapListFab');
+  const fabCount = document.getElementById('mapListFabCount');
+  if (fabCount) fabCount.textContent = `${props.length} ${props.length !== 1 ? 'propiedades' : 'propiedad'}`;
+  if (fab && window.innerWidth <= 768) fab.style.display = 'flex';
 
   if (!props.length) {
     list.innerHTML = '<p style="padding:24px 12px;color:#aaa;font-size:13px;text-align:center;grid-column:1/-1">Sin inmuebles en esta área</p>';
@@ -2583,19 +2588,13 @@ function initMap() {
   state.mapTileLayers[state.currentMapType].addTo(map);
 
 
-  // Al mover o hacer zoom → cierra overlay y oculta sidebar (fix #1)
+  // Al mover → colapsar sheet a hidden (usuario navega el mapa)
   map.on('movestart', () => {
     if (!state.mapPanningToMarker) {
       closeMapOverlay();
-      // En móvil: ocultar las tarjetas para dar prioridad al mapa
       if (window.innerWidth <= 768) {
-        const sidebar = document.getElementById('mapSidebar');
-        if (sidebar) {
-          sidebar.classList.add('sheet-hidden');
-          sidebar.classList.remove('sheet-expanded');
-          // Cerrar cualquier tarjeta abierta
-          sidebar.querySelectorAll('.property-card.is-open').forEach(c => closeCard(c));
-        }
+        document.querySelectorAll('.property-card.is-open').forEach(c => closeCard(c));
+        window._snapMapSheet?.('hidden');
       }
     }
   });
@@ -2849,19 +2848,44 @@ function updateMapMarkers() {
     marker.on('click', (e) => {
       L.DomEvent.stopPropagation(e);
       const markerEl = marker.getElement();
-      showMapOverlay(prop, markerEl);
-
-      const list = document.getElementById('mapCardsList');
-      if (list) {
-        list.querySelectorAll('.property-card').forEach(c => c.classList.remove('is-map-active'));
-        const card = list.querySelector(`[data-card-id="${prop.id}"]`);
-        if (card) {
-          card.classList.add('is-map-active');
-          card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      }
       deactivateAllMarkers();
       markerEl?.querySelector('.map-price-marker')?.classList.add('active');
+
+      const isMobile = window.innerWidth <= 768;
+
+      if (isMobile) {
+        // En móvil: subir sheet a peek y centrar tarjeta en carousel
+        closeMapOverlay();
+        window._snapMapSheet?.('peek');
+        const list = document.getElementById('mapCardsList');
+        if (list) {
+          list.querySelectorAll('.property-card').forEach(c => c.classList.remove('is-map-active'));
+          const card = list.querySelector(`[data-card-id="${prop.id}"]`);
+          if (card) {
+            card.classList.add('is-map-active');
+            // Centrar en el carousel horizontal con scroll smooth
+            setTimeout(() => {
+              const listRect = list.getBoundingClientRect();
+              const cardRect = card.getBoundingClientRect();
+              const scrollLeft = list.scrollLeft + cardRect.left - listRect.left
+                                - (listRect.width - cardRect.width) / 2;
+              list.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+            }, 320); // esperar a que el peek animation termine
+          }
+        }
+      } else {
+        // En desktop: overlay popup como antes
+        showMapOverlay(prop, markerEl);
+        const list = document.getElementById('mapCardsList');
+        if (list) {
+          list.querySelectorAll('.property-card').forEach(c => c.classList.remove('is-map-active'));
+          const card = list.querySelector(`[data-card-id="${prop.id}"]`);
+          if (card) {
+            card.classList.add('is-map-active');
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }
+      }
     });
 
     // Hover pin → solo en desktop (touch no tiene hover real)
@@ -2921,130 +2945,129 @@ function updateMapMarkers() {
   renderMapSidebar(getVisibleProperties());
 }
 
-// ─── BOTTOM SHEET MÓVIL (AIRBNB STYLE) ──────────────────────
+// ─── BOTTOM SHEET MÓVIL — 3 SNAP POINTS AIRBNB ──────────────
+// Snap 1: hidden   (72px)  — solo handle, usuario navega mapa
+// Snap 2: peek    (310px)  — carousel horizontal, 1 tarjeta visible
+// Snap 3: expanded (88vh)  — lista completa vertical
+
+const SHEET_H = { hidden: 72, peek: 310, expanded: 0 };
+
 function initBottomSheet() {
   if (window.innerWidth > 768) return;
   const sidebar = document.getElementById('mapSidebar');
-  const header  = sidebar?.querySelector('.map-sidebar-header');
-  const list    = sidebar?.querySelector('.map-cards-list');
+  const header  = document.getElementById('mapSheetHandle');
+  const list    = document.getElementById('mapCardsList');
+  const fab     = document.getElementById('mapListFab');
   if (!sidebar || !header || sidebar._sheetInit) return;
   sidebar._sheetInit = true;
 
-  let startY = 0, startH = 0, dragging = false;
-  let lastScrollTop = 0;
+  SHEET_H.expanded = Math.floor(window.innerHeight * 0.88);
 
-  function setHeight(h) {
-    const clamped = Math.max(140, Math.min(window.innerHeight * 0.80, h));
-    sidebar.style.height = clamped + 'px';
+  // ── Funciones de snap ─────────────────────────────────────
+  function snapTo(snap, animate = true) {
+    if (!animate) sidebar.style.transition = 'none';
+    sidebar.classList.remove('sheet-hidden', 'sheet-peek', 'sheet-expanded', 'sheet-dragging');
+
+    if (snap === 'hidden') {
+      sidebar.classList.add('sheet-hidden');
+      sidebar.style.height = SHEET_H.hidden + 'px';
+      if (fab) fab.style.display = 'flex';
+    } else if (snap === 'peek') {
+      sidebar.classList.add('sheet-peek');
+      sidebar.style.height = SHEET_H.peek + 'px';
+      if (fab) fab.style.display = 'none';
+    } else {
+      sidebar.classList.add('sheet-expanded');
+      sidebar.style.height = SHEET_H.expanded + 'px';
+      if (fab) fab.style.display = 'none';
+    }
+
+    setTimeout(() => {
+      if (!animate) sidebar.style.transition = '';
+      state.leafletMap?.invalidateSize();
+    }, animate ? 400 : 0);
   }
 
-  function expandSheet() {
-    sidebar.classList.remove('sheet-hidden');
-    sidebar.classList.add('sheet-expanded');
-    sidebar.style.height = '80vh';
-    state.leafletMap?.invalidateSize();
+  // Estado inicial: hidden
+  snapTo('hidden', false);
+
+  // ── Botón FAB "Ver lista" ─────────────────────────────────
+  if (fab) {
+    fab.addEventListener('click', () => snapTo('peek'));
   }
 
-  function collapseSheet() {
-    sidebar.classList.remove('sheet-expanded');
-    sidebar.classList.add('sheet-hidden');
-    sidebar.style.height = '140px';
-    state.leafletMap?.invalidateSize();
-  }
+  // ── TAP en handle: toggle hidden ↔ peek ↔ expanded ───────
+  let _tapMoved = false;
+  header.addEventListener('touchstart', () => { _tapMoved = false; }, { passive: true });
+  header.addEventListener('touchmove', () => { _tapMoved = true; }, { passive: true });
+  header.addEventListener('click', () => {
+    if (_tapMoved) return;
+    const cur = sidebar.classList.contains('sheet-expanded') ? 'expanded'
+              : sidebar.classList.contains('sheet-peek')     ? 'peek'
+              : 'hidden';
+    if (cur === 'hidden')    snapTo('peek');
+    else if (cur === 'peek') snapTo('expanded');
+    else                     snapTo('hidden');
+  });
 
-  // ── DRAG EN HEADER con feedback visual ─────────────────────
+  // ── DRAG en header ────────────────────────────────────────
+  let startY = 0, startH = 0, isDragging = false;
+
   header.addEventListener('touchstart', (e) => {
     startY = e.touches[0].clientY;
     startH = sidebar.getBoundingClientRect().height;
-    dragging = true;
-    sidebar.classList.remove('sheet-expanded', 'sheet-hidden');
+    isDragging = false;
     sidebar.style.transition = 'none';
-    header.style.background = '#efefef'; // Feedback visual
   }, { passive: true });
 
   header.addEventListener('touchmove', (e) => {
-    if (!dragging) return;
     const dy = startY - e.touches[0].clientY;
-    setHeight(startH + dy);
+    if (Math.abs(dy) < 5) return;
+    isDragging = true;
+    sidebar.classList.add('sheet-dragging');
+    const newH = Math.max(SHEET_H.hidden, Math.min(SHEET_H.expanded, startH + dy));
+    sidebar.style.height = newH + 'px';
+    // Actualizar clase dinámica para el chevron
+    sidebar.classList.remove('sheet-hidden', 'sheet-peek', 'sheet-expanded');
+    if (newH < 180)            sidebar.classList.add('sheet-hidden');
+    else if (newH < SHEET_H.expanded * 0.6) sidebar.classList.add('sheet-peek');
+    else                       sidebar.classList.add('sheet-expanded');
   }, { passive: true });
 
   header.addEventListener('touchend', () => {
-    if (!dragging) return;
-    dragging = false;
-    header.style.background = '';
-    sidebar.style.transition = 'height .32s cubic-bezier(.34,.1,.68,.55)';
-    const h = sidebar.getBoundingClientRect().height;
+    if (!isDragging) return;
+    isDragging = false;
+    sidebar.classList.remove('sheet-dragging');
+    sidebar.style.transition = '';
+    const h    = sidebar.getBoundingClientRect().height;
     const winH = window.innerHeight;
-    // Snap automático: si pasó más de mitad de cambio, expandir; si no, colapsar
-    if (h > winH * 0.5) {
-      expandSheet();
-    } else {
-      collapseSheet();
-    }
-    setTimeout(() => state.leafletMap?.invalidateSize(), 320);
+    // Snap al punto más cercano de los 3
+    const dHidden   = Math.abs(h - SHEET_H.hidden);
+    const dPeek     = Math.abs(h - SHEET_H.peek);
+    const dExpanded = Math.abs(h - SHEET_H.expanded);
+    if (dHidden <= dPeek && dHidden <= dExpanded) snapTo('hidden');
+    else if (dPeek <= dExpanded)                  snapTo('peek');
+    else                                           snapTo('expanded');
   });
 
-  // ── TAP EN HEADER (sin drag) → 2 estados: collapsed↔expanded
-  header.addEventListener('click', (e) => {
-    if (dragging) return;
-    sidebar.style.transition = 'height .32s cubic-bezier(.34,.1,.68,.55)';
-    if (sidebar.classList.contains('sheet-expanded')) {
-      collapseSheet(); // expandido → colapsar
-    } else {
-      expandSheet(); // colapsado → expandir
-    }
-    setTimeout(() => state.leafletMap?.invalidateSize(), 320);
-  });
-
-  // ── SCROLL DENTRO DEL SHEET → AIRBNB BEHAVIOR ──────────────
+  // ── Scroll vertical en expanded → si llega al top vuelve a peek
   if (list) {
+    let lastST = 0;
     list.addEventListener('scroll', () => {
-      if (dragging) return;
-      const scrollTop   = list.scrollTop;
-      const isExpanded  = sidebar.classList.contains('sheet-expanded');
-      const winH        = window.innerHeight;
-
-      // Scrolleando hacia abajo → expandir a pantalla completa
-      if (scrollTop > lastScrollTop && scrollTop > 10 && !isExpanded) {
-        sidebar.style.transition = 'height .3s cubic-bezier(.4,0,.2,1)';
-        sidebar.classList.remove('sheet-hidden');
-        sidebar.classList.add('sheet-expanded');
-        sidebar.style.height = (winH - 64) + 'px'; // pantalla completa menos header
-        state.leafletMap?.invalidateSize();
-      }
-      // Scrolleando hacia arriba y llegó al top → volver a 50/50
-      else if (scrollTop < lastScrollTop && scrollTop === 0 && isExpanded) {
-        sidebar.style.transition = 'height .3s cubic-bezier(.4,0,.2,1)';
-        sidebar.classList.remove('sheet-expanded');
-        sidebar.style.height = '44vh'; // 50/50
-        state.leafletMap?.invalidateSize();
-      }
-      lastScrollTop = scrollTop;
+      if (isDragging || !sidebar.classList.contains('sheet-expanded')) return;
+      if (list.scrollTop < lastST && list.scrollTop === 0) snapTo('peek');
+      lastST = list.scrollTop;
     }, { passive: true });
   }
 
-  // ── DRAG EN EL MAPA → AIRBNB BEHAVIOR ──────────────────────
-  // Si el usuario toca el mapa → bajar el sheet automáticamente
-  if (state.leafletMap) {
-    state.leafletMap.on('mousedown pointerdown', () => {
-      if (sidebar.classList.contains('sheet-expanded')) {
-        sidebar.style.transition = 'height .32s cubic-bezier(.4,0,.2,1)';
-        setTimeout(() => {
-          if (sidebar.classList.contains('sheet-expanded')) {
-            sidebar.classList.remove('sheet-expanded');
-            sidebar.style.height = '220px';
-            state.leafletMap?.invalidateSize();
-          }
-        }, 50);
-      }
-    });
-  }
-
-  // ── TAP EN EL MAPA → OCULTAR SHEET ────────────────────────
+  // ── Click en mapa → collapsar a hidden ───────────────────
   state.leafletMap?.on('click', () => {
     if (window.innerWidth > 768) return;
-    collapseSheet();
+    snapTo('hidden');
   });
+
+  // Exponer snapTo globalmente para usarla al tocar pins
+  window._snapMapSheet = snapTo;
 }
 
 // ─── VISTA GRID / MAPA ────────────────────────────────────────

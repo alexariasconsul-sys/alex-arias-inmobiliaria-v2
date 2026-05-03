@@ -1951,16 +1951,16 @@ a { text-decoration: none; color: inherit; }
 .map-overlay-detail-btn:hover { background: #333; transform: translateY(-1px); }
 .map-overlay-detail-btn:active { transform: scale(.97); }
 
-/* ── Responsive móvil: Bottom Sheet Airbnb ─────────────────── */
+/* ── Responsive móvil: Bottom Sheet Airbnb (3 snap points) ─── */
 @media (max-width: 768px) {
   .map-view {
     top: var(--top-bar-h, 64px);
-    bottom: calc(60px + env(safe-area-inset-bottom, 0px)); /* sobre el tab bar */
+    bottom: calc(60px + env(safe-area-inset-bottom, 0px));
     position: fixed;
     flex-direction: column;
   }
 
-  /* Mapa ocupa toda la pantalla por debajo */
+  /* Mapa ocupa toda la pantalla */
   .map-pane {
     position: absolute;
     inset: 0;
@@ -1968,92 +1968,136 @@ a { text-decoration: none; color: inherit; }
     height: 100%;
     flex: none;
     order: 1;
-    padding: 0; /* sin padding en móvil */
+    padding: 0;
   }
 
-  /* En móvil el mapa no tiene esquinas redondeadas */
   #leafletMap { border-radius: 0; }
 
-  /* Sidebar = bottom sheet deslizable */
+  /* ── BOTTOM SHEET ─────────────────────────────────────────── */
   .map-sidebar {
     position: absolute;
     bottom: 0; left: 0; right: 0;
     width: 100%;
-    height: 140px;          /* altura colapsada por defecto - muestra ~1.5 tarjetas */
-    max-height: 85vh;
+    height: 72px;                      /* Snap 1: solo handle */
+    max-height: 90vh;
     border-right: none;
-    border-radius: 22px 22px 0 0;
-    box-shadow: 0 -6px 30px rgba(0,0,0,.18);
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -2px 20px rgba(0,0,0,.12);
     z-index: 20;
     order: 2;
-    transition: height .32s cubic-bezier(.34,.1,.68,.55);
+    transition: height .38s cubic-bezier(.32,.72,0,1); /* iOS spring */
     background: #fff;
     flex-shrink: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    will-change: height;
   }
-  .map-sidebar.sheet-expanded { height: 80vh; }
-  .map-sidebar.sheet-hidden   { height: 140px; /* Mostrar ~1.5 tarjetas en collapsed */ }
 
-  /* Handle pill + contador - MÁS VISIBLE Y CON FEEDBACK */
+  /* Snap 1: colapsado — solo handle+contador */
+  .map-sidebar.sheet-hidden { height: 72px; }
+
+  /* Snap 2: peek — 1 tarjeta visible (carousel horizontal) */
+  .map-sidebar.sheet-peek { height: 310px; }
+
+  /* Snap 3: expandido — lista completa */
+  .map-sidebar.sheet-expanded { height: 88vh; }
+
+  /* ── HANDLE ───────────────────────────────────────────────── */
   .map-sidebar-header {
     cursor: grab;
-    padding: 12px 16px 10px;
+    padding: 10px 16px 8px;
     display: flex; flex-direction: column;
-    align-items: center; gap: 7px;
-    user-select: none;
+    align-items: center; gap: 6px;
+    user-select: none; -webkit-user-select: none;
     flex-shrink: 0;
-    border-bottom: 1px solid #f0f0f0;
-    transition: background .2s;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
+    transition: background .15s;
+    touch-action: none;
   }
-  .map-sidebar-header:active {
-    background: #f5f5f5;
-    cursor: grabbing;
+  .map-sidebar-header:active { background: #f8f8f8; cursor: grabbing; }
+
+  /* Pill del handle */
+  .map-sheet-pill {
+    width: 44px; height: 4px;
+    background: #d0d0d0;
+    border-radius: 999px;
+    transition: width .2s, background .2s;
+    flex-shrink: 0;
   }
-  .map-sidebar-header::before {
+  .map-sidebar-header:active .map-sheet-pill {
+    width: 52px; background: #888;
+  }
+  .map-sidebar.sheet-dragging .map-sheet-pill { background: #555; }
+
+  /* Label: contador + chevron */
+  .map-sheet-label {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .map-sidebar-count { font-size: 12px; font-weight: 700; color: #333; }
+  .map-sheet-chevron {
+    transition: transform .32s cubic-bezier(.32,.72,0,1);
+    color: #999;
+  }
+  .map-sidebar.sheet-expanded .map-sheet-chevron { transform: rotate(180deg); }
+  .map-sidebar.sheet-peek .map-sheet-chevron { transform: rotate(0deg); }
+
+  /* Separador bajo el handle */
+  .map-sidebar-header::after {
     content: '';
-    width: 48px; height: 5px;
-    background: #999; border-radius: 999px;
-    flex-shrink: 0;
-    transition: all .2s;
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px; background: #f0f0f0;
   }
-  .map-sidebar-header:active::before {
-    background: #555;
-    width: 52px;
-  }
-  .map-sidebar-header .map-sidebar-count {
-    font-size: 12px; font-weight: 600; color: #555;
-    /* Mostrar SIEMPRE el contador */
-    display: block !important;
-  }
+  .map-sidebar-header { position: relative; }
 
-  /* Cuando oculto: mostrar counter pero no list */
-  .map-sidebar.sheet-hidden .map-cards-list { display: none; }
-
-  /* Lista: 1 columna, scroll vertical, tarjetas completas */
+  /* ── LISTA: VERTICAL por defecto ─────────────────────────── */
   .map-cards-list {
     grid-template-columns: 1fr;
-    padding: 12px 14px 100px;
+    padding: 10px 14px 100px;
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1;
     height: auto;
-    gap: 14px;
+    gap: 12px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
   }
 
-  /* Property cards en móvil dentro del sheet */
+  /* ── LISTA: HORIZONTAL en modo peek (carousel) ──────────── */
+  .map-sidebar.sheet-peek .map-cards-list {
+    display: flex;
+    flex-direction: row;
+    grid-template-columns: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 10px;
+    padding: 10px 14px 16px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .map-sidebar.sheet-peek .map-cards-list::-webkit-scrollbar { display: none; }
+
+  /* Tarjeta en carousel — ancho fijo */
+  .map-sidebar.sheet-peek .map-cards-list .property-card {
+    flex: 0 0 82vw;
+    max-width: 340px;
+    scroll-snap-align: center;
+    height: var(--card-collapsed-height);
+  }
+
+  /* Property cards normales en el sheet */
   .map-cards-list .property-card { height: var(--card-collapsed-height); }
   .map-cards-list .property-card.is-open { height: var(--card-expanded-height-mobile); }
   .map-cards-list .property-media { height: var(--media-height); }
 
-  /* Tarjeta expandida en móvil → sale del sheet y va a pantalla completa */
+  /* Tarjeta expandida → pantalla completa */
   .map-cards-list .property-card.is-open {
     position: fixed !important;
-    top: var(--top-bar-h, 64px) !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+    top: var(--top-bar-h, 64px) !important;
+    left: 0 !important; right: 0 !important; bottom: 0 !important;
     width: 100% !important;
-    height: calc(100vh - var(--top-bar-h, 64px)) !important;
+    height: calc(100dvh - var(--top-bar-h, 64px)) !important;
     z-index: 300 !important;
     margin: 0 !important;
     border-radius: 0 !important;
@@ -2062,15 +2106,44 @@ a { text-decoration: none; color: inherit; }
   .map-cards-list .property-card.is-open .property-card-inner {
     position: relative !important;
     height: auto !important;
-    min-height: calc(100vh - 64px);
+    min-height: calc(100dvh - 64px);
     border-radius: 0 !important;
     overflow: visible !important;
   }
   .map-cards-list .property-card.is-open .property-media {
-    height: 62vw;
-    min-height: 240px;
+    height: 62vw; min-height: 240px;
     border-radius: var(--radius-lg) !important;
   }
+
+  /* ── FAB "Ver lista" ──────────────────────────────────────── */
+  .map-list-fab {
+    position: absolute;
+    bottom: 86px;             /* sobre el sheet colapsado */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 25;
+    display: flex; align-items: center; gap: 7px;
+    padding: 11px 22px;
+    background: #111; color: #fff;
+    border: none; border-radius: 999px;
+    font-size: 13px; font-weight: 700; font-family: inherit;
+    box-shadow: 0 4px 24px rgba(0,0,0,.35);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform .15s, box-shadow .15s;
+    animation: fabIn .3s cubic-bezier(.32,.72,0,1) both;
+  }
+  .map-list-fab:active {
+    transform: translateX(-50%) scale(.95);
+    box-shadow: 0 2px 12px rgba(0,0,0,.2);
+  }
+  @keyframes fabIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  /* Ocultar FAB cuando sheet no está colapsado */
+  .map-sidebar:not(.sheet-hidden) ~ .map-list-fab { display: none !important; }
 }
 
 /* ─── FLOATING BAR ──────────────────────────────────────────── */
