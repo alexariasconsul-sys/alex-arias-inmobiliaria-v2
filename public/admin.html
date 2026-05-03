@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="admin.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -1910,46 +1911,111 @@ function loadPatterns(searches, leads) {
   }
 }
 
-// Canvas chart helpers (simplified)
+// ── CHART.JS HELPERS ──────────────────────────────────────────
+const _chartInst = {};
+
+function _destroyChart(id) {
+  if (_chartInst[id]) { _chartInst[id].destroy(); delete _chartInst[id]; }
+}
+
+const CHART_COLORS = ['#E71433','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#6366f1'];
+
 function drawLineChart(canvas, data, title) {
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // Simplified line - just draw axis and label
-  ctx.font = '12px Arial';
-  ctx.fillStyle = '#6b7280';
-  ctx.fillText(title, 10, 20);
-  ctx.fillText(`${(data || []).length} registros`, 10, 40);
+  _destroyChart(canvas.id);
+  const parent = canvas.parentElement;
+  if (!data || !data.length) {
+    parent.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:180px;color:#9ca3af;font-size:13px;">Sin datos aún</div>`;
+    return;
+  }
+  canvas.style.height = '200px';
+  _chartInst[canvas.id] = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: data.map(([d]) => d),
+      datasets: [{
+        label: title,
+        data: data.map(([,v]) => v),
+        borderColor: '#E71433',
+        backgroundColor: 'rgba(231,20,51,0.08)',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: '#E71433',
+        pointRadius: 4,
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0, font: { size: 11 } }, grid: { color: '#f3f4f6' } },
+        x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
 }
 
 function drawBarChart(canvas, data, title) {
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = '12px Arial';
-  ctx.fillStyle = '#6b7280';
-  ctx.fillText(title, 10, 20);
-
-  const sorted = [...(data || [])].sort((a,b) => b[1]-a[1]);
-  sorted.slice(0,10).forEach((item, i) => {
-    const label = item[0]?.substring(0, 15) || '—';
-    const val = item[1] || 0;
-    const x = 10;
-    const y = 50 + i * 20;
-    ctx.fillStyle = '#6b7280';
-    ctx.fillText(`${label}: ${val}`, x, y);
+  _destroyChart(canvas.id);
+  const parent = canvas.parentElement;
+  const filtered = (data || []).filter(([l]) => l !== 'sin filtro').slice(0, 10);
+  if (!filtered.length) {
+    parent.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:230px;color:#9ca3af;font-size:13px;">Sin datos con filtro aplicado</div>`;
+    return;
+  }
+  canvas.style.height = '250px';
+  _chartInst[canvas.id] = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: filtered.map(([l]) => l),
+      datasets: [{
+        data: filtered.map(([,v]) => v),
+        backgroundColor: CHART_COLORS.slice(0, filtered.length),
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, ticks: { precision: 0, font: { size: 11 } }, grid: { color: '#f3f4f6' } },
+        y: { ticks: { font: { size: 12 } }, grid: { display: false } }
+      }
+    }
   });
 }
 
 function drawDonutChart(canvas, data, title) {
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // Simplified - just show labels
-  ctx.font = '11px Arial';
-  ctx.fillStyle = '#6b7280';
-  data.slice(0, 5).forEach((item, i) => {
-    ctx.fillText(`${item[0]}: ${item[1]}`, 10, 20 + i * 15);
+  _destroyChart(canvas.id);
+  const parent = canvas.parentElement;
+  if (!data || !data.length) {
+    parent.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:160px;color:#9ca3af;font-size:13px;">Sin datos aún</div>`;
+    return;
+  }
+  canvas.removeAttribute('width'); canvas.removeAttribute('height');
+  canvas.style.maxWidth = '220px'; canvas.style.margin = '0 auto';
+  _chartInst[canvas.id] = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels: data.map(([l]) => l),
+      datasets: [{
+        data: data.map(([,v]) => v),
+        backgroundColor: CHART_COLORS.slice(0, data.length),
+        borderWidth: 0,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12, usePointStyle: true } }
+      }
+    }
   });
 }
 
