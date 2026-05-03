@@ -155,12 +155,12 @@
       <!-- Tab: Búsquedas -->
       <div class="adm-stats-tab-content active" data-tab="búsquedas">
         <div class="adm-row">
-          <div class="adm-card"><h3 class="adm-card-title">Búsquedas por día</h3><canvas id="chartSearchesByDay" style="height:200px"></canvas></div>
-          <div class="adm-card"><h3 class="adm-card-title">Búsquedas por tipo</h3><div class="adm-donut-wrap"><canvas id="chartSearchesByType" width="140" height="140"></canvas></div></div>
+          <div class="adm-card"><h3 class="adm-card-title">Búsquedas por día</h3><div style="position:relative;height:200px"><canvas id="chartSearchesByDay"></canvas></div></div>
+          <div class="adm-card"><h3 class="adm-card-title">Búsquedas por tipo</h3><div style="position:relative;height:200px"><canvas id="chartSearchesByType"></canvas></div></div>
         </div>
         <div class="adm-row">
-          <div class="adm-card"><h3 class="adm-card-title">Top 10 Municipios buscados</h3><div class="adm-bar-chart-wrap"><canvas id="chartTopMunicipios" style="height:250px"></canvas></div></div>
-          <div class="adm-card"><h3 class="adm-card-title">Top 10 Barrios buscados</h3><div class="adm-bar-chart-wrap"><canvas id="chartTopBarrios" style="height:250px"></canvas></div></div>
+          <div class="adm-card"><h3 class="adm-card-title">Top 10 Municipios buscados</h3><div style="position:relative;height:250px"><canvas id="chartTopMunicipios"></canvas></div></div>
+          <div class="adm-card"><h3 class="adm-card-title">Top 10 Barrios buscados</h3><div style="position:relative;height:250px"><canvas id="chartTopBarrios"></canvas></div></div>
         </div>
         <div class="adm-card adm-card--full"><h3 class="adm-card-title">Búsquedas recientes</h3><div id="searchesTableWrap" style="overflow-x:auto"><table class="adm-table"><thead><tr><th>Filtros aplicados</th><th>Resultados</th><th>Fecha</th></tr></thead><tbody id="searchesTableBody"><tr><td colspan="3" style="text-align:center;padding:20px">Cargando...</td></tr></tbody></table></div></div>
       </div>
@@ -1924,10 +1924,9 @@ function drawLineChart(canvas, data, title) {
   _destroyChart(canvas.id);
   const parent = canvas.parentElement;
   if (!data || !data.length) {
-    parent.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:180px;color:#9ca3af;font-size:13px;">Sin datos aún</div>`;
+    parent.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9ca3af;font-size:13px;">Sin datos aún</div>`;
     return;
   }
-  canvas.style.height = '200px';
   _chartInst[canvas.id] = new Chart(canvas, {
     type: 'line',
     data: {
@@ -1962,10 +1961,9 @@ function drawBarChart(canvas, data, title) {
   const parent = canvas.parentElement;
   const filtered = (data || []).filter(([l]) => l !== 'sin filtro').slice(0, 10);
   if (!filtered.length) {
-    parent.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:230px;color:#9ca3af;font-size:13px;">Sin datos con filtro aplicado</div>`;
+    parent.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9ca3af;font-size:13px;">Sin datos con filtro aplicado</div>`;
     return;
   }
-  canvas.style.height = '250px';
   _chartInst[canvas.id] = new Chart(canvas, {
     type: 'bar',
     data: {
@@ -1994,11 +1992,9 @@ function drawDonutChart(canvas, data, title) {
   _destroyChart(canvas.id);
   const parent = canvas.parentElement;
   if (!data || !data.length) {
-    parent.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:160px;color:#9ca3af;font-size:13px;">Sin datos aún</div>`;
+    parent.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9ca3af;font-size:13px;">Sin datos aún</div>`;
     return;
   }
-  canvas.removeAttribute('width'); canvas.removeAttribute('height');
-  canvas.style.maxWidth = '220px'; canvas.style.margin = '0 auto';
   _chartInst[canvas.id] = new Chart(canvas, {
     type: 'doughnut',
     data: {
