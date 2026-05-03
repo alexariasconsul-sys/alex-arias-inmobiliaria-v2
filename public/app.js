@@ -4219,6 +4219,19 @@ function setupReviewsPanel() {
     });
   });
 
+  // ── Emoji bar ─────────────────────────────────────────────────
+  document.querySelectorAll('.emoji-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ta = document.getElementById('reviewsComment');
+      const emoji = btn.dataset.emoji;
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      ta.value = ta.value.slice(0, start) + emoji + ta.value.slice(end);
+      ta.selectionStart = ta.selectionEnd = start + emoji.length;
+      ta.focus();
+    });
+  });
+
   // ── Submit review ─────────────────────────────────────────────
   document.getElementById('reviewsSubmitBtn').addEventListener('click', async () => {
     if (!_gCredential || _selectedRating === 0) return;

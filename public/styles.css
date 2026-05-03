@@ -3724,6 +3724,33 @@ a { text-decoration: none; color: inherit; }
   transition: border-color .15s;
 }
 .reviews-textarea:focus { outline: none; border-color: #1a73e8; }
+
+.reviews-emoji-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.reviews-emoji-label {
+  font-size: .72rem;
+  color: #9ca3af;
+  margin-right: 2px;
+  white-space: nowrap;
+}
+.emoji-btn {
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 3px 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  line-height: 1;
+  transition: background .15s, transform .1s;
+}
+.emoji-btn:hover { background: #f3f4f6; transform: scale(1.2); }
+.emoji-btn:active { transform: scale(.95); }
+
 .reviews-form-actions {
   display: flex; align-items: center; justify-content: space-between;
   margin-top: 10px; gap: 10px;
