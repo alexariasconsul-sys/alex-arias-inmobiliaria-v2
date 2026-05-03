@@ -1845,6 +1845,7 @@ function loadSearchesStats(data) {
         const dateStr = new Date(s.ts).toLocaleDateString('es-CO', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
         return `
           <div class="srch-row">
+            <div class="srch-row-icon">🔍</div>
             <div class="srch-chips">${chips}</div>
             <div class="srch-meta">
               <span class="${countClass}">${count} inmueble${count !== 1 ? 's' : ''}</span>
