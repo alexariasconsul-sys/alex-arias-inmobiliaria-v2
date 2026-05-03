@@ -2602,13 +2602,10 @@ function initMap() {
   map.on('moveend zoomend', () => {
     if (state.mapPanningToMarker) {
       state.mapPanningToMarker = false;
-      return; // no re-renderizar: el sidebar ya está bien
+      return;
     }
-    // Mostrar sidebar de nuevo con las propiedades visibles
-    if (window.innerWidth <= 768) {
-      const sidebar = document.getElementById('mapSidebar');
-      if (sidebar) sidebar.classList.remove('sheet-hidden');
-    }
+    // Actualizar tarjetas en segundo plano pero NO subir el sidebar
+    // El usuario lo abre manualmente tocando el handle cuando quiera
     renderMapSidebar(getVisibleProperties());
   });
 
