@@ -162,7 +162,15 @@
           <div class="adm-card"><h3 class="adm-card-title">Top 10 Municipios buscados</h3><div style="position:relative;height:250px"><canvas id="chartTopMunicipios"></canvas></div></div>
           <div class="adm-card"><h3 class="adm-card-title">Top 10 Barrios buscados</h3><div style="position:relative;height:250px"><canvas id="chartTopBarrios"></canvas></div></div>
         </div>
-        <div class="adm-card adm-card--full"><h3 class="adm-card-title">Búsquedas recientes</h3><div id="searchesTableWrap" style="overflow-x:auto"><table class="adm-table"><thead><tr><th>Filtros aplicados</th><th>Resultados</th><th>Fecha</th></tr></thead><tbody id="searchesTableBody"><tr><td colspan="3" style="text-align:center;padding:20px">Cargando...</td></tr></tbody></table></div></div>
+        <div class="adm-card adm-card--full">
+          <div class="adm-card-title-row">
+            <h3 class="adm-card-title">Búsquedas recientes</h3>
+            <span class="adm-card-subtitle">Últimas 20 sesiones de búsqueda</span>
+          </div>
+          <div id="searchesFeed" class="srch-feed">
+            <div class="srch-loading">Cargando...</div>
+          </div>
+        </div>
       </div>
 
       <!-- Tab: Leads -->
@@ -1822,17 +1830,61 @@ function loadSearchesStats(data) {
   const canvasBarrio = document.getElementById('chartTopBarrios');
   if (canvasBarrio) drawBarChart(canvasBarrio, data.byBarrio || [], 'Top barrios');
 
-  // Tabla de búsquedas recientes
-  const tbody = document.getElementById('searchesTableBody');
-  if (tbody) {
-    tbody.innerHTML = (data.recent || []).slice(0, 20).map(s => `
-      <tr>
-        <td>${JSON.stringify(s.filters || {}).substring(0, 50)}…</td>
-        <td>${s.resultsCount || 0}</td>
-        <td>${new Date(s.ts).toLocaleDateString('es-ES')}</td>
-      </tr>
-    `).join('') || '<tr><td colspan="3" style="text-align:center;color:#9ca3af">Sin datos</td></tr>';
+  // Panel de búsquedas recientes (chips visuales)
+  const feed = document.getElementById('searchesFeed');
+  if (feed) {
+    const recent = (data.recent || []).slice(0, 20);
+    if (!recent.length) {
+      feed.innerHTML = '<div class="srch-empty">Sin búsquedas recientes</div>';
+    } else {
+      feed.innerHTML = recent.map(s => {
+        const chips = buildSearchChips(s.filters || {});
+        const count = s.resultsCount || 0;
+        const countClass = count === 0 ? 'srch-count srch-count--zero' : count >= 5 ? 'srch-count srch-count--good' : 'srch-count';
+        const time = srchTimeAgo(s.ts);
+        const dateStr = new Date(s.ts).toLocaleDateString('es-CO', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+        return `
+          <div class="srch-row">
+            <div class="srch-chips">${chips}</div>
+            <div class="srch-meta">
+              <span class="${countClass}">${count} inmueble${count !== 1 ? 's' : ''}</span>
+              <span class="srch-time" title="${dateStr}">${time}</span>
+            </div>
+          </div>`;
+      }).join('');
+    }
   }
+}
+
+function buildSearchChips(f) {
+  const chips = [];
+  const tipoMap = { arriendo: '🔑 Arriendo', venta: '🏷️ Venta', todos: null };
+  if (f.tipo && f.tipo !== 'todos' && tipoMap[f.tipo]) {
+    chips.push(`<span class="srch-chip srch-chip--tipo">${tipoMap[f.tipo]}</span>`);
+  }
+  if (f.municipio) chips.push(`<span class="srch-chip srch-chip--place">📍 ${escHtml(f.municipio)}</span>`);
+  if (f.barrio)    chips.push(`<span class="srch-chip srch-chip--place">🏘️ ${escHtml(f.barrio)}</span>`);
+  if (f.sector)    chips.push(`<span class="srch-chip srch-chip--place">📌 ${escHtml(f.sector)}</span>`);
+  if (f.search)    chips.push(`<span class="srch-chip srch-chip--text">🔍 &ldquo;${escHtml(f.search)}&rdquo;</span>`);
+  if (f.precioMin) chips.push(`<span class="srch-chip srch-chip--price">Desde $${Number(f.precioMin).toLocaleString('es-CO')}</span>`);
+  if (f.precioMax) chips.push(`<span class="srch-chip srch-chip--price">Hasta $${Number(f.precioMax).toLocaleString('es-CO')}</span>`);
+  if (f.habitaciones) chips.push(`<span class="srch-chip srch-chip--feat">🛏️ ${f.habitaciones} hab.</span>`);
+  if (f.banos)     chips.push(`<span class="srch-chip srch-chip--feat">🚿 ${f.banos} baños</span>`);
+  if (!chips.length) chips.push('<span class="srch-chip srch-chip--neutral">Exploración general</span>');
+  return chips.join('');
+}
+
+function srchTimeAgo(ts) {
+  const diff = Date.now() - new Date(ts).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Ahora mismo';
+  if (mins < 60) return `hace ${mins}m`;
+  const h = Math.floor(mins / 60);
+  if (h < 24) return `hace ${h}h`;
+  const d = Math.floor(h / 24);
+  if (d === 1) return 'Ayer';
+  if (d < 7) return `hace ${d} días`;
+  return new Date(ts).toLocaleDateString('es-CO', { day:'numeric', month:'short' });
 }
 
 function loadLeadsStats(data) {

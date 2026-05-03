@@ -1553,3 +1553,107 @@ body {
   background: rgba(255,255,255,.02);
   border-radius: 8px;
 }
+
+/* ── Card title row (título + subtítulo inline) ─────────── */
+.adm-card-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.adm-card-title-row .adm-card-title { margin-bottom: 0; }
+.adm-card-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* ── Feed de búsquedas recientes ────────────────────────── */
+.srch-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.srch-loading, .srch-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.srch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg);
+  transition: background 0.15s;
+}
+.srch-row:hover { background: #eef0f3; }
+
+.srch-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Chips individuales */
+.srch-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.srch-chip--tipo    { background: #dbeafe; color: #1d4ed8; }
+.srch-chip--place   { background: #dcfce7; color: #166534; }
+.srch-chip--text    { background: #fef9c3; color: #854d0e; }
+.srch-chip--price   { background: #fce7f3; color: #9d174d; }
+.srch-chip--feat    { background: #ede9fe; color: #5b21b6; }
+.srch-chip--neutral { background: #f3f4f6; color: #6b7280; font-weight: 400; }
+
+/* Meta: conteo + tiempo */
+.srch-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.srch-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue);
+  background: var(--blue-bg);
+  padding: 2px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+.srch-count--zero { color: #9ca3af; background: #f3f4f6; }
+.srch-count--good { color: var(--green); background: var(--green-bg); }
+.srch-time {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .srch-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .srch-meta {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+}
