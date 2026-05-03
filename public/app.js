@@ -449,6 +449,7 @@ async function loadProperties() {
     if (!res.ok) throw new Error('Error del servidor');
     state.properties = await res.json();
     state.filtered = state.properties;
+    clearFavoritesFilter(); // nueva búsqueda → salir del modo favoritos
     logSearch(state.properties.length); // Log de búsqueda
     renderGrid();
     updateFilterDropdowns();
@@ -3086,8 +3087,13 @@ function initBottomSheet() {
 }
 
 // ─── VISTA GRID / MAPA ────────────────────────────────────────
+function clearFavoritesFilter() {
+  document.getElementById('btnFavorites')?.classList.remove('active');
+}
+
 function switchView(view) {
   state.currentView = view;
+  clearFavoritesFilter(); // siempre limpia al cambiar de vista
   const gridView = document.getElementById('gridView');
   const mapView  = document.getElementById('mapView');
   const btnGrid  = document.getElementById('btnViewGrid');
