@@ -183,9 +183,7 @@
       <div class="adm-stats-tab-content" data-tab="conversión">
         <div class="adm-card adm-card--full">
           <h3 class="adm-card-title">Funnel de Conversión</h3>
-          <div style="padding:30px 20px">
-            <canvas id="chartConversionFunnel" style="height:300px"></canvas>
-          </div>
+          <div id="chartConversionFunnel" style="padding:24px 20px"></div>
         </div>
         <div class="adm-row">
           <div class="adm-card"><h3 class="adm-card-title">Métricas de Conversión</h3><div id="conversionMetrics" style="padding:20px;font-size:14px;line-height:1.8"><div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e5e7eb"><span>Búsquedas totales:</span><strong id="convTotal" style="color:#e71433">—</strong></div><div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e5e7eb"><span>Vistas (búsqueda→vista):</span><strong id="convView" style="color:#3b82f6">—</strong></div><div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e5e7eb"><span>Leads (vista→contacto):</span><strong id="convLead" style="color:#10b981">—</strong></div><div style="display:flex;justify-content:space-between;padding:10px 0;color:#6b7280"><span>Conversión general:</span><strong id="convOverall" style="color:#e71433">—</strong></div></div></div>
@@ -1055,6 +1053,7 @@ function openPropPanel(prop = null) {
 
   document.getElementById('propPanel').classList.add('open');
   document.getElementById('propPanelOverlay').style.display = 'block';
+  document.body.style.overflow = 'hidden'; // Bloquea scroll de fondo en iPhone
   setTimeout(() => {
     const lat = parseFloat(document.getElementById('pfLat').value) || 6.151;
     const lng = parseFloat(document.getElementById('pfLng').value) || -75.619;
@@ -1064,6 +1063,7 @@ function openPropPanel(prop = null) {
 function closePropPanel() {
   document.getElementById('propPanel').classList.remove('open');
   document.getElementById('propPanelOverlay').style.display = 'none';
+  document.body.style.overflow = '';
 }
 document.getElementById('propPanelClose').addEventListener('click', closePropPanel);
 document.getElementById('propPanelCancel').addEventListener('click', closePropPanel);
@@ -1331,10 +1331,12 @@ function openBlogPanel(post = null) {
   }
   document.getElementById('blogPanel').classList.add('open');
   document.getElementById('blogPanelOverlay').style.display = 'block';
+  document.body.style.overflow = 'hidden';
 }
 function closeBlogPanel() {
   document.getElementById('blogPanel').classList.remove('open');
   document.getElementById('blogPanelOverlay').style.display = 'none';
+  document.body.style.overflow = '';
 }
 document.getElementById('blogPanelClose').addEventListener('click', closeBlogPanel);
 document.getElementById('blogPanelCancel').addEventListener('click', closeBlogPanel);
@@ -2015,29 +2017,38 @@ function drawDonutChart(canvas, data, title) {
   });
 }
 
-function drawFunnelChart(canvas, stages) {
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-  const w = canvas.width || 400;
-  const h = canvas.height || 300;
-  ctx.clearRect(0, 0, w, h);
+function drawFunnelChart(container, stages) {
+  if (!container) return;
+  const colors     = ['#E71433', '#3b82f6', '#10b981'];
+  const colorsBg   = ['#fff0f2', '#dbeafe', '#dcfce7'];
+  const icons      = ['🔍', '👁️', '💬'];
+  const max        = Math.max(...stages.map(s => s.value), 1);
 
-  const max = Math.max(...stages.map(s => s.value), 1);
-  const colors = ['#e71433', '#3b82f6', '#10b981'];
+  container.innerHTML = stages.map((stage, i) => {
+    const widthPct = Math.round((stage.value / max) * 100);
+    const convPct  = i > 0 && stages[i-1].value > 0
+      ? Math.round((stage.value / stages[i-1].value) * 100) : null;
 
-  stages.forEach((stage, i) => {
-    const width = (w * 0.6) * (stage.value / max);
-    const x = (w - width) / 2;
-    const y = 40 + i * 80;
+    const arrowHtml = convPct !== null ? `
+      <div class="funnel-arrow">
+        <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>${convPct}% pasaron al siguiente paso</span>
+      </div>` : '';
 
-    ctx.fillStyle = colors[i] || '#6b7280';
-    ctx.fillRect(x, y, width, 40);
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 13px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(stage.label, w / 2, y + 14);
-    ctx.fillText(stage.value, w / 2, y + 30);
-  });
+    return `${arrowHtml}
+    <div class="funnel-stage">
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar" style="width:${widthPct}%;background:${colors[i]}">
+          <span class="funnel-bar-icon">${icons[i]}</span>
+          <span class="funnel-bar-label">${stage.label}</span>
+          <span class="funnel-bar-val">${stage.value}</span>
+        </div>
+      </div>
+      <div class="funnel-side" style="color:${colors[i]}">
+        ${Math.round(widthPct)}%
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // Setup event listeners for stats
@@ -2069,41 +2080,36 @@ document.getElementById('admLogoutBtn').addEventListener('click', () => {
   window.location.href = '/auth/logout';
 });
 
-// ── FAB ───────────────────────────────────────────────────────
-document.getElementById('admFab')?.addEventListener('click', () => {
-  // Mismo comportamiento que el botón principal de nueva propiedad
-  document.getElementById('admTopNewBtn')?.click();
+// ── BOTTOM NAV + FAB (event delegation — funciona sin importar orden del DOM) ──
+document.addEventListener('click', function(e) {
+  // FAB
+  if (e.target.closest('#admFab')) {
+    document.getElementById('admTopNewBtn')?.click();
+    return;
+  }
+  // Bottom nav
+  const btn = e.target.closest('.adm-bottom-nav-item');
+  if (!btn) return;
+  const sec = btn.dataset.section;
+  // Disparar la navegación existente
+  document.querySelector(`.adm-nav-item[data-section="${sec}"]`)?.click();
+  // Actualizar visual bottom nav
+  document.querySelectorAll('.adm-bottom-nav-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
 });
 
-// Sincronizar bottom nav con sección activa
-(function syncBottomNav() {
-  const items = document.querySelectorAll('.adm-bottom-nav-item');
-  items.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const sec = btn.dataset.section;
-      // Reutilizar la lógica de navegación existente
-      document.querySelector(`.adm-nav-item[data-section="${sec}"]`)?.click();
-      // Actualizar estado visual bottom nav
-      items.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    });
-  });
-
-  // Observar cambios en adm-nav-item para mantener bottom nav sincronizado
-  const observer = new MutationObserver(() => {
-    const activeSection = document.querySelector('.adm-nav-item.active')?.dataset?.section;
-    if (!activeSection) return;
-    items.forEach(b => {
-      b.classList.toggle('active', b.dataset.section === activeSection);
-    });
-    // Mostrar/ocultar FAB solo en sección propiedades
-    const fab = document.getElementById('admFab');
-    if (fab) fab.classList.toggle('hidden', activeSection !== 'properties');
-  });
-  document.querySelectorAll('.adm-nav-item').forEach(el =>
-    observer.observe(el, { attributes: true, attributeFilter: ['class'] })
+// Sincronizar FAB y bottom nav cuando cambia sección (observer en sidebar nav)
+new MutationObserver(() => {
+  const activeSection = document.querySelector('.adm-nav-item.active')?.dataset?.section;
+  if (!activeSection) return;
+  // Sync bottom nav
+  document.querySelectorAll('.adm-bottom-nav-item').forEach(b =>
+    b.classList.toggle('active', b.dataset.section === activeSection)
   );
-})();
+  // FAB solo visible en sección propiedades
+  const fab = document.getElementById('admFab');
+  if (fab) fab.classList.toggle('hidden', activeSection !== 'properties');
+}).observe(document.getElementById('admShell'), { subtree: true, attributes: true, attributeFilter: ['class'] });
 </script>
 
 <!-- Bottom nav mobile -->
