@@ -852,6 +852,7 @@ function cardHTML(p) {
               <div class="media-location">
                 <p class="location-municipio">${p.municipio || ''}</p>
                 <h2 class="location-barrio">${p.barrio || p.title}</h2>
+                <span class="tipo-overlay-badge">${p.tipo === 'venta' ? 'Venta' : 'Arriendo'}</span>
               </div>
               <div class="card-price">${price}</div>
             </div>
@@ -1535,6 +1536,7 @@ function updateLikeCount(id, count) {
 
 function saveLikedIds() {
   localStorage.setItem('likedProperties', JSON.stringify([...state.likedIds]));
+  updateFavBadge();
 }
 
 function loadLikedIds() {
@@ -1542,6 +1544,19 @@ function loadLikedIds() {
     const saved = JSON.parse(localStorage.getItem('likedProperties') || '[]');
     state.likedIds = new Set(saved.map(String));
   } catch (_) { state.likedIds = new Set(); }
+  updateFavBadge();
+}
+
+function updateFavBadge() {
+  const badge = document.getElementById('favCountBadge');
+  if (!badge) return;
+  const count = state.likedIds.size;
+  if (count > 0) {
+    badge.textContent = count > 99 ? '99+' : count;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
 }
 
 // ─── SHARE ───────────────────────────────────────────────────
@@ -3137,18 +3152,37 @@ function switchView(view) {
 // ─── FAVORITES TOGGLE ────────────────────────────────────────
 function toggleFavoritesFilter() {
   const btnFav = document.getElementById('btnFavorites');
+  if (!btnFav) return;
   const isActive = btnFav.classList.contains('active');
 
   if (!isActive) {
-    // Show only liked
+    // Switch to grid view first if on map
+    if (state.currentView !== 'grid') switchView('grid');
+
     btnFav.classList.add('active');
     const likedArr = [...state.likedIds].map(String);
     const filtered = state.properties.filter(p => likedArr.includes(String(p.id)));
     state.filtered = filtered;
-    renderGrid();
-    if (!filtered.length) showToast('No tienes favoritos guardados');
+
+    if (!filtered.length) {
+      // Show friendly empty state
+      const grid = document.getElementById('propertiesGrid');
+      const countEl = document.getElementById('resultsCount');
+      if (countEl) countEl.textContent = '';
+      if (grid) grid.innerHTML = `
+        <div class="empty-state fav-empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" width="48" height="48" style="color:#ddd;margin-bottom:12px">
+            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p style="font-weight:700;margin:0 0 6px;color:#444">Aún no tienes guardados</p>
+          <p style="font-size:13px;color:#888;margin:0">Toca el ❤️ en cualquier inmueble para guardarlo aquí</p>
+        </div>`;
+    } else {
+      renderGrid();
+    }
   } else {
     btnFav.classList.remove('active');
+    // Restore the full server-filtered list and re-render
     state.filtered = state.properties;
     renderGrid();
   }

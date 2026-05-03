@@ -779,6 +779,13 @@ a { text-decoration: none; color: inherit; }
 }
 .empty-state p { font-size: 15px; font-weight: 500; }
 
+.fav-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80px 24px;
+}
+
 @keyframes badgePulse {
   0% { transform: scale(0.85); opacity: 0; }
   60% { transform: scale(1.04); }
@@ -976,6 +983,24 @@ a { text-decoration: none; color: inherit; }
   letter-spacing: -.03em;
   white-space: nowrap;
   text-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+
+/* Tipo pill inside image overlay — hidden by default, shown in carousel peek */
+.tipo-overlay-badge {
+  display: none;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: rgba(255,255,255,.92);
+  background: rgba(255,255,255,.16);
+  border: 1px solid rgba(255,255,255,.28);
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-top: 5px;
+  width: fit-content;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 /* Slider arrows */
@@ -2086,6 +2111,72 @@ a { text-decoration: none; color: inherit; }
     height: var(--card-collapsed-height);
   }
 
+  /* ── CAROUSEL COMPACT: Airbnb-style clean cards ─────────────── */
+  /* Only applies to non-expanded cards so is-open full-screen wins */
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) {
+    height: 205px !important;
+    border-radius: 18px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,.18) !important;
+  }
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) .property-card-inner {
+    height: 205px !important;
+    border-radius: 18px !important;
+    overflow: hidden !important;
+    padding: 0 !important;          /* Remove desktop inner padding */
+  }
+  /* Image fills the full card */
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) .property-media {
+    height: 205px !important;
+    flex: none !important;
+    border-radius: 0 !important;
+  }
+  /* Stronger gradient so overlay text is readable */
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) .media-overlay {
+    background: linear-gradient(to top,
+      rgba(0,0,0,.82) 0%,
+      rgba(0,0,0,.10) 52%,
+      transparent 100%) !important;
+  }
+  /* Tighten overlay bottom padding */
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) .media-overlay-bottom {
+    padding: 0 13px 13px !important;
+    align-items: flex-end !important;
+  }
+  /* Compact barrio text (single line, no overflow) */
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) .location-barrio {
+    font-size: 14px !important;
+    max-width: 160px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    line-height: 1.15 !important;
+  }
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) .location-municipio {
+    font-size: 8px !important;
+  }
+  /* Compact price */
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) .card-price {
+    font-size: 13px !important;
+    align-self: flex-end !important;
+    padding-bottom: 2px !important;
+  }
+  /* Show tipo pill in overlay */
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) .tipo-overlay-badge {
+    display: inline-flex !important;
+  }
+
+  /* Hide all cluttered / complex elements in compact mode */
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) .slider-arrow,
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) .slider-dots,
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) .lightbox-trigger,
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) .prop-corner-badge,
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) .media-overlay-top,
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) .card-actions-bar,
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) .property-details,
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) .admin-actions {
+    display: none !important;
+  }
+
   /* Property cards normales en el sheet */
   .map-cards-list .property-card { height: var(--card-collapsed-height); }
   .map-cards-list .property-card.is-open { height: var(--card-expanded-height-mobile); }
@@ -2209,6 +2300,41 @@ a { text-decoration: none; color: inherit; }
 .float-icon:hover::after {
   opacity: 1;
   visibility: visible;
+}
+
+/* Favorites count badge */
+.fav-count-badge {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 8.5px;
+  font-weight: 800;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  line-height: 1;
+  border: 1.5px solid #111;
+  animation: favBadgeIn .25s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes favBadgeIn {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* Active: heart fills with brand red */
+#btnFavorites.active svg {
+  fill: var(--brand);
+  stroke: var(--brand);
+}
+#btnFavorites.active {
+  color: var(--brand);
 }
 
 /* ─── MODALS ────────────────────────────────────────────────── */
