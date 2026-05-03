@@ -1559,8 +1559,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 20px;
-  padding-bottom: 14px;
+  padding: 20px 20px 16px;
   border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
 }
@@ -1570,6 +1569,9 @@ body {
   color: var(--muted);
   font-weight: 400;
 }
+
+/* Feed con padding propio (el .adm-card--full tiene padding:0) */
+.srch-feed { padding: 8px 20px 20px; }
 
 /* ── Feed de búsquedas recientes ────────────────────────── */
 .srch-feed {
