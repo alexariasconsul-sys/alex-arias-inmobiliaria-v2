@@ -2103,12 +2103,11 @@ a { text-decoration: none; color: inherit; }
   }
   .map-sidebar.sheet-peek .map-cards-list::-webkit-scrollbar { display: none; }
 
-  /* Tarjeta en carousel — ancho fijo */
-  .map-sidebar.sheet-peek .map-cards-list .property-card {
+  /* Tarjeta en carousel — ancho fijo (solo cuando NO está expandida) */
+  .map-sidebar.sheet-peek .map-cards-list .property-card:not(.is-open) {
     flex: 0 0 82vw;
     max-width: 340px;
     scroll-snap-align: center;
-    height: var(--card-collapsed-height);
   }
 
   /* ── CAROUSEL COMPACT: Airbnb-style clean cards ─────────────── */
