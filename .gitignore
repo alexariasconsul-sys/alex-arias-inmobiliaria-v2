@@ -1,0 +1,49 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno (nunca subir al repo)
+.env
+
+# Base de datos (se genera automáticamente en el servidor)
+properties.db
+properties.db~
+views.db
+views.db~
+leads.db
+leads.db~
+reviews.db
+reviews.db~
+profiles.db
+profiles.db~
+integrations.json
+api_keys.json
+
+# Fotos subidas por usuarios
+uploads/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.log
+
+# Archivos de credenciales Google (nunca subir)
+client_secret_*.json
+credentials.json
+
+# Claude AI (archivos internos del asistente)
+.claude/
+
+# Bases de datos (se generan automáticamente en el servidor)
+blog.db
+blog.db~
+
+# Perfil del consultor (se configura desde el admin en el servidor)
+profile.json
+
+# Archivos legados en raíz (reemplazados por los de public/)
+/app.js
+/styles.css
+/tarjetas.html

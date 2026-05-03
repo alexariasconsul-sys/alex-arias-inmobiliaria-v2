@@ -1,0 +1,38 @@
+# /etc/nginx/sites-available/alex-arias
+# Reemplaza TU_DOMINIO.COM con tu dominio
+# Comando para crear: sudo nano /etc/nginx/sites-available/alex-arias
+# Luego: sudo ln -s /etc/nginx/sites-available/alex-arias /etc/nginx/sites-enabled/
+# Verifica: sudo nginx -t
+# Reinicia: sudo systemctl restart nginx
+
+server {
+    listen 80;
+    server_name TU_DOMINIO.COM www.TU_DOMINIO.COM;
+
+    # Límite de tamaño de subida (fotos)
+    client_max_body_size 100M;
+
+    location / {
+        # Proxy hacia Node.js en puerto 3000
+        proxy_pass http://localhost:3000;
+        
+        # Headers para WebSocket (Socket.io)
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        
+        # Headers de identificación
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+}
+
+# HTTPS se configura automáticamente con Let's Encrypt:
+# sudo certbot --nginx -d TU_DOMINIO.COM -d www.TU_DOMINIO.COM

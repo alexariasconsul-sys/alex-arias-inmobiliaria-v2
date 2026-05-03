@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog Inmobiliario · Alex Arias Consultor</title>
+  <meta name="description" content="Artículos, consejos y noticias del mercado inmobiliario en Sabaneta, Envigado y Medellín. Aprende sobre arriendo, compra y venta de inmuebles." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="/blog" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Blog Inmobiliario · Alex Arias" />
+  <meta property="og:description" content="Artículos y consejos del mercado inmobiliario en el área metropolitana de Medellín." />
+  <meta property="og:url" content="/blog" />
+
+  <link rel="icon" type="image/png" href="/assets/logo/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="blog.css" />
+
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": "Blog Inmobiliario Alex Arias",
+    "description": "Artículos y consejos del mercado inmobiliario en Medellín, Sabaneta y Envigado",
+    "url": "/blog",
+    "author": {
+      "@type": "Person",
+      "name": "Alexander Arias",
+      "jobTitle": "Consultor Inmobiliario"
+    }
+  }
+  </script>
+  <script src="/tracking.js" defer></script>
+</head>
+<body class="blog-body">
+
+  <!-- ═══ HEADER ═══════════════════════════════════════════════ -->
+  <header class="blog-header" role="banner">
+    <div class="blog-header-inner">
+      <a href="/" class="blog-brand" aria-label="Volver al inicio">
+        <img src="/assets/logo/Logo.png" alt="Alex Arias" class="blog-brand-logo" />
+        <div class="blog-brand-text">
+          <span class="blog-brand-name">Alex Arias</span>
+          <span class="blog-brand-sub">Consultor Inmobiliario</span>
+        </div>
+      </a>
+
+      <nav class="blog-nav" aria-label="Navegación principal">
+        <a href="/" class="blog-nav-link">Propiedades</a>
+        <a href="/blog" class="blog-nav-link active" aria-current="page">Blog</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ═══ HERO DEL BLOG ════════════════════════════════════════ -->
+  <section class="blog-hero" aria-label="Encabezado del blog">
+    <div class="blog-hero-inner">
+      <p class="blog-hero-eyebrow">Mercado Inmobiliario</p>
+      <h1 class="blog-hero-title">Noticias &amp; Consejos</h1>
+      <p class="blog-hero-sub">Todo lo que necesitas saber sobre arriendo, compra y venta de inmuebles en Medellín y su área metropolitana.</p>
+    </div>
+  </section>
+
+  <!-- ═══ FILTROS DE CATEGORÍA ═════════════════════════════════ -->
+  <div class="blog-cats-wrap" role="navigation" aria-label="Filtrar por categoría">
+    <div class="blog-cats" id="blogCats">
+      <button class="blog-cat active" data-cat="">Todos</button>
+      <!-- Categorías dinámicas -->
+    </div>
+  </div>
+
+  <!-- ═══ GRID DE POSTS ════════════════════════════════════════ -->
+  <main class="blog-main" id="blogMain" role="main">
+    <div class="blog-grid" id="blogGrid">
+      <!-- Posts se renderizan aquí -->
+    </div>
+
+    <!-- Estado vacío -->
+    <div class="blog-empty" id="blogEmpty" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" width="48" height="48"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.5"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.5"/><line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="1.5"/><line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="1.5"/></svg>
+      <h3>Próximamente</h3>
+      <p>Estamos preparando contenido de calidad para ti. ¡Vuelve pronto!</p>
+    </div>
+
+    <!-- Skeleton loader -->
+    <div class="blog-skeleton-grid" id="blogSkeleton">
+      <div class="blog-card-skeleton"></div>
+      <div class="blog-card-skeleton"></div>
+      <div class="blog-card-skeleton"></div>
+      <div class="blog-card-skeleton"></div>
+      <div class="blog-card-skeleton"></div>
+      <div class="blog-card-skeleton"></div>
+    </div>
+
+    <!-- Load more -->
+    <div class="blog-load-more" id="blogLoadMore" style="display:none">
+      <button class="btn-load-more" id="btnLoadMore">Cargar más artículos</button>
+    </div>
+  </main>
+
+  <!-- ═══ FOOTER ═══════════════════════════════════════════════ -->
+  <footer class="blog-footer" role="contentinfo">
+    <div class="blog-footer-inner">
+      <div class="blog-footer-brand">
+        <img src="/assets/logo/Logo.png" alt="Alex Arias" class="blog-footer-logo" />
+        <p>Consultor Inmobiliario especializado en el área metropolitana de Medellín.</p>
+      </div>
+      <div class="blog-footer-links">
+        <h4>Explorar</h4>
+        <a href="/">Propiedades</a>
+        <a href="/blog">Blog</a>
+      </div>
+      <div class="blog-footer-contact">
+        <h4>Contacto</h4>
+        <a href="https://wa.me/573000000000" target="_blank" rel="noopener">WhatsApp</a>
+        <a href="tel:+573000000000">Llamar</a>
+      </div>
+    </div>
+    <div class="blog-footer-bottom">
+      <p>&copy; <span id="footerYear"></span> Alexander Arias · Consultor Inmobiliario</p>
+    </div>
+  </footer>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="blog.js"></script>
+</body>
+</html>

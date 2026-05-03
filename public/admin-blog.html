@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Blog · Alex Arias</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/png" href="/assets/logo/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="blog.css" />
+</head>
+<body class="blog-body admin-blog-body">
+
+  <!-- ═══ HEADER ═══════════════════════════════════════════════ -->
+  <header class="blog-header" role="banner">
+    <div class="blog-header-inner">
+      <a href="/" class="blog-brand">
+        <img src="/assets/logo/Logo.png" alt="Alex Arias" class="blog-brand-logo" />
+        <div class="blog-brand-text">
+          <span class="blog-brand-name">Alex Arias</span>
+          <span class="blog-brand-sub">Consultor Inmobiliario</span>
+        </div>
+      </a>
+      <nav class="blog-nav">
+        <a href="/" class="blog-nav-link">Propiedades</a>
+        <a href="/blog" class="blog-nav-link">Blog</a>
+        <span class="blog-nav-link active">Admin Blog</span>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ═══ LOGIN ════════════════════════════════════════════════ -->
+  <div class="admin-login" id="adminLogin">
+    <div class="admin-login-card">
+      <div class="admin-login-icon">
+        <svg viewBox="0 0 24 24" fill="none" width="32" height="32"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M7 11V7a5 5 0 0110 0v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <h1>Admin Blog</h1>
+      <p>Ingresa la contraseña de administrador</p>
+      <div class="admin-login-form">
+        <input type="password" id="loginPwd" class="form-input" placeholder="Contraseña" autocomplete="current-password" />
+        <div class="admin-login-error" id="loginError" style="display:none">Contraseña incorrecta</div>
+        <button class="btn-primary" id="loginBtn">Entrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PANEL ════════════════════════════════════════════════ -->
+  <div class="admin-panel" id="adminPanel" style="display:none">
+
+    <!-- Toolbar -->
+    <div class="admin-toolbar">
+      <div class="admin-toolbar-left">
+        <h1 class="admin-panel-title">Artículos del Blog</h1>
+        <span class="admin-posts-count" id="adminPostsCount"></span>
+      </div>
+      <button class="btn-primary admin-new-btn" id="openEditor">
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+        Nuevo artículo
+      </button>
+    </div>
+
+    <!-- Tabla de posts -->
+    <div class="admin-table-wrap">
+      <table class="admin-table" id="adminTable">
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Categoría</th>
+            <th>Estado</th>
+            <th>Fecha</th>
+            <th>Vistas</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="adminTableBody">
+        </tbody>
+      </table>
+      <div class="admin-table-empty" id="adminTableEmpty" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" width="36" height="36"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.5"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.5"/></svg>
+        <p>No hay artículos. ¡Crea el primero!</p>
+      </div>
+      <div class="admin-table-loading" id="adminTableLoading">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+  </div><!-- /admin-panel -->
+
+  <!-- ═══ EDITOR MODAL ══════════════════════════════════════════ -->
+  <div class="admin-editor-overlay" id="editorOverlay" style="display:none" role="dialog" aria-modal="true">
+    <div class="admin-editor-modal">
+
+      <div class="admin-editor-header">
+        <h2 id="editorTitle">Nuevo artículo</h2>
+        <button class="admin-editor-close" id="closeEditor" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div class="admin-editor-body">
+        <form id="editorForm">
+          <input type="hidden" id="editSlug" />
+
+          <div class="editor-cols">
+
+            <!-- Columna principal -->
+            <div class="editor-main">
+
+              <!-- Título -->
+              <div class="form-group">
+                <label class="form-label">Título del artículo *</label>
+                <input type="text" id="eTitle" class="form-input editor-title-input" placeholder="Ej: 5 consejos para arrendar en Medellín" required />
+              </div>
+
+              <!-- Excerpt -->
+              <div class="form-group">
+                <label class="form-label">Resumen / Subtítulo</label>
+                <textarea id="eExcerpt" class="form-textarea" rows="2" placeholder="Resumen breve que aparece en la tarjeta y en Google…"></textarea>
+              </div>
+
+              <!-- Contenido -->
+              <div class="form-group">
+                <label class="form-label">Contenido del artículo *</label>
+                <div class="editor-toolbar-btns" id="editorToolbar">
+                  <button type="button" data-cmd="bold" title="Negrita"><b>B</b></button>
+                  <button type="button" data-cmd="italic" title="Cursiva"><i>I</i></button>
+                  <button type="button" data-cmd="underline" title="Subrayado"><u>U</u></button>
+                  <span class="etb-sep"></span>
+                  <button type="button" data-cmd="h2" title="Subtítulo H2">H2</button>
+                  <button type="button" data-cmd="h3" title="H3">H3</button>
+                  <button type="button" data-cmd="quote" title="Cita">❝</button>
+                  <span class="etb-sep"></span>
+                  <button type="button" data-cmd="ul" title="Lista">• Lista</button>
+                  <button type="button" data-cmd="ol" title="Lista numerada">1. Lista</button>
+                  <span class="etb-sep"></span>
+                  <button type="button" data-cmd="link" title="Enlace">🔗</button>
+                  <button type="button" data-cmd="img" title="Imagen por URL">🖼</button>
+                  <span class="etb-sep"></span>
+                  <button type="button" data-cmd="hr" title="Línea separadora">—</button>
+                </div>
+                <div id="eContent" class="editor-content" contenteditable="true" spellcheck="true" data-placeholder="Escribe el contenido del artículo aquí. Puedes usar los botones de formato de arriba o escribir directamente…"></div>
+              </div>
+            </div>
+
+            <!-- Columna lateral -->
+            <div class="editor-side">
+
+              <!-- Imagen portada -->
+              <div class="form-section">
+                <div class="form-section-header"><span>Imagen de portada</span></div>
+                <div class="editor-cover-upload" id="eCoverUploadArea">
+                  <input type="file" id="eCover" accept="image/jpeg,image/png,image/webp" style="display:none" />
+                  <div id="eCoverPreview" class="editor-cover-preview" style="display:none">
+                    <img id="eCoverPreviewImg" alt="Preview" />
+                    <button type="button" class="editor-cover-remove" id="removeCover">
+                      <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </button>
+                  </div>
+                  <div id="eCoverEmpty" class="editor-cover-empty">
+                    <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="1.5"/><polyline points="21 15 16 10 5 21" stroke="currentColor" stroke-width="1.5"/></svg>
+                    <span>Seleccionar imagen</span>
+                  </div>
+                </div>
+                <input type="hidden" id="eCoverExisting" />
+              </div>
+
+              <!-- Categoría y estado -->
+              <div class="form-section">
+                <div class="form-section-header"><span>Publicación</span></div>
+                <div class="form-group">
+                  <label class="form-label">Categoría</label>
+                  <input type="text" id="eCategory" class="form-input" placeholder="Consejos, Mercado, Noticias…" list="eCatList" />
+                  <datalist id="eCatList">
+                    <option value="Consejos"/>
+                    <option value="Mercado"/>
+                    <option value="Noticias"/>
+                    <option value="Guías"/>
+                    <option value="Inversión"/>
+                    <option value="Legal"/>
+                  </datalist>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Estado</label>
+                  <div class="editor-status-btns">
+                    <button type="button" class="editor-status-btn active" data-status="draft">Borrador</button>
+                    <button type="button" class="editor-status-btn" data-status="published">Publicado</button>
+                  </div>
+                  <input type="hidden" id="eStatus" value="draft" />
+                </div>
+              </div>
+
+              <!-- Tags -->
+              <div class="form-section">
+                <div class="form-section-header"><span>Etiquetas</span></div>
+                <div class="form-group">
+                  <input type="text" id="eTags" class="form-input" placeholder="arriendo, medellín, consejos" />
+                  <span class="field-hint">Separadas por coma</span>
+                </div>
+              </div>
+
+              <!-- SEO -->
+              <div class="form-section">
+                <div class="form-section-header">
+                  <span>SEO</span>
+                  <span class="seo-badge">Google / IA</span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Meta título <span class="form-label-hint" id="metaTitleCount">0/60</span></label>
+                  <input type="text" id="eMetaTitle" class="form-input" placeholder="Título para Google (máx 60 chars)" maxlength="60" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Meta descripción <span class="form-label-hint" id="metaDescCount">0/155</span></label>
+                  <textarea id="eMetaDesc" class="form-textarea" rows="2" placeholder="Descripción para Google (máx 155 chars)" maxlength="155"></textarea>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Palabras clave</label>
+                  <input type="text" id="eMetaKeys" class="form-input" placeholder="inmuebles medellín, arriendo sabaneta" />
+                </div>
+
+                <!-- Preview Google -->
+                <div class="seo-preview">
+                  <p class="seo-preview-label">Vista previa en Google</p>
+                  <div class="seo-preview-box">
+                    <div class="seo-preview-url">alexarias.com › blog › <span id="seoPrevSlug">slug</span></div>
+                    <div class="seo-preview-title" id="seoPrevTitle">Título del artículo</div>
+                    <div class="seo-preview-desc" id="seoPrevDesc">Descripción del artículo para motores de búsqueda…</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="admin-editor-footer">
+        <button type="button" class="btn-secondary" id="cancelEditor">Cancelar</button>
+        <div class="editor-footer-right">
+          <button type="button" class="btn-draft" id="saveDraft">Guardar borrador</button>
+          <button type="button" class="btn-primary" id="publishPost">
+            <svg viewBox="0 0 24 24" fill="none" width="15" height="15"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Publicar
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ CONFIRM DELETE ═══════════════════════════════════════ -->
+  <div class="confirm-overlay" id="confirmOverlay" style="display:none">
+    <div class="confirm-card">
+      <h3>¿Eliminar artículo?</h3>
+      <p>Esta acción no se puede deshacer.</p>
+      <div class="confirm-actions">
+        <button class="btn-secondary" id="confirmCancel">Cancelar</button>
+        <button class="btn-danger" id="confirmDelete">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+  /* ══════════════════════════════════════════════════════════
+     ADMIN BLOG  — lógica completa
+  ══════════════════════════════════════════════════════════ */
+  const ADMIN_KEY = 'blog_admin_pwd';
+  let adminPwd = sessionStorage.getItem(ADMIN_KEY) || '';
+  let editingSlug = null;
+  let deleteSlug = null;
+  let coverFile = null;
+
+  // ─── LOGIN ─────────────────────────────────────────────
+  if (adminPwd) tryLogin(adminPwd, true);
+
+  document.getElementById('loginBtn').addEventListener('click', () => {
+    tryLogin(document.getElementById('loginPwd').value);
+  });
+  document.getElementById('loginPwd').addEventListener('keydown', e => {
+    if (e.key === 'Enter') tryLogin(document.getElementById('loginPwd').value);
+  });
+
+  async function tryLogin(pwd, silent = false) {
+    try {
+      const res = await fetch('/api/verify-password', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pwd })
+      });
+      if (res.ok) {
+        adminPwd = pwd;
+        sessionStorage.setItem(ADMIN_KEY, pwd);
+        document.getElementById('adminLogin').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
+        loadPosts();
+      } else {
+        if (!silent) {
+          document.getElementById('loginError').style.display = 'block';
+          document.getElementById('loginPwd').value = '';
+        }
+      }
+    } catch (_) { if (!silent) alert('Error de conexión'); }
+  }
+
+  // ─── CARGAR POSTS ──────────────────────────────────────
+  async function loadPosts() {
+    const tbody  = document.getElementById('adminTableBody');
+    const loader = document.getElementById('adminTableLoading');
+    const empty  = document.getElementById('adminTableEmpty');
+    loader.style.display = 'flex';
+    tbody.innerHTML = '';
+    empty.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/blog?status=all&limit=100', {
+        headers: { 'x-admin-password': adminPwd }
+      });
+      const { posts } = await res.json();
+      loader.style.display = 'none';
+      document.getElementById('adminPostsCount').textContent = `${posts.length} artículo${posts.length !== 1 ? 's' : ''}`;
+
+      if (!posts.length) { empty.style.display = 'flex'; return; }
+
+      posts.forEach(p => {
+        const tr = document.createElement('tr');
+        const date = p.published_at || p.created_at;
+        const dateStr = date ? new Date(date).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+        tr.innerHTML = `
+          <td>
+            <div class="at-title-wrap">
+              ${p.cover ? `<img src="/${p.cover}" alt="" class="at-thumb" />` : '<div class="at-thumb at-thumb--empty"></div>'}
+              <div>
+                <span class="at-title">${p.title}</span>
+                <span class="at-slug">${p.slug}</span>
+              </div>
+            </div>
+          </td>
+          <td><span class="at-cat">${p.category || '—'}</span></td>
+          <td><span class="at-status at-status--${p.status}">${p.status === 'published' ? 'Publicado' : 'Borrador'}</span></td>
+          <td class="at-date">${dateStr}</td>
+          <td class="at-views">${p.views || 0}</td>
+          <td>
+            <div class="at-actions">
+              ${p.status === 'published' ? `<a href="/post.html?slug=${p.slug}" target="_blank" class="at-btn at-btn--view" title="Ver">
+                <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>
+              </a>` : ''}
+              <button class="at-btn at-btn--edit" data-slug="${p.slug}" title="Editar">
+                <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+              <button class="at-btn at-btn--del" data-slug="${p.slug}" title="Eliminar">
+                <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+          </td>
+        `;
+        // Edit button
+        tr.querySelector('.at-btn--edit').addEventListener('click', () => openEdit(p));
+        // Delete button
+        tr.querySelector('.at-btn--del').addEventListener('click', () => openConfirmDelete(p.slug));
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      loader.style.display = 'none';
+      console.error(err);
+    }
+  }
+
+  // ─── EDITOR ────────────────────────────────────────────
+  document.getElementById('openEditor').addEventListener('click', openCreate);
+  document.getElementById('closeEditor').addEventListener('click', closeEditor);
+  document.getElementById('cancelEditor').addEventListener('click', closeEditor);
+
+  function openCreate() {
+    editingSlug = null;
+    coverFile = null;
+    document.getElementById('editorTitle').textContent = 'Nuevo artículo';
+    document.getElementById('editorForm').reset();
+    document.getElementById('eContent').innerHTML = '';
+    document.getElementById('editSlug').value = '';
+    document.getElementById('eCoverExisting').value = '';
+    document.getElementById('eCoverPreview').style.display = 'none';
+    document.getElementById('eCoverEmpty').style.display = 'flex';
+    setStatus('draft');
+    updateSeoPreview();
+    document.getElementById('editorOverlay').style.display = 'flex';
+    document.getElementById('eTitle').focus();
+  }
+
+  function openEdit(post) {
+    editingSlug = post.slug;
+    coverFile = null;
+    document.getElementById('editorTitle').textContent = 'Editar artículo';
+    document.getElementById('editSlug').value = post.slug;
+    document.getElementById('eTitle').value = post.title || '';
+    document.getElementById('eExcerpt').value = post.excerpt || '';
+    document.getElementById('eContent').innerHTML = post.content || '';
+    document.getElementById('eCategory').value = post.category || '';
+    document.getElementById('eTags').value = (post.tags || []).join(', ');
+    document.getElementById('eMetaTitle').value = post.seo?.metaTitle || '';
+    document.getElementById('eMetaDesc').value = post.seo?.metaDescription || '';
+    document.getElementById('eMetaKeys').value = post.seo?.metaKeywords || '';
+    document.getElementById('eCoverExisting').value = post.cover || '';
+    setStatus(post.status || 'draft');
+
+    if (post.cover) {
+      document.getElementById('eCoverPreviewImg').src = '/' + post.cover;
+      document.getElementById('eCoverPreview').style.display = 'block';
+      document.getElementById('eCoverEmpty').style.display = 'none';
+    } else {
+      document.getElementById('eCoverPreview').style.display = 'none';
+      document.getElementById('eCoverEmpty').style.display = 'flex';
+    }
+
+    updateSeoPreview();
+    document.getElementById('editorOverlay').style.display = 'flex';
+  }
+
+  function closeEditor() {
+    document.getElementById('editorOverlay').style.display = 'none';
+    editingSlug = null;
+    coverFile = null;
+  }
+
+  // ─── STATUS BUTTONS ────────────────────────────────────
+  document.querySelectorAll('.editor-status-btn').forEach(btn => {
+    btn.addEventListener('click', () => setStatus(btn.dataset.status));
+  });
+  function setStatus(s) {
+    document.getElementById('eStatus').value = s;
+    document.querySelectorAll('.editor-status-btn').forEach(b => b.classList.toggle('active', b.dataset.status === s));
+  }
+
+  // ─── COVER UPLOAD ──────────────────────────────────────
+  document.getElementById('eCoverUploadArea').addEventListener('click', e => {
+    if (!e.target.closest('.editor-cover-remove')) document.getElementById('eCover').click();
+  });
+  document.getElementById('eCover').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    coverFile = file;
+    const url = URL.createObjectURL(file);
+    document.getElementById('eCoverPreviewImg').src = url;
+    document.getElementById('eCoverPreview').style.display = 'block';
+    document.getElementById('eCoverEmpty').style.display = 'none';
+  });
+  document.getElementById('removeCover').addEventListener('click', e => {
+    e.stopPropagation();
+    coverFile = null;
+    document.getElementById('eCoverExisting').value = '';
+    document.getElementById('eCoverPreview').style.display = 'none';
+    document.getElementById('eCoverEmpty').style.display = 'flex';
+    document.getElementById('eCover').value = '';
+  });
+
+  // ─── EDITOR TOOLBAR ────────────────────────────────────
+  document.getElementById('editorToolbar').addEventListener('mousedown', e => {
+    const btn = e.target.closest('[data-cmd]');
+    if (!btn) return;
+    e.preventDefault();
+    const cmd = btn.dataset.cmd;
+    const content = document.getElementById('eContent');
+    content.focus();
+    const sel = window.getSelection();
+    const selText = sel && !sel.isCollapsed ? sel.toString() : '';
+
+    const cmds = {
+      bold:      () => document.execCommand('bold'),
+      italic:    () => document.execCommand('italic'),
+      underline: () => document.execCommand('underline'),
+      h2:        () => document.execCommand('formatBlock', false, 'h2'),
+      h3:        () => document.execCommand('formatBlock', false, 'h3'),
+      quote:     () => document.execCommand('formatBlock', false, 'blockquote'),
+      ul:        () => document.execCommand('insertUnorderedList'),
+      ol:        () => document.execCommand('insertOrderedList'),
+      hr:        () => document.execCommand('insertHorizontalRule'),
+      link: () => {
+        const url = prompt('URL del enlace:', 'https://');
+        if (url) document.execCommand('createLink', false, url);
+      },
+      img: () => {
+        const url = prompt('URL de la imagen:', 'https://');
+        if (url) document.execCommand('insertImage', false, url);
+      }
+    };
+    cmds[cmd]?.();
+  });
+
+  // ─── SEO PREVIEW ───────────────────────────────────────
+  function slugify(s) {
+    return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-');
+  }
+  function updateSeoPreview() {
+    const t = document.getElementById('eMetaTitle').value || document.getElementById('eTitle').value || 'Título del artículo';
+    const d = document.getElementById('eMetaDesc').value || document.getElementById('eExcerpt').value || 'Descripción del artículo para motores de búsqueda…';
+    const slug = slugify(document.getElementById('eTitle').value || '');
+    document.getElementById('seoPrevTitle').textContent = t.slice(0, 60);
+    document.getElementById('seoPrevDesc').textContent = d.slice(0, 155);
+    document.getElementById('seoPrevSlug').textContent = slug || 'slug';
+  }
+  ['eTitle','eMetaTitle','eMetaDesc','eExcerpt'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateSeoPreview);
+  });
+
+  // ─── COUNTER SEO ───────────────────────────────────────
+  document.getElementById('eMetaTitle').addEventListener('input', function() {
+    document.getElementById('metaTitleCount').textContent = `${this.value.length}/60`;
+  });
+  document.getElementById('eMetaDesc').addEventListener('input', function() {
+    document.getElementById('metaDescCount').textContent = `${this.value.length}/155`;
+  });
+
+  // ─── GUARDAR ───────────────────────────────────────────
+  document.getElementById('saveDraft').addEventListener('click', () => savePost('draft'));
+  document.getElementById('publishPost').addEventListener('click', () => savePost('published'));
+
+  async function savePost(statusOverride) {
+    const title = document.getElementById('eTitle').value.trim();
+    if (!title) { alert('El título es obligatorio'); return; }
+
+    const fd = new FormData();
+    fd.append('title', title);
+    fd.append('excerpt', document.getElementById('eExcerpt').value);
+    fd.append('content', document.getElementById('eContent').innerHTML);
+    fd.append('category', document.getElementById('eCategory').value || 'General');
+    fd.append('tags', document.getElementById('eTags').value);
+    fd.append('status', statusOverride);
+    fd.append('metaTitle', document.getElementById('eMetaTitle').value);
+    fd.append('metaDescription', document.getElementById('eMetaDesc').value);
+    fd.append('metaKeywords', document.getElementById('eMetaKeys').value);
+
+    if (coverFile) {
+      fd.append('cover', coverFile);
+    } else {
+      fd.append('cover', document.getElementById('eCoverExisting').value || '');
+    }
+
+    const publishBtn = document.getElementById('publishPost');
+    const draftBtn   = document.getElementById('saveDraft');
+    publishBtn.disabled = draftBtn.disabled = true;
+    publishBtn.textContent = 'Guardando…';
+
+    try {
+      let res;
+      if (editingSlug) {
+        res = await fetch(`/api/blog/${encodeURIComponent(editingSlug)}`, {
+          method: 'PUT', headers: { 'x-admin-password': adminPwd }, body: fd
+        });
+      } else {
+        res = await fetch('/api/blog', {
+          method: 'POST', headers: { 'x-admin-password': adminPwd }, body: fd
+        });
+      }
+
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Error'); }
+      closeEditor();
+      loadPosts();
+    } catch (err) {
+      alert('Error: ' + err.message);
+    } finally {
+      publishBtn.disabled = draftBtn.disabled = false;
+      publishBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" width="15" height="15"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Publicar`;
+    }
+  }
+
+  // ─── ELIMINAR ──────────────────────────────────────────
+  function openConfirmDelete(slug) {
+    deleteSlug = slug;
+    document.getElementById('confirmOverlay').style.display = 'flex';
+  }
+  document.getElementById('confirmCancel').addEventListener('click', () => {
+    document.getElementById('confirmOverlay').style.display = 'none';
+    deleteSlug = null;
+  });
+  document.getElementById('confirmDelete').addEventListener('click', async () => {
+    if (!deleteSlug) return;
+    document.getElementById('confirmOverlay').style.display = 'none';
+    try {
+      await fetch(`/api/blog/${encodeURIComponent(deleteSlug)}`, {
+        method: 'DELETE', headers: { 'x-admin-password': adminPwd }
+      });
+      deleteSlug = null;
+      loadPosts();
+    } catch (err) { alert('Error al eliminar: ' + err.message); }
+  });
+
+  // ─── Socket.io ─────────────────────────────────────────
+  try {
+    const socket = io();
+    socket.on('blog-new', loadPosts);
+    socket.on('blog-updated', loadPosts);
+    socket.on('blog-deleted', loadPosts);
+  } catch (_) {}
+  </script>
+</body>
+</html>

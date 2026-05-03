@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · Alex Arias</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/png" href="/assets/logo/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+<!-- ═══ LOGIN ══════════════════════════════════════════════════ -->
+<div class="adm-login" id="admLogin">
+  <div class="adm-login-card">
+    <img src="/assets/logo/Logo.png" alt="Alex Arias" class="adm-login-logo" />
+    <h1>Panel Admin</h1>
+    <p>Alex Arias · Consultor Inmobiliario</p>
+
+    <!-- Google -->
+    <a href="/auth/google" class="adm-google-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Entrar con Google
+    </a>
+
+    <div class="adm-login-divider"><span>o</span></div>
+
+    <!-- Contraseña -->
+    <input type="password" id="admPwd" class="adm-input" placeholder="Contraseña" autocomplete="current-password" />
+    <div class="adm-login-error" id="admLoginError" style="display:none">Contraseña incorrecta</div>
+    <button class="adm-btn-primary" id="admLoginBtn" style="width:100%;justify-content:center">Entrar</button>
+  </div>
+</div>
+
+<!-- ═══ SHELL ══════════════════════════════════════════════════ -->
+<div class="adm-shell" id="admShell" style="display:none">
+
+  <!-- Sidebar -->
+  <aside class="adm-sidebar" id="admSidebar">
+    <div class="adm-sidebar-brand">
+      <img src="/assets/logo/Logo.png" alt="Logo" class="adm-sidebar-logo" />
+      <div>
+        <span class="adm-sidebar-name">Alex Arias</span>
+        <span class="adm-sidebar-sub">Panel Admin</span>
+      </div>
+    </div>
+    <nav class="adm-nav">
+      <button class="adm-nav-item active" data-section="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/></svg>
+        Dashboard
+      </button>
+      <button class="adm-nav-item" data-section="estadísticas">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M3 3v18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 14v-4M12 14v-7M17 14v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Estadísticas
+      </button>
+      <button class="adm-nav-item" data-section="properties">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Propiedades
+      </button>
+      <button class="adm-nav-item" data-section="blog">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="2"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2"/></svg>
+        Blog
+      </button>
+      <button class="adm-nav-item" data-section="profile">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/></svg>
+        Perfil
+      </button>
+      <button class="adm-nav-item" data-section="integraciones">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Integraciones
+      </button>
+    </nav>
+    <div class="adm-sidebar-footer">
+      <a href="/" class="adm-sidebar-link" target="_blank">
+        <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>
+        Ver sitio
+      </a>
+      <a href="/blog" class="adm-sidebar-link" target="_blank">
+        <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="2"/></svg>
+        Ver blog
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="adm-main">
+
+    <!-- Topbar -->
+    <header class="adm-topbar">
+      <div class="adm-topbar-left">
+        <button class="adm-menu-toggle" id="admMenuToggle">
+          <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <h1 class="adm-page-title" id="admPageTitle">Dashboard</h1>
+      </div>
+      <div class="adm-topbar-right">
+        <span class="adm-topbar-time" id="admTime"></span>
+        <button class="adm-btn-primary" id="admTopNewBtn">
+          <svg viewBox="0 0 24 24" fill="none" width="15" height="15"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+          <span id="admTopNewLabel">Nueva propiedad</span>
+        </button>
+        <button class="adm-logout-btn" id="admLogoutBtn" title="Cerrar sesión">
+          <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Salir</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ── DASHBOARD ──────────────────────────────────────────── -->
+    <section class="adm-section active" id="sectionDashboard">
+      <div class="adm-kpis">
+        <div class="adm-kpi"><div class="adm-kpi-icon adm-kpi-icon--props"><svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" stroke-width="2"/></svg></div><div class="adm-kpi-info"><span class="adm-kpi-val" id="kpiProps">—</span><span class="adm-kpi-label">Propiedades</span></div></div>
+        <div class="adm-kpi"><div class="adm-kpi-icon adm-kpi-icon--posts"><svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="2"/></svg></div><div class="adm-kpi-info"><span class="adm-kpi-val" id="kpiPosts">—</span><span class="adm-kpi-label">Artículos</span></div></div>
+        <div class="adm-kpi"><div class="adm-kpi-icon adm-kpi-icon--views"><svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg></div><div class="adm-kpi-info"><span class="adm-kpi-val" id="kpiViews">—</span><span class="adm-kpi-label">Vistas totales</span></div></div>
+        <div class="adm-kpi"><div class="adm-kpi-icon adm-kpi-icon--likes"><svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke="currentColor" stroke-width="2"/></svg></div><div class="adm-kpi-info"><span class="adm-kpi-val" id="kpiLikes">—</span><span class="adm-kpi-label">Me gusta</span></div></div>
+      </div>
+      <div class="adm-row">
+        <div class="adm-card"><h2 class="adm-card-title">Por tipo</h2><div class="adm-donut-wrap"><canvas id="chartTipo" width="140" height="140"></canvas><div class="adm-donut-legend" id="legendTipo"></div></div></div>
+        <div class="adm-card"><h2 class="adm-card-title">Por estado</h2><div class="adm-donut-wrap"><canvas id="chartEstado" width="140" height="140"></canvas><div class="adm-donut-legend" id="legendEstado"></div></div></div>
+      </div>
+      <div class="adm-row">
+        <div class="adm-card"><h2 class="adm-card-title">Top propiedades más vistas</h2><div class="adm-list" id="topPropsList"></div></div>
+        <div class="adm-card"><h2 class="adm-card-title">Top artículos más leídos</h2><div class="adm-list" id="topPostsList"></div></div>
+      </div>
+    </section>
+
+    <!-- ── ESTADÍSTICAS ────────────────────────────────────────── -->
+    <section class="adm-section" id="sectionEstadísticas">
+      <div class="adm-section-toolbar">
+        <select class="adm-search-input" id="statsDateRange" style="max-width:180px">
+          <option value="7">Últimos 7 días</option>
+          <option value="30" selected>Últimos 30 días</option>
+          <option value="90">Últimos 90 días</option>
+        </select>
+      </div>
+
+      <!-- Tabs de Estadísticas -->
+      <div class="adm-stats-tabs">
+        <button class="adm-stats-tab active" data-tab="búsquedas">📊 Búsquedas</button>
+        <button class="adm-stats-tab" data-tab="leads">📱 Leads</button>
+        <button class="adm-stats-tab" data-tab="conversión">📈 Conversión</button>
+        <button class="adm-stats-tab" data-tab="patrones">🔍 Patrones</button>
+      </div>
+
+      <!-- Tab: Búsquedas -->
+      <div class="adm-stats-tab-content active" data-tab="búsquedas">
+        <div class="adm-row">
+          <div class="adm-card"><h3 class="adm-card-title">Búsquedas por día</h3><canvas id="chartSearchesByDay" style="height:200px"></canvas></div>
+          <div class="adm-card"><h3 class="adm-card-title">Búsquedas por tipo</h3><div class="adm-donut-wrap"><canvas id="chartSearchesByType" width="140" height="140"></canvas></div></div>
+        </div>
+        <div class="adm-row">
+          <div class="adm-card"><h3 class="adm-card-title">Top 10 Municipios buscados</h3><div class="adm-bar-chart-wrap"><canvas id="chartTopMunicipios" style="height:250px"></canvas></div></div>
+          <div class="adm-card"><h3 class="adm-card-title">Top 10 Barrios buscados</h3><div class="adm-bar-chart-wrap"><canvas id="chartTopBarrios" style="height:250px"></canvas></div></div>
+        </div>
+        <div class="adm-card adm-card--full"><h3 class="adm-card-title">Búsquedas recientes</h3><div id="searchesTableWrap" style="overflow-x:auto"><table class="adm-table"><thead><tr><th>Filtros aplicados</th><th>Resultados</th><th>Fecha</th></tr></thead><tbody id="searchesTableBody"><tr><td colspan="3" style="text-align:center;padding:20px">Cargando...</td></tr></tbody></table></div></div>
+      </div>
+
+      <!-- Tab: Leads -->
+      <div class="adm-stats-tab-content" data-tab="leads">
+        <div class="adm-row">
+          <div class="adm-kpi"><div class="adm-kpi-icon adm-kpi-icon--leads" style="background:#ec4899"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="2"/></svg></div><div class="adm-kpi-info"><span class="adm-kpi-val" id="kpiTotalLeads">—</span><span class="adm-kpi-label">Total Leads</span></div></div>
+          <div class="adm-kpi"><div class="adm-kpi-icon adm-kpi-icon--channel" style="background:#10b981"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M3 8l9-6 9 6v11a2 2 0 01-2 2h-2M3 8v11a2 2 0 002 2h2" stroke="currentColor" stroke-width="2"/><path d="M21 12v8a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3" stroke="currentColor" stroke-width="2"/></svg></div><div class="adm-kpi-info"><span class="adm-kpi-val" id="kpiWhatsappLeads">—</span><span class="adm-kpi-label">WhatsApp</span></div></div>
+          <div class="adm-kpi"><div class="adm-kpi-icon adm-kpi-icon--channel" style="background:#f59e0b"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M3 8l9-6 9 6v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" stroke-width="2"/><path d="M12 13v4M9 13v4M15 13v4" stroke="currentColor" stroke-width="2"/></svg></div><div class="adm-kpi-info"><span class="adm-kpi-val" id="kpiPhoneLeads">—</span><span class="adm-kpi-label">Llamadas</span></div></div>
+        </div>
+        <div class="adm-row">
+          <div class="adm-card"><h3 class="adm-card-title">Leads por día</h3><canvas id="chartLeadsByDay" style="height:200px"></canvas></div>
+          <div class="adm-card"><h3 class="adm-card-title">Leads por canal</h3><div class="adm-donut-wrap"><canvas id="chartLeadsByChannel" width="140" height="140"></canvas></div></div>
+        </div>
+        <div class="adm-card adm-card--full"><h3 class="adm-card-title">Leads recientes</h3><div id="leadsTableWrap" style="overflow-x:auto"><table class="adm-table"><thead><tr><th>Propiedad</th><th>Canal</th><th>Origen</th><th>Fecha</th></tr></thead><tbody id="leadsTableBody"><tr><td colspan="4" style="text-align:center;padding:20px">Cargando...</td></tr></tbody></table></div></div>
+      </div>
+
+      <!-- Tab: Conversión -->
+      <div class="adm-stats-tab-content" data-tab="conversión">
+        <div class="adm-card adm-card--full">
+          <h3 class="adm-card-title">Funnel de Conversión</h3>
+          <div style="padding:30px 20px">
+            <canvas id="chartConversionFunnel" style="height:300px"></canvas>
+          </div>
+        </div>
+        <div class="adm-row">
+          <div class="adm-card"><h3 class="adm-card-title">Métricas de Conversión</h3><div id="conversionMetrics" style="padding:20px;font-size:14px;line-height:1.8"><div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e5e7eb"><span>Búsquedas totales:</span><strong id="convTotal" style="color:#e71433">—</strong></div><div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e5e7eb"><span>Vistas (búsqueda→vista):</span><strong id="convView" style="color:#3b82f6">—</strong></div><div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e5e7eb"><span>Leads (vista→contacto):</span><strong id="convLead" style="color:#10b981">—</strong></div><div style="display:flex;justify-content:space-between;padding:10px 0;color:#6b7280"><span>Conversión general:</span><strong id="convOverall" style="color:#e71433">—</strong></div></div></div>
+        </div>
+      </div>
+
+      <!-- Tab: Patrones -->
+      <div class="adm-stats-tab-content" data-tab="patrones">
+        <div class="adm-card adm-card--full"><h3 class="adm-card-title">Análisis de Patrones de Búsqueda</h3><div id="patternsTableWrap" style="overflow-x:auto"><table class="adm-table"><thead><tr><th>Municipio</th><th>Búsquedas</th><th>% Total</th><th>Leads</th><th>Conversión</th></tr></thead><tbody id="patternsTableBody"><tr><td colspan="5" style="text-align:center;padding:20px">Cargando...</td></tr></tbody></table></div></div>
+        <div class="adm-card adm-card--full"><h3 class="adm-card-title">Insights Automáticos</h3><div id="statsInsights" style="padding:20px;line-height:1.8;color:#6b7280"><p>Cargando insights...</p></div></div>
+      </div>
+    </section>
+
+    <!-- ── PROPIEDADES ─────────────────────────────────────────── -->
+    <section class="adm-section" id="sectionProperties">
+      <div class="adm-section-toolbar">
+        <input type="search" class="adm-search-input" id="propSearch" placeholder="Buscar propiedad…" />
+        <button class="adm-btn-primary" id="propNewBtn">
+          <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+          Nueva propiedad
+        </button>
+      </div>
+      <div class="adm-card adm-card--full">
+        <div class="adm-table-wrap">
+          <table class="adm-table">
+            <thead><tr><th>Propiedad</th><th>Tipo</th><th>Precio</th><th>Estado</th><th>Vistas</th><th>Likes</th><th>Acciones</th></tr></thead>
+            <tbody id="propTableBody"></tbody>
+          </table>
+          <div class="adm-table-empty" id="propTableEmpty" style="display:none">No hay propiedades aún</div>
+          <div class="adm-table-loading" id="propTableLoading"><div class="adm-spinner"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── BLOG ───────────────────────────────────────────────── -->
+    <section class="adm-section" id="sectionBlog">
+      <div class="adm-section-toolbar">
+        <input type="search" class="adm-search-input" id="blogSearch" placeholder="Buscar artículo…" />
+        <button class="adm-btn-primary" id="blogNewBtn">
+          <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+          Nuevo artículo
+        </button>
+      </div>
+      <div class="adm-card adm-card--full">
+        <div class="adm-table-wrap">
+          <table class="adm-table">
+            <thead><tr><th>Artículo</th><th>Categoría</th><th>Estado</th><th>Fecha</th><th>Vistas</th><th>Acciones</th></tr></thead>
+            <tbody id="blogTableBody"></tbody>
+          </table>
+          <div class="adm-table-empty" id="blogTableEmpty" style="display:none">No hay artículos aún</div>
+          <div class="adm-table-loading" id="blogTableLoading"><div class="adm-spinner"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PERFIL ─────────────────────────────────────────────── -->
+    <section class="adm-section" id="sectionProfile">
+      <div class="adm-row">
+        <div class="adm-card" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:28px 20px">
+          <div class="adm-profile-avatar" id="admProfileAvatar">AA</div>
+          <h3 id="admProfileName" style="font-size:16px;font-weight:700"></h3>
+          <p id="admProfileRole" style="font-size:13px;color:#6b7280"></p>
+          <p id="admProfileZone" style="font-size:12px;color:#9ca3af"></p>
+          <div style="margin-top:8px;display:flex;flex-direction:column;align-items:center;gap:6px;width:100%">
+            <input type="file" id="apAvatar" accept="image/jpeg,image/png,image/webp" style="display:none"/>
+            <button class="adm-btn-outline" onclick="document.getElementById('apAvatar').click()">
+              <svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              Cambiar foto
+            </button>
+          </div>
+        </div>
+        <div class="adm-card">
+          <h2 class="adm-card-title">Información del consultor</h2>
+          <form class="adm-profile-form" id="admProfileForm">
+            <div class="adm-form-row">
+              <div class="adm-form-group"><label>Nombre completo</label><input type="text" id="apName" class="adm-input" /></div>
+              <div class="adm-form-group"><label>Cargo / Rol</label><input type="text" id="apRole" class="adm-input" /></div>
+            </div>
+            <div class="adm-form-group"><label>Zona de trabajo</label><input type="text" id="apZone" class="adm-input" /></div>
+            <div class="adm-form-group"><label>Bio / Descripción</label><textarea id="apBio" class="adm-textarea" rows="3"></textarea></div>
+            <div class="adm-form-row">
+              <div class="adm-form-group"><label>Teléfono (visible)</label><input type="text" id="apPhone" class="adm-input" /></div>
+              <div class="adm-form-group"><label>Teléfono (enlace)</label><input type="text" id="apPhoneLink" class="adm-input" /></div>
+            </div>
+            <div class="adm-form-row">
+              <div class="adm-form-group"><label>Email</label><input type="email" id="apEmail" class="adm-input" /></div>
+              <div class="adm-form-group"><label>WhatsApp</label><input type="text" id="apWhatsapp" class="adm-input" /></div>
+            </div>
+            <div class="adm-form-group"><label>Mensaje WhatsApp predeterminado</label><input type="text" id="apWaMsg" class="adm-input" /></div>
+            <div class="adm-form-row">
+              <div class="adm-form-group"><label>Instagram</label><input type="text" id="apInstagram" class="adm-input" /></div>
+              <div class="adm-form-group"><label>Años de experiencia</label><input type="text" id="apExp" class="adm-input" /></div>
+            </div>
+            <div class="adm-form-row">
+              <div class="adm-form-group"><label>Licencia / Matrícula</label><input type="text" id="apLicense" class="adm-input" /></div>
+              <div class="adm-form-group"><label>Idiomas</label><input type="text" id="apLanguages" class="adm-input" /></div>
+            </div>
+            <div class="adm-form-actions">
+              <span class="adm-save-msg" id="apSaveMsg" style="display:none">✓ Guardado correctamente</span>
+              <button type="submit" class="adm-btn-primary">Guardar cambios</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── INTEGRACIONES ──────────────────────────────────────── -->
+    <section class="adm-section" id="sectionIntegraciones">
+
+      <!-- Tabs -->
+      <div class="adm-integ-tabs" id="admIntegTabs">
+        <button class="adm-integ-tab active" data-itab="marketing">📣 Marketing</button>
+        <button class="adm-integ-tab" data-itab="apikeys">🔑 API Keys</button>
+        <button class="adm-integ-tab" data-itab="webhooks">🪝 Webhooks</button>
+        <button class="adm-integ-tab" data-itab="servicios">⚡ Servicios</button>
+        <button class="adm-integ-tab" data-itab="chat">💬 Chat IA</button>
+      </div>
+
+      <!-- Tab: Marketing -->
+      <div class="adm-integ-content active" id="aitab-marketing">
+        <div class="adm-row" style="align-items:flex-start">
+
+          <!-- Col izquierda: Pixel + Código personalizado -->
+          <div style="flex:1;display:flex;flex-direction:column;gap:20px;min-width:0">
+
+            <!-- Facebook Pixel -->
+            <div class="adm-card">
+              <div class="adm-service-header" style="margin-bottom:8px">
+                <div class="adm-service-logo" style="background:linear-gradient(135deg,#1877f2,#0d5bbf);color:#fff;font-size:18px;font-weight:900">f</div>
+                <div>
+                  <strong style="color:#e5e7eb">Facebook Pixel</strong>
+                  <span class="adm-service-subdesc">Rastrea visitas, leads y conversiones de tus anuncios</span>
+                </div>
+                <div class="adm-pixel-status" id="admPixelStatus"></div>
+              </div>
+              <div class="adm-form-group">
+                <label>Pixel ID</label>
+                <div class="adm-integ-row">
+                  <input type="text" class="adm-input" id="admFbPixelId" placeholder="Ej: 1234567890123456" style="flex:1;font-family:monospace" maxlength="20" />
+                  <button class="adm-btn-outline" id="admVerifyPixel" title="Verificar Pixel">Verificar</button>
+                </div>
+                <p class="adm-integ-desc" style="margin-top:6px;font-size:11px">
+                  Encuéntralo en <a href="https://business.facebook.com/events_manager" target="_blank" rel="noopener" class="adm-integ-link">Events Manager → Orígenes de datos</a>
+                </p>
+              </div>
+              <div class="adm-pixel-events">
+                <p style="font-size:12px;font-weight:600;color:#8b99b0;margin:0 0 8px">Eventos que se dispararán automáticamente:</p>
+                <div class="adm-pixel-event-list">
+                  <span class="adm-pixel-event">PageView</span>
+                  <span class="adm-pixel-event">ViewContent <span style="opacity:.5">(al abrir tarjeta)</span></span>
+                  <span class="adm-pixel-event">Contact <span style="opacity:.5">(al enviar consulta)</span></span>
+                  <span class="adm-pixel-event">Search <span style="opacity:.5">(al filtrar)</span></span>
+                </div>
+              </div>
+              <div class="adm-integ-status" id="admPixelSaveStatus"></div>
+            </div>
+
+            <!-- Código personalizado -->
+            <div class="adm-card">
+              <h2 class="adm-card-title" style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:16px">🧩</span> Código personalizado
+              </h2>
+              <p class="adm-integ-desc">Pega aquí cualquier script externo: Google Tag Manager, TikTok Pixel, Hotjar, Google Analytics, etc. Se inyecta en el <code style="font-size:11px;background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px">&lt;head&gt;</code> de todas las páginas.</p>
+              <div class="adm-form-group">
+                <label>Script / HTML</label>
+                <textarea class="adm-textarea adm-code-textarea" id="admCustomCode" rows="6" placeholder="<!-- Google Tag Manager -->&#10;&lt;script&gt;...&lt;/script&gt;&#10;&#10;<!-- o cualquier otro tracking -->"></textarea>
+              </div>
+              <div class="adm-integ-status" id="admCustomCodeStatus"></div>
+            </div>
+
+            <button class="adm-btn-primary" id="admBtnSaveMarketing" style="align-self:flex-start">
+              <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+              Guardar cambios de marketing
+            </button>
+          </div>
+
+          <!-- Col derecha: Catálogo Facebook -->
+          <div style="flex:1;min-width:0">
+            <div class="adm-card">
+              <div class="adm-service-header" style="margin-bottom:12px">
+                <div class="adm-service-logo" style="background:linear-gradient(135deg,#1877f2,#0d5bbf);color:#fff;font-size:10px;font-weight:700;text-align:center;line-height:1.2">ADS<br>CAT</div>
+                <div>
+                  <strong style="color:#e5e7eb">Catálogo de Facebook Ads</strong>
+                  <span class="adm-service-subdesc">Conecta tus inmuebles como productos en Meta Business</span>
+                </div>
+              </div>
+
+              <p class="adm-integ-desc">Tu portafolio genera automáticamente un feed de inmuebles compatible con el <strong style="color:#c8d0dc">Catálogo de Bienes Raíces</strong> de Facebook. Úsalo para crear anuncios de retargeting con Dynamic Ads.</p>
+
+              <div class="adm-catalog-steps">
+                <div class="adm-catalog-step">
+                  <span class="adm-step-num">1</span>
+                  <div>
+                    <strong>Copia la URL del feed</strong>
+                    <p>Esta URL contiene todos tus inmuebles en formato que Facebook entiende</p>
+                  </div>
+                </div>
+                <div class="adm-catalog-step">
+                  <span class="adm-step-num">2</span>
+                  <div>
+                    <strong>Ve a Meta Business Suite</strong>
+                    <p>Commerce Manager → Catálogos → Crear catálogo → Bienes raíces</p>
+                  </div>
+                </div>
+                <div class="adm-catalog-step">
+                  <span class="adm-step-num">3</span>
+                  <div>
+                    <strong>Agrega el origen de datos</strong>
+                    <p>Elige "URL del feed de datos" y pega la URL. Facebook se sincroniza automáticamente.</p>
+                  </div>
+                </div>
+                <div class="adm-catalog-step">
+                  <span class="adm-step-num">4</span>
+                  <div>
+                    <strong>Crea tu campaña</strong>
+                    <p>Campaña → Objetivo: Ventas de catálogo → selecciona tu catálogo de inmuebles</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="adm-feed-url-block" id="admFeedBlock">
+                <p style="font-size:12px;font-weight:600;color:#cbd5e1;margin:0 0 10px">URLs del feed (copia la que prefieras):</p>
+                <div class="adm-feed-url-row">
+                  <span class="adm-feed-badge">JSON</span>
+                  <code class="adm-feed-url" id="admFeedUrlJson"></code>
+                  <button class="adm-copy-key-btn" onclick="copyFeedUrl('json')">Copiar</button>
+                </div>
+                <div class="adm-feed-url-row" style="margin-top:8px">
+                  <span class="adm-feed-badge adm-feed-badge-xml">XML</span>
+                  <code class="adm-feed-url" id="admFeedUrlXml"></code>
+                  <button class="adm-copy-key-btn" onclick="copyFeedUrl('xml')">Copiar</button>
+                </div>
+              </div>
+
+              <a href="https://business.facebook.com/commerce/" target="_blank" rel="noopener" class="adm-btn-outline" style="margin-top:14px;display:inline-flex;align-items:center;gap:6px;font-size:12px">
+                <svg viewBox="0 0 24 24" fill="none" width="12" height="12"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                Abrir Meta Commerce Manager
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Tab: API Keys -->
+      <div class="adm-integ-content" id="aitab-apikeys">
+        <div class="adm-row">
+          <div class="adm-card" style="flex:1">
+            <h2 class="adm-card-title">API Keys</h2>
+            <p class="adm-integ-desc">Genera claves para conectar apps externas, CRMs o automatizaciones a tu portafolio vía REST API.</p>
+            <div class="adm-integ-row" style="margin-bottom:18px">
+              <label class="adm-integ-label">Google Client ID <small style="color:#999;font-weight:400">(para reseñas con Google)</small></label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input type="text" class="adm-integ-input" id="googleClientIdInput" placeholder="xxxxxxxxxxxx-xxxx.apps.googleusercontent.com" style="flex:1;font-family:monospace;font-size:.83rem" />
+                <button class="adm-btn-save" id="saveGoogleClientId" style="white-space:nowrap">Guardar</button>
+              </div>
+              <p class="adm-integ-desc" style="margin-top:6px">
+                Crea un proyecto en <a href="https://console.cloud.google.com/" target="_blank" rel="noopener" style="color:#1a73e8">Google Cloud Console</a>, habilita la API de Google Identity y añade tu dominio como origen autorizado. Pega el Client ID aquí.
+              </p>
+              <div class="adm-integ-status" id="googleClientIdStatus"></div>
+            </div>
+            <div class="adm-integ-row">
+              <input type="text" class="adm-input" id="admNewKeyName" placeholder="Nombre de la clave (ej: Mi CRM, Zapier…)" style="flex:1" />
+              <button class="adm-btn-primary" id="admBtnCreateKey">+ Crear clave</button>
+            </div>
+            <div class="adm-new-key-box" id="admNewKeyBox" style="display:none">
+              <p class="adm-new-key-label">⚠️ Copia esta clave ahora — no se volverá a mostrar:</p>
+              <div class="adm-key-copy-row">
+                <code class="adm-key-code" id="admNewKeyValue"></code>
+                <button class="adm-copy-key-btn" id="admCopyNewKey">Copiar</button>
+              </div>
+            </div>
+            <div class="adm-keys-list" id="admApiKeysList"></div>
+          </div>
+          <div class="adm-card" style="flex:1">
+            <h2 class="adm-card-title">Endpoints disponibles</h2>
+            <p class="adm-integ-desc">Usa tu API key en el header <code style="background:#f4f4f4;padding:2px 6px;border-radius:4px">x-api-key</code> o como parámetro:</p>
+            <div class="adm-endpoints-list">
+              <div class="adm-endpoint-item">
+                <span class="adm-endpoint-method get">GET</span>
+                <code class="adm-endpoint-path">/api/v1/properties</code>
+                <span class="adm-endpoint-desc">Lista todos los inmuebles</span>
+              </div>
+              <div class="adm-endpoint-item">
+                <span class="adm-endpoint-method get">GET</span>
+                <code class="adm-endpoint-path">/api/v1/properties/:id</code>
+                <span class="adm-endpoint-desc">Obtener un inmueble por ID</span>
+              </div>
+            </div>
+            <p class="adm-integ-desc" style="margin-top:14px">Ejemplo de uso:</p>
+            <code class="adm-code-block">curl /api/v1/properties \<br>&nbsp;&nbsp;-H "x-api-key: sk_live_..."</code>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Webhooks -->
+      <div class="adm-integ-content" id="aitab-webhooks">
+        <div class="adm-row">
+          <div class="adm-card" style="flex:1;max-width:560px">
+            <h2 class="adm-card-title">Webhooks</h2>
+            <p class="adm-integ-desc">Recibe notificaciones HTTP en tiempo real cuando ocurran eventos en tu portafolio. Úsalos para conectar con Zapier, Make, n8n u otros CRMs.</p>
+            <div class="adm-form-group">
+              <label>URL del Webhook</label>
+              <input type="url" class="adm-input" id="admWebhookUrl" placeholder="https://tu-crm.com/webhook" />
+            </div>
+            <div class="adm-form-group">
+              <label>Eventos a notificar</label>
+              <div class="adm-integ-checks">
+                <label class="adm-integ-check"><input type="checkbox" id="admWevNewProp" checked /> Nuevo inmueble publicado</label>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:4px">
+              <button class="adm-btn-outline" id="admBtnTestWebhook">Probar webhook</button>
+              <button class="adm-btn-primary" id="admBtnSaveWebhook">Guardar</button>
+            </div>
+            <div class="adm-integ-status" id="admWebhookStatus"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Servicios -->
+      <div class="adm-integ-content" id="aitab-servicios">
+        <div class="adm-row">
+          <div class="adm-card" style="flex:1;max-width:560px">
+            <h2 class="adm-card-title">Servicios externos</h2>
+            <p class="adm-integ-desc">Configura credenciales de servicios externos para habilitar funcionalidades avanzadas.</p>
+            <div class="adm-service-card">
+              <div class="adm-service-header">
+                <div class="adm-service-logo adm-logo-anthropic">AI</div>
+                <div>
+                  <strong>Anthropic Claude</strong>
+                  <span class="adm-service-subdesc">Habilita el chat con IA para los visitantes del portafolio</span>
+                </div>
+              </div>
+              <div class="adm-form-group">
+                <label>API Key de Anthropic</label>
+                <input type="password" class="adm-input" id="admAnthropicKey" placeholder="sk-ant-..." autocomplete="new-password" />
+              </div>
+              <a href="https://console.anthropic.com/" target="_blank" rel="noopener" class="adm-integ-link">Obtener API Key en console.anthropic.com →</a>
+            </div>
+            <button class="adm-btn-primary" style="margin-top:16px" id="admBtnSaveServicios">Guardar credenciales</button>
+            <div class="adm-integ-status" id="admServiciosStatus"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Chat IA -->
+      <div class="adm-integ-content" id="aitab-chat">
+        <div class="adm-row">
+          <div class="adm-card" style="flex:1;max-width:560px">
+            <h2 class="adm-card-title">Chat IA</h2>
+            <p class="adm-integ-desc">Configura el asistente virtual que verán los visitantes. Requiere API Key de Anthropic activa.</p>
+            <div class="adm-form-group adm-toggle-row">
+              <label>Estado del chat</label>
+              <label class="adm-toggle">
+                <input type="checkbox" id="admChatEnabled" />
+                <span class="adm-toggle-slider"></span>
+              </label>
+              <span class="adm-toggle-label" id="admChatEnabledLabel">Desactivado</span>
+            </div>
+            <div class="adm-form-group">
+              <label>Mensaje de bienvenida</label>
+              <input type="text" class="adm-input" id="admChatGreeting" placeholder="Hola 👋 ¿En qué puedo ayudarte?" />
+            </div>
+            <div class="adm-form-group">
+              <label>Instrucciones para la IA <span style="font-weight:400;font-size:11px;color:#9ca3af">(opcional — se usa un prompt por defecto)</span></label>
+              <textarea class="adm-textarea" id="admChatSystemPrompt" rows="4" placeholder="Describe el rol del asistente, qué puede y no puede responder..."></textarea>
+            </div>
+            <button class="adm-btn-primary" id="admBtnSaveChat">Guardar configuración</button>
+            <div class="adm-integ-status" id="admChatStatus"></div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+</div>
+
+<!-- ═══ PANEL LATERAL: PROPIEDAD ═══════════════════════════════ -->
+<div class="adm-panel-overlay" id="propPanelOverlay" style="display:none"></div>
+<div class="adm-panel" id="propPanel">
+  <div class="adm-panel-header">
+    <h2 id="propPanelTitle">Nueva propiedad</h2>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="adm-btn-outline" id="propParseToggle" style="padding:6px 12px;font-size:12px">
+        <svg viewBox="0 0 24 24" fill="none" width="12" height="12"><path d="M12 3l1.5 4.5H18l-3.75 2.72 1.5 4.5L12 12l-3.75 2.72 1.5-4.5L6 7.5h4.5L12 3z" fill="currentColor"/></svg>
+        Parsear texto
+      </button>
+      <button class="adm-panel-close" id="propPanelClose">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="adm-panel-body">
+
+    <!-- PARSEAR TEXTO -->
+    <div class="adm-parse-area" id="propParseArea" style="display:none">
+      <textarea id="propParseText" class="adm-textarea" rows="4" placeholder="Pega aquí el texto con los datos del inmueble. Ej: Apartamento en Arriendo en Vivaré Plaza, Sabaneta, $3.500.000, 87m², 3 hab, 2.5 baños, parqueadero, piscina, seguridad 24h…"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button type="button" class="adm-btn-primary" id="propParseBtn" style="flex:1;justify-content:center">
+          <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Parsear automáticamente
+        </button>
+        <button type="button" class="adm-btn-outline" id="propParseClear">Limpiar</button>
+      </div>
+    </div>
+
+    <form id="propForm">
+      <input type="hidden" id="propEditId" />
+
+      <!-- Tipo de operación -->
+      <div class="adm-form-section">
+        <p class="adm-form-section-title">Tipo de operación</p>
+        <div class="adm-tipo-btns">
+          <button type="button" class="adm-tipo-btn active" data-val="arriendo">Arriendo</button>
+          <button type="button" class="adm-tipo-btn" data-val="venta">Venta</button>
+        </div>
+        <div class="adm-estado-btns" style="margin-top:8px">
+          <button type="button" class="adm-estado-btn active" data-val="libre">● Disponible</button>
+          <button type="button" class="adm-estado-btn" data-val="ocupado">● Ocupado</button>
+        </div>
+        <input type="hidden" id="pfTipo" value="arriendo" />
+        <input type="hidden" id="pfEstado" value="libre" />
+      </div>
+
+      <!-- Información básica -->
+      <div class="adm-form-section">
+        <p class="adm-form-section-title">Información básica</p>
+        <div class="adm-form-group"><label>Título *</label><input type="text" id="pfTitle" class="adm-input" placeholder="Ej: Apartamento en Vivaré Plaza" /></div>
+        <div class="adm-form-row">
+          <div class="adm-form-group"><label>Municipio</label><input type="text" id="pfMunicipio" class="adm-input" placeholder="Sabaneta" list="pfMunicipioList"/><datalist id="pfMunicipioList"><option value="Sabaneta"/><option value="Envigado"/><option value="Medellín"/><option value="Itagüí"/><option value="Bello"/></datalist></div>
+          <div class="adm-form-group"><label>Barrio / Conjunto</label><input type="text" id="pfBarrio" class="adm-input" placeholder="Vivaré Plaza" /></div>
+        </div>
+        <div class="adm-form-group"><label>Sector / Referencia</label><input type="text" id="pfSector" class="adm-input" placeholder="Av. Las Vegas" /></div>
+        <div class="adm-form-row">
+          <div class="adm-form-group"><label>Dirección</label><input type="text" id="pfDireccion" class="adm-input" placeholder="Calle 78cSur # 47G - 10" /></div>
+          <div class="adm-form-group" style="max-width:90px"><label>Piso</label><input type="text" id="pfPiso" class="adm-input" placeholder="8" /></div>
+        </div>
+      </div>
+
+      <!-- Precio y detalles -->
+      <div class="adm-form-section">
+        <p class="adm-form-section-title">Precio y detalles</p>
+        <div class="adm-form-row">
+          <div class="adm-form-group">
+            <label>Precio (COP) *</label>
+            <div class="adm-input-prefix-wrap"><span class="adm-input-prefix">$</span><input type="number" id="pfPrecio" class="adm-input adm-input--prefix" placeholder="3500000" min="0" /></div>
+          </div>
+          <div class="adm-form-group">
+            <label>Área</label>
+            <div class="adm-input-suffix-wrap"><input type="number" id="pfArea" class="adm-input adm-input--suffix" placeholder="87" /><span class="adm-input-suffix">m²</span></div>
+          </div>
+        </div>
+        <div class="adm-form-row">
+          <div class="adm-form-group">
+            <label>Habitaciones</label>
+            <div class="adm-counter-wrap">
+              <button type="button" class="adm-counter-btn" data-for="pfHab" data-step="1" data-dir="-1">−</button>
+              <input type="number" id="pfHab" class="adm-counter-input" placeholder="0" min="0" max="20" />
+              <button type="button" class="adm-counter-btn" data-for="pfHab" data-step="1" data-dir="1">+</button>
+            </div>
+          </div>
+          <div class="adm-form-group">
+            <label>Baños</label>
+            <div class="adm-counter-wrap">
+              <button type="button" class="adm-counter-btn" data-for="pfBanos" data-step="0.5" data-dir="-1">−</button>
+              <input type="number" id="pfBanos" class="adm-counter-input" placeholder="0" min="0" max="20" step="0.5" />
+              <button type="button" class="adm-counter-btn" data-for="pfBanos" data-step="0.5" data-dir="1">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="adm-form-group"><label>Características</label>
+          <div class="adm-check-pills">
+            <label class="adm-check-pill"><input type="checkbox" id="pfParqueadero" /> Parqueadero</label>
+            <label class="adm-check-pill"><input type="checkbox" id="pfCuartoUtil" /> Cuarto útil</label>
+            <label class="adm-check-pill"><input type="checkbox" id="pfEstudio" /> Estudio</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Amenidades -->
+      <div class="adm-form-section">
+        <p class="adm-form-section-title">Amenidades</p>
+        <div class="adm-form-group"><textarea id="pfAmenidades" class="adm-textarea" rows="3" placeholder="Piscina, Gimnasio, Seguridad 24h…"></textarea><span class="adm-field-hint">Una por línea o separadas por coma</span></div>
+      </div>
+
+      <!-- Ubicación con mapa -->
+      <div class="adm-form-section">
+        <p class="adm-form-section-title">Ubicación exacta</p>
+        <p class="adm-field-hint" style="margin-bottom:8px">Toca el mapa o arrastra el pin para ubicar el inmueble</p>
+        <div class="adm-map-wrap">
+          <div id="pfMap"></div>
+          <button type="button" class="adm-map-locate-btn" id="pfLocateMe" title="Mi ubicación">
+            <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <button type="button" class="adm-btn-outline" id="pfGeocode" style="width:100%;margin:8px 0;justify-content:center;font-size:12px">
+          <svg viewBox="0 0 24 24" fill="none" width="13" height="13"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Buscar dirección en mapa
+        </button>
+        <div class="adm-form-row">
+          <div class="adm-form-group"><label>Latitud</label><input type="number" id="pfLat" class="adm-input" placeholder="6.1510" step="any" /></div>
+          <div class="adm-form-group"><label>Longitud</label><input type="number" id="pfLng" class="adm-input" placeholder="-75.6190" step="any" /></div>
+        </div>
+      </div>
+
+      <!-- Descripción -->
+      <div class="adm-form-section">
+        <p class="adm-form-section-title">Descripción</p>
+        <div class="adm-form-group"><textarea id="pfDescripcion" class="adm-textarea" rows="4" placeholder="Describe el inmueble…"></textarea></div>
+      </div>
+
+      <!-- Fotos -->
+      <div class="adm-form-section">
+        <p class="adm-form-section-title">Fotos <span class="adm-badge-sm">máx. 15</span></p>
+        <div class="adm-upload-area" id="pfUploadArea">
+          <input type="file" id="pfImages" accept="image/jpeg,image/png,image/webp" multiple style="display:none" />
+          <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <p>Arrastra fotos o <button type="button" class="adm-link-btn" id="pfTriggerImages">selecciona</button></p>
+          <span class="adm-field-hint">JPG, PNG, WEBP · Máx 10MB</span>
+        </div>
+        <div class="adm-image-preview" id="pfImagePreview"></div>
+        <div id="pfExistingImgs" style="display:none">
+          <p class="adm-form-group" style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-top:12px">Fotos actuales</p>
+          <div class="adm-image-preview" id="pfExistingGrid"></div>
+        </div>
+      </div>
+
+    </form>
+  </div>
+  <div class="adm-panel-footer">
+    <button class="adm-btn-outline" id="propPanelCancel">Cancelar</button>
+    <button class="adm-btn-primary" id="propPanelSave">
+      <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+      Guardar propiedad
+    </button>
+  </div>
+</div>
+
+<!-- ═══ PANEL LATERAL: BLOG ════════════════════════════════════ -->
+<div class="adm-panel-overlay" id="blogPanelOverlay" style="display:none"></div>
+<div class="adm-panel" id="blogPanel">
+  <div class="adm-panel-header">
+    <h2 id="blogPanelTitle">Nuevo artículo</h2>
+    <button class="adm-panel-close" id="blogPanelClose">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="adm-panel-body">
+    <input type="hidden" id="blogEditSlug" />
+
+    <!-- Título y excerpt -->
+    <div class="adm-form-section">
+      <div class="adm-form-group"><label>Título *</label><input type="text" id="bfTitle" class="adm-input adm-input--lg" placeholder="Título del artículo…" /></div>
+      <div class="adm-form-group"><label>Resumen</label><textarea id="bfExcerpt" class="adm-textarea" rows="2" placeholder="Resumen breve para listados y Google…"></textarea></div>
+    </div>
+
+    <!-- Contenido -->
+    <div class="adm-form-section">
+      <p class="adm-form-section-title">Contenido</p>
+      <div class="adm-editor-toolbar" id="bfToolbar">
+        <button type="button" data-cmd="bold"><b>B</b></button>
+        <button type="button" data-cmd="italic"><i>I</i></button>
+        <button type="button" data-cmd="underline"><u>U</u></button>
+        <span class="adm-etb-sep"></span>
+        <button type="button" data-cmd="h2">H2</button>
+        <button type="button" data-cmd="h3">H3</button>
+        <button type="button" data-cmd="quote">❝</button>
+        <span class="adm-etb-sep"></span>
+        <button type="button" data-cmd="ul">• Lista</button>
+        <button type="button" data-cmd="ol">1. Lista</button>
+        <span class="adm-etb-sep"></span>
+        <button type="button" data-cmd="link">🔗 Enlace</button>
+        <button type="button" data-cmd="img">🖼 Imagen</button>
+        <button type="button" data-cmd="hr">— Línea</button>
+      </div>
+      <div id="bfContent" class="adm-editor-content" contenteditable="true" data-placeholder="Escribe el contenido aquí…"></div>
+    </div>
+
+    <!-- Imagen portada -->
+    <div class="adm-form-section">
+      <p class="adm-form-section-title">Imagen de portada</p>
+      <div class="adm-cover-upload" id="bfCoverArea">
+        <input type="file" id="bfCover" accept="image/jpeg,image/png,image/webp" style="display:none" />
+        <div id="bfCoverPreview" style="display:none;position:relative">
+          <img id="bfCoverImg" src="" alt="" style="width:100%;height:160px;object-fit:cover;border-radius:8px;display:block;" />
+          <button type="button" class="adm-cover-remove" id="bfCoverRemove">✕</button>
+        </div>
+        <div id="bfCoverEmpty" class="adm-cover-empty">
+          <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="1.5"/><polyline points="21 15 16 10 5 21" stroke="currentColor" stroke-width="1.5"/></svg>
+          <span>Click para seleccionar imagen</span>
+        </div>
+      </div>
+      <input type="hidden" id="bfCoverExisting" />
+    </div>
+
+    <!-- Meta -->
+    <div class="adm-form-section">
+      <p class="adm-form-section-title">Clasificación y estado</p>
+      <div class="adm-form-row">
+        <div class="adm-form-group"><label>Categoría</label><input type="text" id="bfCategory" class="adm-input" placeholder="Consejos, Mercado…" list="bfCatList"/><datalist id="bfCatList"><option value="Consejos"/><option value="Mercado"/><option value="Noticias"/><option value="Guías"/><option value="Inversión"/><option value="Legal"/></datalist></div>
+        <div class="adm-form-group"><label>Etiquetas</label><input type="text" id="bfTags" class="adm-input" placeholder="tag1, tag2" /></div>
+      </div>
+      <div class="adm-form-group"><label>Estado de publicación</label>
+        <div class="adm-status-btns">
+          <button type="button" class="adm-status-btn active" data-val="draft">Borrador</button>
+          <button type="button" class="adm-status-btn" data-val="published">Publicado</button>
+        </div>
+        <input type="hidden" id="bfStatus" value="draft" />
+      </div>
+    </div>
+
+    <!-- SEO -->
+    <div class="adm-form-section">
+      <p class="adm-form-section-title">SEO <span class="adm-badge-seo">Google · IA</span></p>
+      <div class="adm-form-group">
+        <label>Meta título <span id="bfMetaTitleCount" style="font-weight:400;color:#9ca3af">0/60</span></label>
+        <input type="text" id="bfMetaTitle" class="adm-input" placeholder="Título para Google (máx 60)" maxlength="60" />
+      </div>
+      <div class="adm-form-group">
+        <label>Meta descripción <span id="bfMetaDescCount" style="font-weight:400;color:#9ca3af">0/155</span></label>
+        <textarea id="bfMetaDesc" class="adm-textarea" rows="2" placeholder="Descripción para Google (máx 155)" maxlength="155"></textarea>
+      </div>
+      <div class="adm-form-group"><label>Palabras clave</label><input type="text" id="bfMetaKeys" class="adm-input" placeholder="inmuebles medellín, arriendo sabaneta" /></div>
+      <!-- Preview Google -->
+      <div class="adm-seo-preview">
+        <p class="adm-seo-label">Vista previa en Google</p>
+        <div class="adm-seo-box">
+          <div class="adm-seo-url">alexarias.com › blog › <span id="bfPrevSlug">slug</span></div>
+          <div class="adm-seo-title" id="bfPrevTitle">Título del artículo</div>
+          <div class="adm-seo-desc" id="bfPrevDesc">Descripción del artículo…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="adm-panel-footer">
+    <button class="adm-btn-outline" id="blogPanelCancel">Cancelar</button>
+    <div style="display:flex;gap:8px">
+      <button class="adm-btn-outline" id="blogSaveDraft">Guardar borrador</button>
+      <button class="adm-btn-primary" id="blogPanelSave">
+        <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+        Publicar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CONFIRM DELETE ══════════════════════════════════════════ -->
+<div class="adm-confirm-overlay" id="confirmOverlay" style="display:none">
+  <div class="adm-confirm-card">
+    <h3 id="confirmTitle">¿Eliminar?</h3>
+    <p id="confirmMsg">Esta acción no se puede deshacer.</p>
+    <div class="adm-confirm-actions">
+      <button class="adm-btn-outline" id="confirmCancel">Cancelar</button>
+      <button class="adm-btn-danger" id="confirmOk">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════
+   ADMIN DASHBOARD — Lógica completa
+══════════════════════════════════════════════════════════════ */
+const ADMIN_KEY = 'adm_pwd_v2';
+let pwd = sessionStorage.getItem(ADMIN_KEY) || '';
+let confirmCallback = null;
+
+// Clock
+setInterval(() => {
+  const el = document.getElementById('admTime');
+  if (el) el.textContent = new Date().toLocaleTimeString('es-CO', { hour:'2-digit', minute:'2-digit' });
+}, 1000);
+
+// ── MOSTRAR SHELL ────────────────────────────────────────────
+function showShell() {
+  document.getElementById('admLogin').style.display = 'none';
+  document.getElementById('admShell').style.display = 'flex';
+  loadStats(); loadProperties();
+}
+
+// ── LOGIN: verificar sesión Google primero, luego contraseña ─
+(async () => {
+  try {
+    const r = await fetch('/auth/status');
+    const { loggedIn } = await r.json();
+    if (loggedIn) { pwd = '__google__'; return showShell(); }
+  } catch (_) {}
+  // Fallback: contraseña guardada en sessionStorage
+  if (pwd) tryLogin(pwd, true);
+})();
+
+document.getElementById('admLoginBtn').addEventListener('click', () => tryLogin(document.getElementById('admPwd').value));
+document.getElementById('admPwd').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(document.getElementById('admPwd').value); });
+
+async function tryLogin(p, silent = false) {
+  try {
+    const r = await fetch('/api/verify-password', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password: p }) });
+    if (r.ok) {
+      pwd = p; sessionStorage.setItem(ADMIN_KEY, pwd);
+      showShell();
+    } else if (!silent) {
+      document.getElementById('admLoginError').style.display = 'block';
+      document.getElementById('admPwd').value = '';
+    }
+  } catch (_) {}
+}
+
+// ── NAV ─────────────────────────────────────────────────────
+const sectionLabels = { dashboard:'Dashboard', estadísticas:'Estadísticas', properties:'Propiedades', blog:'Blog', profile:'Perfil', integraciones:'Integraciones & APIs' };
+const newBtnLabels  = { dashboard:'Nueva propiedad', estadísticas:null, properties:'Nueva propiedad', blog:'Nuevo artículo', profile:null, integraciones:null };
+let currentSection = 'dashboard';
+
+document.querySelectorAll('.adm-nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentSection = btn.dataset.section;
+    document.querySelectorAll('.adm-nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.adm-section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('section' + cap(currentSection)).classList.add('active');
+    document.getElementById('admPageTitle').textContent = sectionLabels[currentSection];
+    const lbl = newBtnLabels[currentSection];
+    const topBtn = document.getElementById('admTopNewBtn');
+    if (lbl) { topBtn.style.display = 'flex'; document.getElementById('admTopNewLabel').textContent = lbl; }
+    else { topBtn.style.display = 'none'; }
+    if (currentSection === 'properties') loadProperties();
+    if (currentSection === 'blog') loadBlogPosts();
+    if (currentSection === 'profile') loadProfile();
+    if (currentSection === 'integraciones') loadIntegraciones();
+    if (currentSection === 'estadísticas') loadStatistics();
+    document.getElementById('admSidebar').classList.remove('open');
+  });
+});
+
+document.getElementById('admMenuToggle').addEventListener('click', () => document.getElementById('admSidebar').classList.toggle('open'));
+
+document.getElementById('admTopNewBtn').addEventListener('click', () => {
+  if (currentSection === 'blog') openBlogPanel();
+  else openPropPanel();
+});
+document.getElementById('propNewBtn').addEventListener('click', openPropPanel);
+document.getElementById('blogNewBtn').addEventListener('click', openBlogPanel);
+
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ── CONFIRM DIALOG ───────────────────────────────────────────
+function showConfirm(title, msg, cb) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent = msg;
+  confirmCallback = cb;
+  document.getElementById('confirmOverlay').style.display = 'flex';
+}
+document.getElementById('confirmCancel').addEventListener('click', () => { document.getElementById('confirmOverlay').style.display = 'none'; confirmCallback = null; });
+document.getElementById('confirmOk').addEventListener('click', () => { document.getElementById('confirmOverlay').style.display = 'none'; if (confirmCallback) { confirmCallback(); confirmCallback = null; } });
+
+// ── STATS ────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const r = await fetch('/api/stats', { headers: { 'x-admin-password': pwd } });
+    const d = await r.json();
+    document.getElementById('kpiProps').textContent  = d.totals.properties;
+    document.getElementById('kpiPosts').textContent  = d.totals.publishedPosts;
+    document.getElementById('kpiViews').textContent  = fmtNum(d.totals.views);
+    document.getElementById('kpiLikes').textContent  = fmtNum(d.totals.likes);
+    drawDonut('chartTipo',   'legendTipo',   d.propsByType,   ['#E71433','#111827','#3b82f6','#f59e0b']);
+    drawDonut('chartEstado', 'legendEstado', d.propsByStatus, ['#16a34a','#dc2626','#f59e0b']);
+    document.getElementById('topPropsList').innerHTML = d.topProps.length ? d.topProps.map((p,i) => `
+      <div class="adm-list-item"><span class="adm-list-rank">${i+1}</span><div class="adm-list-info"><span class="adm-list-title">${p.title}</span><span class="adm-list-meta">${p.tipo}</span></div><div class="adm-list-stats"><span class="adm-stat-pill views">${fmtNum(p.views)} vistas</span><span class="adm-stat-pill likes">${p.likes} ♥</span></div></div>`).join('') : '<p class="adm-empty">Sin datos aún</p>';
+    document.getElementById('topPostsList').innerHTML = d.topPosts.length ? d.topPosts.map((p,i) => `
+      <div class="adm-list-item"><span class="adm-list-rank">${i+1}</span><div class="adm-list-info"><span class="adm-list-title">${p.title}</span><span class="adm-list-meta">${p.status==='published'?'Publicado':'Borrador'}</span></div><div class="adm-list-stats"><span class="adm-stat-pill views">${fmtNum(p.views)} vistas</span></div></div>`).join('') : '<p class="adm-empty">Sin datos aún</p>';
+  } catch (err) { console.error(err); }
+}
+
+// ── PROPIEDADES ──────────────────────────────────────────────
+let allProps = [], propNewImages = [], propDeleteImages = [];
+async function loadProperties() {
+  document.getElementById('propTableLoading').style.display = 'flex';
+  document.getElementById('propTableEmpty').style.display = 'none';
+  try {
+    const r = await fetch('/api/properties');
+    allProps = await r.json();
+    renderPropsTable(allProps);
+  } catch (_) {}
+  document.getElementById('propTableLoading').style.display = 'none';
+}
+function renderPropsTable(props) {
+  const tbody = document.getElementById('propTableBody');
+  if (!props.length) { tbody.innerHTML = ''; document.getElementById('propTableEmpty').style.display = 'block'; return; }
+  document.getElementById('propTableEmpty').style.display = 'none';
+  tbody.innerHTML = props.map(p => `<tr>
+    <td><span class="adm-tbl-title">${p.title}</span><br><span class="adm-tbl-sub">${p.municipio||''} ${p.barrio||''}</span></td>
+    <td><span class="adm-badge adm-badge--${p.tipo}">${p.tipo}</span></td>
+    <td>${fmtPrice(p.precio)}</td>
+    <td><span class="adm-badge adm-badge--${p.estado}">${p.estado==='libre'?'Disponible':'Ocupado'}</span></td>
+    <td>${fmtNum(p.views||0)}</td><td>${p.likes||0}</td>
+    <td><div class="adm-tbl-actions">
+      <button class="adm-tbl-btn adm-tbl-btn--edit" data-id="${p.id}" title="Editar">
+        <svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="adm-tbl-btn adm-tbl-btn--del" data-id="${p.id}" data-title="${(p.title||'').replace(/"/g,'')}" title="Eliminar">
+        <svg viewBox="0 0 24 24" fill="none" width="13" height="13"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div></td>
+  </tr>`).join('');
+  tbody.querySelectorAll('.adm-tbl-btn--edit').forEach(btn => btn.addEventListener('click', () => {
+    const p = allProps.find(x => x.id === btn.dataset.id);
+    if (p) openPropPanel(p);
+  }));
+  tbody.querySelectorAll('.adm-tbl-btn--del').forEach(btn => btn.addEventListener('click', () => {
+    showConfirm('¿Eliminar propiedad?', `"${btn.dataset.title}" será eliminada permanentemente.`, async () => {
+      await fetch(`/api/properties/${btn.dataset.id}`, { method:'DELETE', headers:{'x-admin-password':pwd} });
+      loadProperties(); loadStats();
+    });
+  }));
+}
+document.getElementById('propSearch').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  renderPropsTable(allProps.filter(p => (p.title||'').toLowerCase().includes(q) || (p.municipio||'').toLowerCase().includes(q) || (p.barrio||'').toLowerCase().includes(q)));
+});
+
+// Panel propiedad
+function openPropPanel(prop = null) {
+  propNewImages = []; propDeleteImages = [];
+  document.getElementById('propPanelTitle').textContent = prop ? 'Editar propiedad' : 'Nueva propiedad';
+  document.getElementById('propEditId').value = prop?.id || '';
+  document.getElementById('pfTitle').value      = prop?.title || '';
+  document.getElementById('pfMunicipio').value  = prop?.municipio || '';
+  document.getElementById('pfBarrio').value     = prop?.barrio || '';
+  document.getElementById('pfSector').value     = prop?.sector || '';
+  document.getElementById('pfDireccion').value  = prop?.direccion || '';
+  document.getElementById('pfPiso').value       = prop?.piso || '';
+  document.getElementById('pfPrecio').value     = prop?.precio || '';
+  document.getElementById('pfArea').value       = prop?.area || '';
+  document.getElementById('pfHab').value        = prop?.habitaciones || '';
+  document.getElementById('pfBanos').value      = prop?.banos || '';
+  document.getElementById('pfParqueadero').checked = !!(prop?.parqueadero);
+  document.getElementById('pfCuartoUtil').checked  = !!(prop?.cuarto_util);
+  document.getElementById('pfEstudio').checked     = !!(prop?.estudio);
+  document.getElementById('pfAmenidades').value = (prop?.amenidades||[]).join('\n');
+  document.getElementById('pfDescripcion').value = prop?.descripcion || '';
+  document.getElementById('pfLat').value        = prop?.lat || '';
+  document.getElementById('pfLng').value        = prop?.lng || '';
+  setTipo(prop?.tipo || 'arriendo');
+  setEstado(prop?.estado || 'libre');
+  document.getElementById('pfImagePreview').innerHTML = '';
+
+  // Fotos existentes
+  const existWrap = document.getElementById('pfExistingImgs');
+  const existGrid = document.getElementById('pfExistingGrid');
+  if (prop?.images?.length) {
+    existWrap.style.display = 'block';
+    existGrid.innerHTML = prop.images.map(img => `
+      <div class="adm-img-thumb" style="position:relative">
+        <img src="/${img.filename}" style="width:72px;height:60px;object-fit:cover;border-radius:8px;display:block;" />
+        <button type="button" class="adm-img-del" data-img-id="${img.id}" style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+      </div>`).join('');
+    existGrid.querySelectorAll('.adm-img-del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        propDeleteImages.push(btn.dataset.imgId);
+        btn.closest('.adm-img-thumb').style.opacity = '.3';
+        btn.closest('.adm-img-thumb').style.pointerEvents = 'none';
+      });
+    });
+  } else { existWrap.style.display = 'none'; }
+
+  document.getElementById('propPanel').classList.add('open');
+  document.getElementById('propPanelOverlay').style.display = 'block';
+  setTimeout(() => {
+    const lat = parseFloat(document.getElementById('pfLat').value) || 6.151;
+    const lng = parseFloat(document.getElementById('pfLng').value) || -75.619;
+    initPfMap(lat, lng);
+  }, 120);
+}
+function closePropPanel() {
+  document.getElementById('propPanel').classList.remove('open');
+  document.getElementById('propPanelOverlay').style.display = 'none';
+}
+document.getElementById('propPanelClose').addEventListener('click', closePropPanel);
+document.getElementById('propPanelCancel').addEventListener('click', closePropPanel);
+document.getElementById('propPanelOverlay').addEventListener('click', closePropPanel);
+
+function setTipo(val) {
+  document.getElementById('pfTipo').value = val;
+  document.querySelectorAll('.adm-tipo-btn').forEach(b => b.classList.toggle('active', b.dataset.val === val));
+}
+function setEstado(val) {
+  document.getElementById('pfEstado').value = val;
+  document.querySelectorAll('.adm-estado-btn').forEach(b => b.classList.toggle('active', b.dataset.val === val));
+}
+document.querySelectorAll('.adm-tipo-btn').forEach(b => b.addEventListener('click', () => setTipo(b.dataset.val)));
+document.querySelectorAll('.adm-estado-btn').forEach(b => b.addEventListener('click', () => setEstado(b.dataset.val)));
+
+// Upload fotos
+document.getElementById('pfTriggerImages').addEventListener('click', () => document.getElementById('pfImages').click());
+document.getElementById('pfUploadArea').addEventListener('click', e => { if (!e.target.closest('button')) document.getElementById('pfImages').click(); });
+document.getElementById('pfImages').addEventListener('change', e => {
+  Array.from(e.target.files).forEach(file => {
+    propNewImages.push(file);
+    const url = URL.createObjectURL(file);
+    const div = document.createElement('div');
+    div.className = 'adm-img-thumb';
+    div.style.position = 'relative';
+    div.innerHTML = `<img src="${url}" style="width:72px;height:60px;object-fit:cover;border-radius:8px;display:block;" /><button type="button" style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>`;
+    div.querySelector('button').addEventListener('click', () => { propNewImages = propNewImages.filter(f => f !== file); div.remove(); });
+    document.getElementById('pfImagePreview').appendChild(div);
+  });
+  e.target.value = '';
+});
+
+// Guardar propiedad
+document.getElementById('propPanelSave').addEventListener('click', async () => {
+  const title = document.getElementById('pfTitle').value.trim();
+  if (!title) { alert('El título es obligatorio'); return; }
+  const fd = new FormData();
+  fd.append('title',       title);
+  fd.append('tipo',        document.getElementById('pfTipo').value);
+  fd.append('estado',      document.getElementById('pfEstado').value);
+  fd.append('municipio',   document.getElementById('pfMunicipio').value);
+  fd.append('barrio',      document.getElementById('pfBarrio').value);
+  fd.append('sector',      document.getElementById('pfSector').value);
+  fd.append('direccion',   document.getElementById('pfDireccion').value);
+  fd.append('piso',        document.getElementById('pfPiso').value);
+  fd.append('precio',      document.getElementById('pfPrecio').value);
+  fd.append('area',        document.getElementById('pfArea').value);
+  fd.append('habitaciones',document.getElementById('pfHab').value);
+  fd.append('banos',       document.getElementById('pfBanos').value);
+  fd.append('parqueadero',  document.getElementById('pfParqueadero').checked ? '1' : '0');
+  fd.append('cuarto_util',  document.getElementById('pfCuartoUtil').checked ? '1' : '0');
+  fd.append('estudio',      document.getElementById('pfEstudio').checked ? '1' : '0');
+  fd.append('amenidades',  document.getElementById('pfAmenidades').value);
+  fd.append('descripcion', document.getElementById('pfDescripcion').value);
+  fd.append('lat',         document.getElementById('pfLat').value);
+  fd.append('lng',         document.getElementById('pfLng').value);
+  propNewImages.forEach(f => fd.append('images', f));
+
+  const btn = document.getElementById('propPanelSave');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    const id = document.getElementById('propEditId').value;
+    const url = id ? `/api/properties/${id}` : '/api/properties';
+    const method = id ? 'PUT' : 'POST';
+    const r = await fetch(url, { method, headers: { 'x-admin-password': pwd }, body: fd });
+    if (!r.ok) throw new Error((await r.json()).error);
+    // Eliminar imágenes marcadas (usando el endpoint dedicado)
+    if (id && propDeleteImages.length) {
+      await Promise.all(propDeleteImages.map(imgId =>
+        fetch(`/api/properties/${id}/images/${imgId}`, { method: 'DELETE', headers: { 'x-admin-password': pwd } })
+      ));
+    }
+    closePropPanel(); loadProperties(); loadStats();
+  } catch (err) { alert('Error: ' + err.message); }
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg> Guardar propiedad';
+});
+
+// ── CONTADORES HAB/BAÑOS ─────────────────────────────────────
+document.querySelectorAll('.adm-counter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const input = document.getElementById(btn.dataset.for);
+    if (!input) return;
+    const step = parseFloat(btn.dataset.step) || 1;
+    const dir  = parseFloat(btn.dataset.dir)  || 1;
+    const min  = parseFloat(input.min) || 0;
+    const max  = parseFloat(input.max) || 99;
+    const val  = parseFloat(input.value) || 0;
+    input.value = Math.min(max, Math.max(min, val + step * dir));
+  });
+});
+
+// ── MAPA LEAFLET ─────────────────────────────────────────────
+let pfMap = null, pfMarker = null;
+
+function syncCoordsFromMarker() {
+  const ll = pfMarker.getLatLng();
+  document.getElementById('pfLat').value = ll.lat.toFixed(6);
+  document.getElementById('pfLng').value = ll.lng.toFixed(6);
+}
+
+function initPfMap(lat, lng) {
+  if (!pfMap) {
+    pfMap = L.map('pfMap', { zoomControl: true }).setView([lat, lng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(pfMap);
+    pfMarker = L.marker([lat, lng], { draggable: true }).addTo(pfMap);
+    pfMarker.on('dragend', syncCoordsFromMarker);
+    pfMap.on('click', e => { pfMarker.setLatLng(e.latlng); syncCoordsFromMarker(); });
+  } else {
+    pfMap.invalidateSize();
+    pfMap.setView([lat, lng], 14);
+    pfMarker.setLatLng([lat, lng]);
+  }
+}
+
+['pfLat','pfLng'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    const lat = parseFloat(document.getElementById('pfLat').value);
+    const lng = parseFloat(document.getElementById('pfLng').value);
+    if (!isNaN(lat) && !isNaN(lng) && pfMap) {
+      pfMap.setView([lat, lng], pfMap.getZoom());
+      pfMarker.setLatLng([lat, lng]);
+    }
+  });
+});
+
+document.getElementById('pfGeocode').addEventListener('click', async () => {
+  const dir = document.getElementById('pfDireccion').value.trim()
+    || document.getElementById('pfBarrio').value.trim()
+    || document.getElementById('pfMunicipio').value.trim();
+  if (!dir) { alert('Ingresa dirección, barrio o municipio primero'); return; }
+  const mun = document.getElementById('pfMunicipio').value.trim();
+  const q = encodeURIComponent((dir + (mun ? ', ' + mun : '') + ', Colombia'));
+  try {
+    const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + q + '&limit=1');
+    const data = await r.json();
+    if (!data.length) { alert('No se encontró la dirección'); return; }
+    const lat2 = parseFloat(data[0].lat), lng2 = parseFloat(data[0].lon);
+    document.getElementById('pfLat').value = lat2.toFixed(6);
+    document.getElementById('pfLng').value = lng2.toFixed(6);
+    if (pfMap) { pfMap.setView([lat2, lng2], 16); pfMarker.setLatLng([lat2, lng2]); }
+  } catch { alert('Error al buscar la dirección'); }
+});
+
+document.getElementById('pfLocateMe').addEventListener('click', () => {
+  if (!navigator.geolocation) { alert('Geolocalización no disponible'); return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    const lat2 = pos.coords.latitude, lng2 = pos.coords.longitude;
+    document.getElementById('pfLat').value = lat2.toFixed(6);
+    document.getElementById('pfLng').value = lng2.toFixed(6);
+    if (pfMap) { pfMap.setView([lat2, lng2], 16); pfMarker.setLatLng([lat2, lng2]); }
+  }, () => alert('No se pudo obtener la ubicación'));
+});
+
+// ── PARSEAR TEXTO ─────────────────────────────────────────────
+document.getElementById('propParseToggle').addEventListener('click', () => {
+  const area = document.getElementById('propParseArea');
+  area.style.display = area.style.display === 'none' ? 'block' : 'none';
+});
+document.getElementById('propParseClear').addEventListener('click', () => {
+  document.getElementById('propParseText').value = '';
+});
+document.getElementById('propParseBtn').addEventListener('click', () => {
+  const txt = document.getElementById('propParseText').value;
+  if (!txt.trim()) return;
+  parsePropText(txt);
+  document.getElementById('propParseArea').style.display = 'none';
+});
+
+function parsePropText(txt) {
+  if (/venta/i.test(txt)) setTipo('venta');
+  else if (/arriendo|alquiler|renta/i.test(txt)) setTipo('arriendo');
+  const firstLine = txt.split('\n')[0].trim().slice(0, 80);
+  if (firstLine && !document.getElementById('pfTitle').value) document.getElementById('pfTitle').value = firstLine;
+  const precioM = txt.match(/\$\s*([\d\.,]+)/);
+  if (precioM) document.getElementById('pfPrecio').value = precioM[1].replace(/\./g,'').replace(/,/g,'');
+  const areaM = txt.match(/(\d+(?:[.,]\d+)?)\s*m[²2]/i);
+  if (areaM) document.getElementById('pfArea').value = areaM[1].replace(',','.');
+  const habM = txt.match(/(\d+)\s*(?:hab|habitaciones?|cuartos?|alcobas?)/i);
+  if (habM) document.getElementById('pfHab').value = habM[1];
+  const banM = txt.match(/(\d+(?:[.,]\d)?)\s*(?:ba[ñn]os?)/i);
+  if (banM) document.getElementById('pfBanos').value = banM[1].replace(',','.');
+  if (/parqueadero|garaje/i.test(txt)) document.getElementById('pfParqueadero').checked = true;
+  if (/cuarto\s*[úu]til|cuarto\s*servicio/i.test(txt)) document.getElementById('pfCuartoUtil').checked = true;
+  if (/\bestudio\b/i.test(txt)) document.getElementById('pfEstudio').checked = true;
+  const munis = ['Sabaneta','Envigado','Medellín','Itagüí','Bello','La Estrella','Caldas'];
+  for (const m of munis) { if (new RegExp(m,'i').test(txt)) { document.getElementById('pfMunicipio').value = m; break; } }
+  if (!document.getElementById('pfAmenidades').value) {
+    const amenLines = txt.split(/[,\n]/).map(s=>s.trim()).filter(s=>s.length>3 && !/^\$|m²|hab|baño|arriendo|venta|apto|casa/i.test(s)).slice(0,10);
+    if (amenLines.length) document.getElementById('pfAmenidades').value = amenLines.join('\n');
+  }
+}
+
+// ── BLOG ─────────────────────────────────────────────────────
+let allBlogPosts = [], bfCoverFile = null;
+async function loadBlogPosts() {
+  document.getElementById('blogTableLoading').style.display = 'flex';
+  document.getElementById('blogTableEmpty').style.display = 'none';
+  try {
+    const r = await fetch('/api/blog?status=all&limit=200', { headers: { 'x-admin-password': pwd } });
+    const { posts } = await r.json();
+    allBlogPosts = posts;
+    renderBlogTable(posts);
+  } catch (_) {}
+  document.getElementById('blogTableLoading').style.display = 'none';
+}
+function renderBlogTable(posts) {
+  const tbody = document.getElementById('blogTableBody');
+  if (!posts.length) { tbody.innerHTML = ''; document.getElementById('blogTableEmpty').style.display = 'block'; return; }
+  document.getElementById('blogTableEmpty').style.display = 'none';
+  tbody.innerHTML = posts.map(p => `<tr>
+    <td><span class="adm-tbl-title">${p.title}</span><br><span class="adm-tbl-sub">${p.slug}</span></td>
+    <td>${p.category||'—'}</td>
+    <td><span class="adm-badge adm-badge--${p.status}">${p.status==='published'?'Publicado':'Borrador'}</span></td>
+    <td>${fmtDate(p.published_at||p.created_at)}</td>
+    <td>${fmtNum(p.views||0)}</td>
+    <td><div class="adm-tbl-actions">
+      ${p.status==='published'?`<a class="adm-tbl-btn" href="/post.html?slug=${p.slug}" target="_blank" title="Ver"><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg></a>`:''}
+      <button class="adm-tbl-btn adm-tbl-btn--edit" data-slug="${p.slug}" title="Editar"><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <button class="adm-tbl-btn adm-tbl-btn--del" data-slug="${p.slug}" data-title="${(p.title||'').replace(/"/g,'')}" title="Eliminar"><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    </div></td>
+  </tr>`).join('');
+  tbody.querySelectorAll('.adm-tbl-btn--edit').forEach(btn => btn.addEventListener('click', () => {
+    const p = allBlogPosts.find(x => x.slug === btn.dataset.slug);
+    if (p) openBlogPanel(p);
+  }));
+  tbody.querySelectorAll('.adm-tbl-btn--del').forEach(btn => btn.addEventListener('click', () => {
+    showConfirm('¿Eliminar artículo?', `"${btn.dataset.title}" será eliminado permanentemente.`, async () => {
+      await fetch(`/api/blog/${btn.dataset.slug}`, { method:'DELETE', headers:{'x-admin-password':pwd} });
+      loadBlogPosts(); loadStats();
+    });
+  }));
+}
+document.getElementById('blogSearch').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  renderBlogTable(allBlogPosts.filter(p => p.title.toLowerCase().includes(q)));
+});
+
+// Panel blog
+function openBlogPanel(post = null) {
+  bfCoverFile = null;
+  document.getElementById('blogPanelTitle').textContent = post ? 'Editar artículo' : 'Nuevo artículo';
+  document.getElementById('blogEditSlug').value    = post?.slug || '';
+  document.getElementById('bfTitle').value         = post?.title || '';
+  document.getElementById('bfExcerpt').value       = post?.excerpt || '';
+  document.getElementById('bfContent').innerHTML   = post?.content || '';
+  document.getElementById('bfCategory').value      = post?.category || '';
+  document.getElementById('bfTags').value          = (post?.tags||[]).join(', ');
+  document.getElementById('bfMetaTitle').value     = post?.seo?.metaTitle || '';
+  document.getElementById('bfMetaDesc').value      = post?.seo?.metaDescription || '';
+  document.getElementById('bfMetaKeys').value      = post?.seo?.metaKeywords || '';
+  document.getElementById('bfCoverExisting').value = post?.cover || '';
+  setBlogStatus(post?.status || 'draft');
+  updateSeoPreview();
+  if (post?.cover) {
+    document.getElementById('bfCoverImg').src = '/' + post.cover;
+    document.getElementById('bfCoverPreview').style.display = 'block';
+    document.getElementById('bfCoverEmpty').style.display = 'none';
+  } else {
+    document.getElementById('bfCoverPreview').style.display = 'none';
+    document.getElementById('bfCoverEmpty').style.display = 'flex';
+  }
+  document.getElementById('blogPanel').classList.add('open');
+  document.getElementById('blogPanelOverlay').style.display = 'block';
+}
+function closeBlogPanel() {
+  document.getElementById('blogPanel').classList.remove('open');
+  document.getElementById('blogPanelOverlay').style.display = 'none';
+}
+document.getElementById('blogPanelClose').addEventListener('click', closeBlogPanel);
+document.getElementById('blogPanelCancel').addEventListener('click', closeBlogPanel);
+document.getElementById('blogPanelOverlay').addEventListener('click', closeBlogPanel);
+
+function setBlogStatus(val) {
+  document.getElementById('bfStatus').value = val;
+  document.querySelectorAll('.adm-status-btn').forEach(b => b.classList.toggle('active', b.dataset.val === val));
+}
+document.querySelectorAll('.adm-status-btn').forEach(b => b.addEventListener('click', () => setBlogStatus(b.dataset.val)));
+
+// Cover blog
+document.getElementById('bfCoverArea').addEventListener('click', e => { if (!e.target.closest('.adm-cover-remove')) document.getElementById('bfCover').click(); });
+document.getElementById('bfCover').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  bfCoverFile = f;
+  document.getElementById('bfCoverImg').src = URL.createObjectURL(f);
+  document.getElementById('bfCoverPreview').style.display = 'block';
+  document.getElementById('bfCoverEmpty').style.display = 'none';
+});
+document.getElementById('bfCoverRemove').addEventListener('click', e => {
+  e.stopPropagation(); bfCoverFile = null;
+  document.getElementById('bfCoverExisting').value = '';
+  document.getElementById('bfCoverPreview').style.display = 'none';
+  document.getElementById('bfCoverEmpty').style.display = 'flex';
+  document.getElementById('bfCover').value = '';
+});
+
+// Toolbar blog
+document.getElementById('bfToolbar').addEventListener('mousedown', e => {
+  const btn = e.target.closest('[data-cmd]'); if (!btn) return;
+  e.preventDefault();
+  document.getElementById('bfContent').focus();
+  const cmds = {
+    bold: () => document.execCommand('bold'),
+    italic: () => document.execCommand('italic'),
+    underline: () => document.execCommand('underline'),
+    h2: () => document.execCommand('formatBlock', false, 'h2'),
+    h3: () => document.execCommand('formatBlock', false, 'h3'),
+    quote: () => document.execCommand('formatBlock', false, 'blockquote'),
+    ul: () => document.execCommand('insertUnorderedList'),
+    ol: () => document.execCommand('insertOrderedList'),
+    hr: () => document.execCommand('insertHorizontalRule'),
+    link: () => { const u = prompt('URL:','https://'); if (u) document.execCommand('createLink', false, u); },
+    img: () => { const u = prompt('URL imagen:','https://'); if (u) document.execCommand('insertImage', false, u); }
+  };
+  cmds[btn.dataset.cmd]?.();
+});
+
+// SEO preview
+function slugify(s) { return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-'); }
+function updateSeoPreview() {
+  const t = document.getElementById('bfMetaTitle').value || document.getElementById('bfTitle').value || 'Título';
+  const d = document.getElementById('bfMetaDesc').value || document.getElementById('bfExcerpt').value || 'Descripción…';
+  document.getElementById('bfPrevTitle').textContent = t.slice(0,60);
+  document.getElementById('bfPrevDesc').textContent  = d.slice(0,155);
+  document.getElementById('bfPrevSlug').textContent  = slugify(document.getElementById('bfTitle').value) || 'slug';
+}
+['bfTitle','bfMetaTitle','bfMetaDesc','bfExcerpt'].forEach(id => document.getElementById(id).addEventListener('input', updateSeoPreview));
+document.getElementById('bfMetaTitle').addEventListener('input', function() { document.getElementById('bfMetaTitleCount').textContent = `${this.value.length}/60`; });
+document.getElementById('bfMetaDesc').addEventListener('input', function()  { document.getElementById('bfMetaDescCount').textContent  = `${this.value.length}/155`; });
+
+// Guardar blog
+document.getElementById('blogSaveDraft').addEventListener('click', () => saveBlogPost('draft'));
+document.getElementById('blogPanelSave').addEventListener('click', () => saveBlogPost('published'));
+
+async function saveBlogPost(statusOverride) {
+  const title = document.getElementById('bfTitle').value.trim();
+  if (!title) { alert('El título es obligatorio'); return; }
+  const fd = new FormData();
+  fd.append('title',           title);
+  fd.append('excerpt',         document.getElementById('bfExcerpt').value);
+  fd.append('content',         document.getElementById('bfContent').innerHTML);
+  fd.append('category',        document.getElementById('bfCategory').value || 'General');
+  fd.append('tags',            document.getElementById('bfTags').value);
+  fd.append('status',          statusOverride);
+  fd.append('metaTitle',       document.getElementById('bfMetaTitle').value);
+  fd.append('metaDescription', document.getElementById('bfMetaDesc').value);
+  fd.append('metaKeywords',    document.getElementById('bfMetaKeys').value);
+  if (bfCoverFile) fd.append('cover', bfCoverFile);
+  else fd.append('cover', document.getElementById('bfCoverExisting').value || '');
+
+  const saveBtn = document.getElementById('blogPanelSave');
+  const draftBtn = document.getElementById('blogSaveDraft');
+  saveBtn.disabled = draftBtn.disabled = true;
+  saveBtn.textContent = 'Guardando…';
+  try {
+    const slug = document.getElementById('blogEditSlug').value;
+    const url = slug ? `/api/blog/${slug}` : '/api/blog';
+    const method = slug ? 'PUT' : 'POST';
+    const r = await fetch(url, { method, headers: { 'x-admin-password': pwd }, body: fd });
+    if (!r.ok) throw new Error((await r.json()).error);
+    closeBlogPanel(); loadBlogPosts(); loadStats();
+  } catch (err) { alert('Error: ' + err.message); }
+  saveBtn.disabled = draftBtn.disabled = false;
+  saveBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg> Publicar';
+}
+
+// ── PERFIL ────────────────────────────────────────────────────
+async function loadProfile() {
+  try {
+    const r = await fetch('/api/profile');
+    const p = await r.json();
+    document.getElementById('apName').value      = p.name||'';
+    document.getElementById('apRole').value      = p.role||'';
+    document.getElementById('apZone').value      = p.zone||'';
+    document.getElementById('apBio').value       = p.bio||'';
+    document.getElementById('apPhone').value     = p.phone||'';
+    document.getElementById('apPhoneLink').value = p.phone_link||'';
+    document.getElementById('apEmail').value     = p.email||'';
+    document.getElementById('apWhatsapp').value  = p.whatsapp||'';
+    document.getElementById('apWaMsg').value     = p.whatsapp_msg||'';
+    document.getElementById('apInstagram').value = p.instagram||'';
+    document.getElementById('apExp').value       = p.experience_years||'';
+    document.getElementById('apLicense').value   = p.license||'';
+    document.getElementById('apLanguages').value = p.languages||'';
+    document.getElementById('admProfileName').textContent = p.name||'';
+    document.getElementById('admProfileRole').textContent = p.role||'';
+    document.getElementById('admProfileZone').textContent = p.zone||'';
+    const av = document.getElementById('admProfileAvatar');
+    if (p.avatar) av.innerHTML = `<img src="/${p.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`;
+    else { const parts=(p.name||'AA').split(' '); av.textContent=(parts[0]?.[0]||'')+(parts[1]?.[0]||''); }
+  } catch (_) {}
+}
+
+document.getElementById('apAvatar').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const av = document.getElementById('admProfileAvatar');
+  av.innerHTML = `<img src="${URL.createObjectURL(f)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`;
+});
+
+document.getElementById('admProfileForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const fd = new FormData();
+  fd.append('name',             document.getElementById('apName').value);
+  fd.append('role',             document.getElementById('apRole').value);
+  fd.append('zone',             document.getElementById('apZone').value);
+  fd.append('bio',              document.getElementById('apBio').value);
+  fd.append('phone',            document.getElementById('apPhone').value);
+  fd.append('phone_link',       document.getElementById('apPhoneLink').value);
+  fd.append('email',            document.getElementById('apEmail').value);
+  fd.append('whatsapp',         document.getElementById('apWhatsapp').value);
+  fd.append('whatsapp_msg',     document.getElementById('apWaMsg').value);
+  fd.append('instagram',        document.getElementById('apInstagram').value);
+  fd.append('experience_years', document.getElementById('apExp').value);
+  fd.append('license',          document.getElementById('apLicense').value);
+  fd.append('languages',        document.getElementById('apLanguages').value);
+  const avatarFile = document.getElementById('apAvatar').files[0];
+  if (avatarFile) fd.append('avatar', avatarFile);
+  try {
+    const r = await fetch('/api/profile', { method:'PUT', headers:{'x-admin-password':pwd}, body:fd });
+    if (r.ok) {
+      const msg = document.getElementById('apSaveMsg');
+      msg.style.display = 'inline';
+      setTimeout(() => msg.style.display = 'none', 3000);
+      loadProfile();
+    }
+  } catch (_) { alert('Error al guardar'); }
+});
+
+// ── DONUT ─────────────────────────────────────────────────────
+function drawDonut(cId, lId, data, colors) {
+  const canvas = document.getElementById(cId); if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const entries = Object.entries(data);
+  const total = entries.reduce((s,[,v]) => s+v, 0);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if (!total) { ctx.fillStyle='#f3f4f6'; ctx.beginPath(); ctx.arc(70,70,60,0,Math.PI*2); ctx.fill(); return; }
+  let start = -Math.PI/2;
+  entries.forEach(([,v],i) => {
+    const slice = (v/total)*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(70,70); ctx.arc(70,70,62,start,start+slice); ctx.closePath();
+    ctx.fillStyle = colors[i%colors.length]; ctx.fill(); start += slice;
+  });
+  ctx.beginPath(); ctx.arc(70,70,36,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+  ctx.fillStyle='#111'; ctx.font='bold 16px Inter,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(total,70,70);
+  const legend = document.getElementById(lId);
+  legend.innerHTML = entries.map(([k,v],i) => `<div class="adm-legend-item"><span class="adm-legend-dot" style="background:${colors[i%colors.length]}"></span><span class="adm-legend-label">${cap(k)}</span><span class="adm-legend-val">${v}</span></div>`).join('');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+function fmtNum(n)   { return Number(n||0).toLocaleString('es-CO'); }
+function fmtPrice(n) { return n ? `$${Number(n).toLocaleString('es-CO')}` : '—'; }
+function fmtDate(iso){ if (!iso) return '—'; return new Date(iso).toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'}); }
+function cap(s)      { return s ? s.charAt(0).toUpperCase()+s.slice(1) : ''; }
+function escHtml(s)  { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── INTEGRACIONES ─────────────────────────────────────────────
+// Sub-tabs
+document.querySelectorAll('.adm-integ-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.adm-integ-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.adm-integ-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('aitab-' + tab.dataset.itab)?.classList.add('active');
+  });
+});
+
+async function loadIntegraciones() {
+  try {
+    const [sRes, kRes] = await Promise.all([
+      fetch('/api/admin/settings',  { headers: { 'x-admin-password': pwd } }),
+      fetch('/api/admin/api-keys',  { headers: { 'x-admin-password': pwd } })
+    ]);
+    const s = await sRes.json();
+    const keys = await kRes.json();
+    populateIntegSettings(s);
+    renderAdmApiKeys(keys);
+  } catch(e) { console.error(e); }
+}
+
+function populateIntegSettings(s) {
+  const g = id => document.getElementById(id);
+  // Marketing
+  if (g('admFbPixelId'))        g('admFbPixelId').value          = s.facebookPixelId || '';
+  if (g('admCustomCode'))       g('admCustomCode').value         = s.customHeadCode || '';
+  updatePixelStatusBadge(s.facebookPixelId);
+  // Feed URLs
+  const base = window.location.origin;
+  if (g('admFeedUrlJson')) g('admFeedUrlJson').textContent = `${base}/api/feed/facebook`;
+  if (g('admFeedUrlXml'))  g('admFeedUrlXml').textContent  = `${base}/api/feed/facebook.xml`;
+  // Webhooks
+  if (g('admWebhookUrl'))       g('admWebhookUrl').value         = s.webhookUrl || '';
+  if (g('admWevNewProp'))       g('admWevNewProp').checked       = (s.webhookEvents||[]).includes('new_property');
+  // Google Client ID para reseñas
+  if (g('googleClientIdInput')) g('googleClientIdInput').value = s.googleClientId || '';
+  // Servicios
+  if (g('admAnthropicKey'))     g('admAnthropicKey').placeholder = s.anthropicApiKey ? 'Clave guardada (' + s.anthropicApiKey + ')' : 'sk-ant-...';
+  // Chat
+  if (g('admChatEnabled'))      { g('admChatEnabled').checked    = !!s.chatEnabled; updateAdmChatLabel(); }
+  if (g('admChatGreeting'))     g('admChatGreeting').value       = s.chatGreeting || '';
+  if (g('admChatSystemPrompt')) g('admChatSystemPrompt').value   = s.chatSystemPrompt || '';
+}
+
+function updatePixelStatusBadge(pixelId) {
+  const el = document.getElementById('admPixelStatus');
+  if (!el) return;
+  if (pixelId && pixelId.trim()) {
+    el.innerHTML = '<span class="adm-pixel-active">● Activo</span>';
+  } else {
+    el.innerHTML = '<span class="adm-pixel-inactive">○ Sin configurar</span>';
+  }
+}
+
+function copyFeedUrl(type) {
+  const el = document.getElementById(type === 'json' ? 'admFeedUrlJson' : 'admFeedUrlXml');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    const btn = el.nextElementSibling;
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copiado';
+    setTimeout(() => btn.textContent = orig, 2000);
+  });
+}
+
+document.getElementById('admVerifyPixel')?.addEventListener('click', () => {
+  const id = document.getElementById('admFbPixelId')?.value.trim();
+  if (!id) return setIntegStatus('admPixelSaveStatus', 'Ingresa un Pixel ID primero', false);
+  if (!/^\d{10,20}$/.test(id)) return setIntegStatus('admPixelSaveStatus', 'El Pixel ID debe ser un número de 10-20 dígitos', false);
+  window.open(`https://www.facebook.com/ads/manager/pixel/facebook_pixel/?pixel_id=${id}`, '_blank');
+});
+
+document.getElementById('admBtnSaveMarketing')?.addEventListener('click', async () => {
+  const pixelId = document.getElementById('admFbPixelId')?.value.trim();
+  const customCode = document.getElementById('admCustomCode')?.value || '';
+  if (pixelId && !/^\d{10,20}$/.test(pixelId)) {
+    return setIntegStatus('admPixelSaveStatus', '⚠️ El Pixel ID debe ser solo números (10-20 dígitos)', false);
+  }
+  const ok = await saveIntegSettings({ facebookPixelId: pixelId, customHeadCode: customCode }, 'admPixelSaveStatus');
+  if (ok) updatePixelStatusBadge(pixelId);
+});
+
+function updateAdmChatLabel() {
+  const on = document.getElementById('admChatEnabled')?.checked;
+  const lbl = document.getElementById('admChatEnabledLabel');
+  if (lbl) lbl.textContent = on ? 'Activado' : 'Desactivado';
+}
+document.getElementById('admChatEnabled')?.addEventListener('change', updateAdmChatLabel);
+
+document.getElementById('saveGoogleClientId')?.addEventListener('click', async () => {
+  const val = document.getElementById('googleClientIdInput').value.trim();
+  const st  = document.getElementById('googleClientIdStatus');
+  try {
+    await fetch('/api/admin/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': pwd },
+      body: JSON.stringify({ googleClientId: val })
+    });
+    st.textContent = '✓ Guardado'; st.style.color = '#1e7e34';
+    setTimeout(() => { st.textContent = ''; }, 3000);
+  } catch (e) { st.textContent = '✗ Error'; st.style.color = '#e53935'; }
+});
+
+function renderAdmApiKeys(keys) {
+  const list = document.getElementById('admApiKeysList');
+  if (!list) return;
+  if (!keys.length) { list.innerHTML = '<p style="font-size:13px;color:#6b7280;font-style:italic;margin:12px 0;padding:10px 12px;background:#f8fafc;border:1.5px dashed #e2e8f0;border-radius:8px">No hay claves creadas aún.</p>'; return; }
+  list.innerHTML = keys.map(k => `
+    <div class="adm-key-item" data-id="${escHtml(k.id)}">
+      <div class="adm-key-item-info">
+        <span class="adm-key-item-name">${escHtml(k.name)}</span>
+        <span class="adm-key-item-meta">${escHtml(k.key)} · Creada ${fmtDate(k.created)}</span>
+      </div>
+      <button class="adm-key-del-btn" data-id="${escHtml(k.id)}" title="Eliminar">
+        <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>`).join('');
+  list.querySelectorAll('.adm-key-del-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('¿Eliminar esta API key?')) return;
+      await fetch('/api/admin/api-keys/' + btn.dataset.id, { method:'DELETE', headers:{'x-admin-password':pwd} });
+      loadIntegraciones();
+    });
+  });
+}
+
+document.getElementById('admBtnCreateKey')?.addEventListener('click', async () => {
+  const name = document.getElementById('admNewKeyName')?.value.trim();
+  if (!name) return alert('Ingresa un nombre para la clave');
+  try {
+    const res = await fetch('/api/admin/api-keys', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'x-admin-password': pwd },
+      body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (!res.ok) return alert(data.error || 'Error');
+    document.getElementById('admNewKeyName').value = '';
+    const box = document.getElementById('admNewKeyBox');
+    const val = document.getElementById('admNewKeyValue');
+    if (box && val) { val.textContent = data.key; box.style.display = 'block'; }
+    loadIntegraciones();
+  } catch(e) { alert('Error al crear clave'); }
+});
+
+document.getElementById('admCopyNewKey')?.addEventListener('click', () => {
+  const val = document.getElementById('admNewKeyValue')?.textContent;
+  if (val) navigator.clipboard.writeText(val).then(() => alert('✓ Clave copiada al portapapeles'));
+});
+
+function setIntegStatus(id, msg, isOk) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'adm-integ-status ' + (isOk ? 'ok' : 'err');
+  if (isOk) setTimeout(() => { el.className = 'adm-integ-status'; }, 3500);
+}
+
+async function saveIntegSettings(body, statusId) {
+  try {
+    const res = await fetch('/api/admin/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type':'application/json', 'x-admin-password': pwd },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error();
+    setIntegStatus(statusId, '✓ Guardado correctamente', true);
+    return true;
+  } catch { setIntegStatus(statusId, 'Error al guardar', false); return false; }
+}
+
+document.getElementById('admBtnSaveWebhook')?.addEventListener('click', async () => {
+  const events = [];
+  if (document.getElementById('admWevNewProp')?.checked) events.push('new_property');
+  await saveIntegSettings({ webhookUrl: document.getElementById('admWebhookUrl')?.value || '', webhookEvents: events }, 'admWebhookStatus');
+});
+
+document.getElementById('admBtnTestWebhook')?.addEventListener('click', async () => {
+  setIntegStatus('admWebhookStatus', 'Enviando prueba…', true);
+  try {
+    const res = await fetch('/api/admin/webhook-test', { method:'POST', headers:{'x-admin-password':pwd} });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error');
+    setIntegStatus('admWebhookStatus', '✓ Webhook de prueba enviado', true);
+  } catch(e) { setIntegStatus('admWebhookStatus', '✗ ' + (e.message||'Error'), false); }
+});
+
+document.getElementById('admBtnSaveServicios')?.addEventListener('click', async () => {
+  const key = document.getElementById('admAnthropicKey')?.value.trim();
+  const body = {};
+  if (key) body.anthropicApiKey = key;
+  const ok = await saveIntegSettings(body, 'admServiciosStatus');
+  if (ok) {
+    if (document.getElementById('admAnthropicKey')) document.getElementById('admAnthropicKey').value = '';
+    loadIntegraciones();
+  }
+});
+
+document.getElementById('admBtnSaveChat')?.addEventListener('click', async () => {
+  await saveIntegSettings({
+    chatEnabled:      document.getElementById('admChatEnabled')?.checked || false,
+    chatGreeting:     document.getElementById('admChatGreeting')?.value || '',
+    chatSystemPrompt: document.getElementById('admChatSystemPrompt')?.value || ''
+  }, 'admChatStatus');
+});
+
+// ─── SOCKET.IO — Tiempo real en el panel admin ───────────────
+function showAdminToast(msg) {
+  let t = document.getElementById('admRtToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'admRtToast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;font-size:13px;font-weight:600;padding:10px 20px;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:9999;transition:opacity .3s;pointer-events:none;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._t);
+  t._t = setTimeout(() => { t.style.opacity = '0'; }, 3000);
+}
+
+try {
+  const socket = io();
+
+  socket.on('new-property', () => {
+    if (currentSection === 'properties') loadProperties();
+    loadStats();
+  });
+
+  socket.on('property-updated', () => {
+    if (currentSection === 'properties') loadProperties();
+    if (currentSection === 'dashboard') loadStats();
+  });
+
+  socket.on('property-deleted', () => {
+    if (currentSection === 'properties') loadProperties();
+    loadStats();
+  });
+
+  socket.on('blog-new', () => {
+    if (currentSection === 'blog') loadBlogPosts();
+    loadStats();
+  });
+
+  socket.on('blog-updated', () => {
+    if (currentSection === 'blog') loadBlogPosts();
+  });
+
+  socket.on('blog-deleted', () => {
+    if (currentSection === 'blog') loadBlogPosts();
+    loadStats();
+  });
+} catch (_) {}
+
+// ── ESTADÍSTICAS ──────────────────────────────────────────────
+let statsCharts = {};
+
+async function loadStatistics() {
+  try {
+    const days = Number(document.getElementById('statsDateRange')?.value) || 30;
+    const [searchesData, leadsData, conversionData] = await Promise.all([
+      apiFetch(`/api/stats/searches?days=${days}`),
+      apiFetch(`/api/stats/leads?days=${days}`),
+      apiFetch(`/api/stats/conversion?days=${days}`)
+    ]);
+
+    // Cargar datos en tabs
+    loadSearchesStats(searchesData);
+    loadLeadsStats(leadsData);
+    loadConversionStats(conversionData);
+    loadPatterns(searchesData, leadsData);
+  } catch (e) { console.error('Error loading stats:', e); }
+}
+
+function loadSearchesStats(data) {
+  if (!data) return;
+  const canvas = document.getElementById('chartSearchesByDay');
+  if (canvas) drawLineChart(canvas, data.byDay, 'Búsquedas por día');
+  const canvasType = document.getElementById('chartSearchesByType');
+  if (canvasType) drawDonutChart(canvasType, Object.entries(data.byTipo || {}), 'Búsquedas por tipo');
+  const canvasMuni = document.getElementById('chartTopMunicipios');
+  if (canvasMuni) drawBarChart(canvasMuni, data.byMunicipio || [], 'Top municipios');
+  const canvasBarrio = document.getElementById('chartTopBarrios');
+  if (canvasBarrio) drawBarChart(canvasBarrio, data.byBarrio || [], 'Top barrios');
+
+  // Tabla de búsquedas recientes
+  const tbody = document.getElementById('searchesTableBody');
+  if (tbody) {
+    tbody.innerHTML = (data.recent || []).slice(0, 20).map(s => `
+      <tr>
+        <td>${JSON.stringify(s.filters || {}).substring(0, 50)}…</td>
+        <td>${s.resultsCount || 0}</td>
+        <td>${new Date(s.ts).toLocaleDateString('es-ES')}</td>
+      </tr>
+    `).join('') || '<tr><td colspan="3" style="text-align:center;color:#9ca3af">Sin datos</td></tr>';
+  }
+}
+
+function loadLeadsStats(data) {
+  if (!data) return;
+  const el = document.getElementById('kpiTotalLeads'); if (el) el.textContent = data.total || '0';
+  const elWa = document.getElementById('kpiWhatsappLeads'); if (elWa) elWa.textContent = data.byChannel?.whatsapp || '0';
+  const elPhone = document.getElementById('kpiPhoneLeads'); if (elPhone) elPhone.textContent = data.byChannel?.call || '0';
+
+  const canvas = document.getElementById('chartLeadsByDay');
+  if (canvas) drawLineChart(canvas, data.byDay, 'Leads por día');
+  const canvasCh = document.getElementById('chartLeadsByChannel');
+  if (canvasCh) drawDonutChart(canvasCh, Object.entries(data.byChannel || {}), 'Leads por canal');
+
+  // Tabla de leads recientes
+  const tbody = document.getElementById('leadsTableBody');
+  if (tbody) {
+    tbody.innerHTML = (data.recent || []).slice(0, 20).map(l => `
+      <tr>
+        <td>${l.propTitle?.substring(0, 30) || '—'}</td>
+        <td>${l.contactChannel || '—'}</td>
+        <td>${l.source || '—'}</td>
+        <td>${new Date(l.ts).toLocaleDateString('es-ES')}</td>
+      </tr>
+    `).join('') || '<tr><td colspan="4" style="text-align:center;color:#9ca3af">Sin datos</td></tr>';
+  }
+}
+
+function loadConversionStats(data) {
+  if (!data) return;
+  const el = document.getElementById('convTotal'); if (el) el.textContent = data.totalSearches || '0';
+  const elView = document.getElementById('convView'); if (elView) elView.textContent = data.conversionSearchToView || '0%';
+  const elLead = document.getElementById('convLead'); if (elLead) elLead.textContent = data.conversionViewToLead || '0%';
+  const elOverall = document.getElementById('convOverall'); if (elOverall) elOverall.textContent = data.conversionSearchToLead || '0%';
+
+  // Funnel chart
+  const canvas = document.getElementById('chartConversionFunnel');
+  if (canvas) drawFunnelChart(canvas, [
+    { label: 'Búsquedas', value: data.totalSearches || 0 },
+    { label: 'Vistas', value: data.totalViews || 0 },
+    { label: 'Leads', value: data.totalLeads || 0 }
+  ]);
+}
+
+function loadPatterns(searches, leads) {
+  if (!searches) return;
+
+  // Tabla de patrones
+  const tbody = document.getElementById('patternsTableBody');
+  if (tbody) {
+    const byMuni = {};
+    (searches.byMunicipio || []).forEach(([m, count]) => {
+      byMuni[m] = { searches: count, leads: 0 };
+    });
+    (leads?.recent || []).forEach(l => {
+      // Extraer municipio si está en los datos... simplificado por ahora
+    });
+
+    tbody.innerHTML = Object.entries(byMuni).slice(0, 10).map(([m, stats]) => {
+      const total = searches.total || 1;
+      const pct = ((stats.searches / total) * 100).toFixed(1);
+      const conv = stats.leads > 0 ? ((stats.leads / stats.searches) * 100).toFixed(1) : '0';
+      return `<tr><td>${m}</td><td>${stats.searches}</td><td>${pct}%</td><td>${stats.leads}</td><td>${conv}%</td></tr>`;
+    }).join('') || '<tr><td colspan="5" style="text-align:center;color:#9ca3af">Sin datos</td></tr>';
+  }
+
+  // Insights
+  const insights = document.getElementById('statsInsights');
+  if (insights) {
+    const topMuni = (searches.byMunicipio || [])[0];
+    const totalSearches = searches.total || 0;
+    const html = `
+      <p><strong>📊 Municipio más buscado:</strong> ${topMuni?.[0] || '—'} (${topMuni?.[1] || 0} búsquedas)</p>
+      <p><strong>📍 Total búsquedas:</strong> ${totalSearches}</p>
+      <p><strong>📱 Total leads:</strong> ${leads?.total || 0}</p>
+      <p><strong>💬 Canal preferido:</strong> ${Object.keys(leads?.byChannel || {})[0] || '—'}</p>
+    `;
+    insights.innerHTML = html;
+  }
+}
+
+// Canvas chart helpers (simplified)
+function drawLineChart(canvas, data, title) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Simplified line - just draw axis and label
+  ctx.font = '12px Arial';
+  ctx.fillStyle = '#6b7280';
+  ctx.fillText(title, 10, 20);
+  ctx.fillText(`${(data || []).length} registros`, 10, 40);
+}
+
+function drawBarChart(canvas, data, title) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.font = '12px Arial';
+  ctx.fillStyle = '#6b7280';
+  ctx.fillText(title, 10, 20);
+
+  const sorted = [...(data || [])].sort((a,b) => b[1]-a[1]);
+  sorted.slice(0,10).forEach((item, i) => {
+    const label = item[0]?.substring(0, 15) || '—';
+    const val = item[1] || 0;
+    const x = 10;
+    const y = 50 + i * 20;
+    ctx.fillStyle = '#6b7280';
+    ctx.fillText(`${label}: ${val}`, x, y);
+  });
+}
+
+function drawDonutChart(canvas, data, title) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Simplified - just show labels
+  ctx.font = '11px Arial';
+  ctx.fillStyle = '#6b7280';
+  data.slice(0, 5).forEach((item, i) => {
+    ctx.fillText(`${item[0]}: ${item[1]}`, 10, 20 + i * 15);
+  });
+}
+
+function drawFunnelChart(canvas, stages) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const w = canvas.width || 400;
+  const h = canvas.height || 300;
+  ctx.clearRect(0, 0, w, h);
+
+  const max = Math.max(...stages.map(s => s.value), 1);
+  const colors = ['#e71433', '#3b82f6', '#10b981'];
+
+  stages.forEach((stage, i) => {
+    const width = (w * 0.6) * (stage.value / max);
+    const x = (w - width) / 2;
+    const y = 40 + i * 80;
+
+    ctx.fillStyle = colors[i] || '#6b7280';
+    ctx.fillRect(x, y, width, 40);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 13px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(stage.label, w / 2, y + 14);
+    ctx.fillText(stage.value, w / 2, y + 30);
+  });
+}
+
+// Setup event listeners for stats
+document.addEventListener('DOMContentLoaded', () => {
+  // Tabs de estadísticas
+  document.querySelectorAll('.adm-stats-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.adm-stats-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.adm-stats-tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.getAttribute('data-tab');
+      document.querySelector(`.adm-stats-tab-content[data-tab="${tab}"]`)?.classList.add('active');
+    });
+  });
+
+  // Date range selector
+  const dateRange = document.getElementById('statsDateRange');
+  if (dateRange) {
+    dateRange.addEventListener('change', () => {
+      if (currentSection === 'estadísticas') loadStatistics();
+    });
+  }
+});
+
+// ── LOGOUT ────────────────────────────────────────────────────
+document.getElementById('admLogoutBtn').addEventListener('click', () => {
+  if (!confirm('¿Cerrar sesión?')) return;
+  sessionStorage.removeItem('adm_pwd_v2');
+  window.location.href = '/auth/logout';
+});
+</script>
+</body>
+</html>
