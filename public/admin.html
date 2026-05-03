@@ -1781,6 +1781,16 @@ try {
 // ── ESTADÍSTICAS ──────────────────────────────────────────────
 let statsCharts = {};
 
+// Helper: fetch autenticado con contraseña admin
+async function apiFetch(url, options = {}) {
+  const r = await fetch(url, {
+    ...options,
+    headers: { 'x-admin-password': pwd, ...(options.headers || {}) }
+  });
+  if (!r.ok) throw new Error(`Error ${r.status}`);
+  return r.json();
+}
+
 async function loadStatistics() {
   try {
     const days = Number(document.getElementById('statsDateRange')?.value) || 30;
