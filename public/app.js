@@ -2934,31 +2934,32 @@ function initBottomSheet() {
   let lastScrollTop = 0;
 
   function setHeight(h) {
-    const clamped = Math.max(56, Math.min(window.innerHeight * 0.80, h));
+    const clamped = Math.max(140, Math.min(window.innerHeight * 0.80, h));
     sidebar.style.height = clamped + 'px';
   }
 
   function expandSheet() {
     sidebar.classList.remove('sheet-hidden');
     sidebar.classList.add('sheet-expanded');
-    sidebar.style.height = '72vh';
+    sidebar.style.height = '80vh';
     state.leafletMap?.invalidateSize();
   }
 
   function collapseSheet() {
     sidebar.classList.remove('sheet-expanded');
     sidebar.classList.add('sheet-hidden');
-    sidebar.style.height = '56px';
+    sidebar.style.height = '140px';
     state.leafletMap?.invalidateSize();
   }
 
-  // ── DRAG EN HEADER ─────────────────────────────────────────
+  // ── DRAG EN HEADER con feedback visual ─────────────────────
   header.addEventListener('touchstart', (e) => {
     startY = e.touches[0].clientY;
     startH = sidebar.getBoundingClientRect().height;
     dragging = true;
     sidebar.classList.remove('sheet-expanded', 'sheet-hidden');
     sidebar.style.transition = 'none';
+    header.style.background = '#efefef'; // Feedback visual
   }, { passive: true });
 
   header.addEventListener('touchmove', (e) => {
@@ -2970,30 +2971,27 @@ function initBottomSheet() {
   header.addEventListener('touchend', () => {
     if (!dragging) return;
     dragging = false;
-    sidebar.style.transition = '';
+    header.style.background = '';
+    sidebar.style.transition = 'height .32s cubic-bezier(.34,.1,.68,.55)';
     const h = sidebar.getBoundingClientRect().height;
     const winH = window.innerHeight;
-    // Snap automático
-    if (h < 100)             { collapseSheet(); }
-    else if (h > winH * 0.45) { expandSheet(); }
-    else                     { sidebar.style.height = '220px'; }
+    // Snap automático: si pasó más de mitad de cambio, expandir; si no, colapsar
+    if (h > winH * 0.5) {
+      expandSheet();
+    } else {
+      collapseSheet();
+    }
     setTimeout(() => state.leafletMap?.invalidateSize(), 320);
   });
 
-  // ── TAP EN HEADER (sin drag) → 3 estados: oculto→peek, peek→expandido, expandido→oculto
+  // ── TAP EN HEADER (sin drag) → 2 estados: collapsed↔expanded
   header.addEventListener('click', (e) => {
     if (dragging) return;
-    const isHidden   = sidebar.classList.contains('sheet-hidden');
-    const isExpanded = sidebar.classList.contains('sheet-expanded');
-    sidebar.classList.remove('sheet-hidden', 'sheet-expanded');
-    sidebar.style.transition = 'height .32s cubic-bezier(.4,0,.2,1)';
-    if (isHidden) {
-      sidebar.style.height = '44vh'; // oculto → peek (50/50)
-    } else if (isExpanded) {
-      sidebar.classList.add('sheet-hidden'); // expandido → ocultar
-      sidebar.style.height = '56px';
+    sidebar.style.transition = 'height .32s cubic-bezier(.34,.1,.68,.55)';
+    if (sidebar.classList.contains('sheet-expanded')) {
+      collapseSheet(); // expandido → colapsar
     } else {
-      expandSheet(); // peek → expandir
+      expandSheet(); // colapsado → expandir
     }
     setTimeout(() => state.leafletMap?.invalidateSize(), 320);
   });
