@@ -3,7 +3,7 @@
    Maneja listado de posts (/blog) y vista individual (/post.html)
 ═════════════════════════════════════════════════════════════ */
 
-const IS_POST_PAGE = document.body.classList.contains('post-body') && !document.body.classList.contains('post-body') || document.getElementById('postArticle') !== null;
+const IS_POST_PAGE = document.body.classList.contains('post-body') || document.getElementById('postArticle') !== null;
 
 // ─── HELPERS ──────────────────────────────────────────────────
 function fmt(isoDate) {

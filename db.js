@@ -53,11 +53,11 @@ async function seedData() {
       likes: 0,
       created_at: now,
       images: [
-        { id: genId(), filename: 'assets/rriendo en Vivaré Plaza Residencial  (1).jpeg', order_index: 0 },
-        { id: genId(), filename: 'assets/rriendo en Vivaré Plaza Residencial  (2).jpeg', order_index: 1 },
-        { id: genId(), filename: 'assets/rriendo en Vivaré Plaza Residencial  (3).jpeg', order_index: 2 },
-        { id: genId(), filename: 'assets/rriendo en Vivaré Plaza Residencial  (4).jpeg', order_index: 3 },
-        { id: genId(), filename: 'assets/rriendo en Vivaré Plaza Residencial  (5).jpeg', order_index: 4 }
+        { id: genId(), filename: 'assets/Arriendo en Vivaré Plaza Residencial  (1).jpeg', order_index: 0 },
+        { id: genId(), filename: 'assets/Arriendo en Vivaré Plaza Residencial  (2).jpeg', order_index: 1 },
+        { id: genId(), filename: 'assets/Arriendo en Vivaré Plaza Residencial  (3).jpeg', order_index: 2 },
+        { id: genId(), filename: 'assets/Arriendo en Vivaré Plaza Residencial  (4).jpeg', order_index: 3 },
+        { id: genId(), filename: 'assets/Arriendo en Vivaré Plaza Residencial  (5).jpeg', order_index: 4 }
       ]
     },
     {

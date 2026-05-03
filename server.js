@@ -97,11 +97,17 @@ app.use('/api/', globalLimiter);
 app.use(cors());
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
+if (!process.env.SESSION_SECRET) {
+  console.warn('⚠️  SESSION_SECRET no definido, usando valor de fallback inseguro');
+}
 app.use(session({
   secret: process.env.SESSION_SECRET || 'alex-arias-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24h
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // HTTPS-only en producción
+    maxAge: 24 * 60 * 60 * 1000 // 24h
+  }
 }));
 app.use(passport.initialize());
 app.use(passport.session());

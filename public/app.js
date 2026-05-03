@@ -51,6 +51,11 @@ function debounce(fn, ms) {
   return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 }
 
+// BUG FIX #1: escHtml no estaba definida en app.js (solo en admin.html)
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function showToast(msg, duration = 2200) {
   let toast = document.getElementById('globalToast');
   if (!toast) {
@@ -1034,8 +1039,8 @@ function openCard(card) {
   // Facebook Pixel: ViewContent
   if (typeof fbq === 'function') {
     const propId = card.dataset.propId || '';
-    const title  = card.querySelector('.property-title')?.textContent || '';
-    const price  = card.querySelector('.property-price')?.textContent || '';
+    const title  = card.querySelector('.detail-header h3')?.textContent || card.querySelector('.map-card-title')?.textContent || '';
+    const price  = card.querySelector('.card-price')?.textContent || '';
     fbq('track', 'ViewContent', { content_ids: [propId], content_type: 'home_listing', content_name: title, value: price });
   }
   card.querySelector('.expand-toggle')?.setAttribute('aria-expanded', 'true');
@@ -2129,6 +2134,9 @@ function setupFilters() {
     document.getElementById('filterMunicipio').value = '';
     document.getElementById('filterBarrio').value = '';
     document.getElementById('searchInput').value = '';
+    // BUG FIX #9: recargar propiedades y cerrar panel después de limpiar
+    loadProperties();
+    closeMobilePanel();
   });
 
   // ── MODAL PERFIL ──────────────────────────────────────────────
@@ -2409,7 +2417,7 @@ function renderMapSidebar(props) {
   const count = document.getElementById('mapSidebarCount');
   if (!list) return;
 
-  count.textContent = `${props.length} inmueble${props.length !== 1 ? 's' : ''} en esta zona`;
+  if (count) count.textContent = `${props.length} inmueble${props.length !== 1 ? 's' : ''} en esta zona`;
 
   if (!props.length) {
     list.innerHTML = '<p style="padding:24px 12px;color:#aaa;font-size:13px;text-align:center;grid-column:1/-1">Sin inmuebles en esta área</p>';
@@ -4057,7 +4065,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const cardTitle = cardContainer?.querySelector('.property-title')?.textContent
                       || cardContainer?.querySelector('.map-card-title')?.textContent
                       || 'Inmueble mapa';
-      const prop = state.properties.find(p => p._id === cardId);
+      const prop = state.properties.find(p => String(p.id) === String(cardId));
       trackLead('mapa_tarjeta_wa', cardTitle, cardId, prop?.precio);
     }
     if (waOverlay) {
@@ -4429,6 +4437,8 @@ function setupReviewsPanel() {
       document.getElementById('replyText').value = review.reply?.text || '';
       const counter = document.getElementById('replyCharCount');
       counter.textContent = review.reply?.text?.length || 0;
+      // BUG FIX #4: actualizar el onclick para que apunte a la reseña correcta
+      modal.querySelector('.reply-modal-submit').setAttribute('onclick', `submitReply('${reviewId}')`);
     }
 
     modal.style.display = 'flex';
