@@ -872,6 +872,8 @@ setInterval(() => {
 function showShell() {
   document.getElementById('admLogin').style.display = 'none';
   document.getElementById('admShell').style.display = 'flex';
+  document.getElementById('admBottomNav').style.display = '';
+  document.getElementById('admFab').style.display = '';
   loadStats(); loadProperties();
 }
 
@@ -2166,7 +2168,7 @@ new MutationObserver(() => {
 </script>
 
 <!-- Bottom nav mobile -->
-<nav class="adm-bottom-nav" id="admBottomNav">
+<nav class="adm-bottom-nav" id="admBottomNav" style="display:none">
   <button class="adm-bottom-nav-item active" data-section="dashboard">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     Inicio
@@ -2190,7 +2192,7 @@ new MutationObserver(() => {
 </nav>
 
 <!-- FAB nueva propiedad (mobile) -->
-<button class="adm-fab hidden" id="admFab" aria-label="Nueva propiedad">
+<button class="adm-fab hidden" id="admFab" aria-label="Nueva propiedad" style="display:none">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
     <path d="M12 5v14M5 12h14"/>
   </svg>
