@@ -111,6 +111,72 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
+// ── RUTA / CON OG TAGS DINÁMICOS POR PROPIEDAD ───────────────
+// Debe ir ANTES de express.static para interceptar GET /
+app.get('/', async (req, res) => {
+  try {
+    const propId = req.query.id;
+    const baseUrl = process.env.SITE_URL || 'https://alexariasc.com';
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    let html = fs.readFileSync(indexPath, 'utf8');
+
+    // Valores por defecto
+    let ogTitle = 'Alex Arias · Consultor Inmobiliario';
+    let ogDesc  = 'Portafolio inmobiliario de Alexander Arias — Arriendo y venta de apartamentos en Sabaneta, Envigado y Medellín';
+    let ogImage = `${baseUrl}/assets/logo/Logo.png`;
+    let ogUrl   = baseUrl;
+
+    // Si viene ?id=, buscar la propiedad y personalizar OG tags
+    if (propId) {
+      try {
+        const db = getDB();
+        const prop = await db.findOneAsync({ _id: propId });
+        if (prop) {
+          const precio = prop.precio
+            ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(prop.precio)
+            : '';
+          ogTitle = `${prop.title} — ${prop.municipio}`;
+          ogDesc  = [
+            prop.tipo === 'arriendo' ? 'En arriendo' : prop.tipo === 'venta' ? 'En venta' : '',
+            precio,
+            prop.area   ? `${prop.area} m²`           : '',
+            prop.habitaciones ? `${prop.habitaciones} habitaciones` : '',
+            prop.banos  ? `${prop.banos} baños`        : '',
+            prop.barrio || ''
+          ].filter(Boolean).join(' · ');
+          if (prop.images && prop.images.length > 0) {
+            ogImage = `${baseUrl}/${prop.images[0].filename}`;
+          }
+          ogUrl = `${baseUrl}/?id=${propId}`;
+        }
+      } catch (_) { /* propiedad no encontrada, usar defaults */ }
+    }
+
+    // Escapar para atributos HTML
+    const esc = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    const ogTags = `
+  <!-- OG tags dinámicos -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:site_name"   content="Alex Arias · Consultor Inmobiliario" />
+  <meta property="og:title"       content="${esc(ogTitle)}" />
+  <meta property="og:description" content="${esc(ogDesc)}" />
+  <meta property="og:image"       content="${esc(ogImage)}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:url"         content="${esc(ogUrl)}" />
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="${esc(ogTitle)}" />
+  <meta name="twitter:description" content="${esc(ogDesc)}" />
+  <meta name="twitter:image"       content="${esc(ogImage)}" />`;
+
+    html = html.replace('</head>', ogTags + '\n</head>');
+    res.send(html);
+  } catch (err) {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 app.use('/uploads', express.static(uploadsDir));

@@ -1614,8 +1614,21 @@ function setupShareSheet() {
   document.getElementById('shareWhatsApp').addEventListener('click', () => {
     const prop = state.properties.find(p => String(p.id) === String(state.shareTargetId));
     if (!prop) return;
-    const url = `${window.location.origin}${window.location.pathname}?id=${prop.id}`;
-    const text = `🏠 ${prop.title}\n📍 ${prop.municipio} · ${prop.barrio}\n💰 ${formatPrice(prop.precio)}\n\n${url}`;
+    const url = `${window.location.origin}/?id=${prop.id}`;
+    const tipo = prop.tipo === 'arriendo' ? '🔑 Arriendo' : prop.tipo === 'venta' ? '🏷️ Venta' : '';
+    const lines = [
+      `🏠 *${prop.title}*`,
+      `📍 ${[prop.municipio, prop.barrio].filter(Boolean).join(', ')}`,
+      tipo ? tipo : '',
+      `💰 ${formatPrice(prop.precio)}`,
+      prop.area        ? `📐 ${prop.area} m²`                       : '',
+      prop.habitaciones? `🛏️ ${prop.habitaciones} habitaciones`     : '',
+      prop.banos       ? `🚿 ${prop.banos} baños`                   : '',
+      prop.parqueadero ? `🚗 Parqueadero incluido`                   : '',
+      '',
+      `🔗 Ver propiedad: ${url}`
+    ].filter(s => s !== null && s !== undefined);
+    const text = lines.join('\n');
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     hideShareSheet();
   });
