@@ -434,6 +434,63 @@
           </div>
 
         </div>
+
+        <!-- ── Debug Dashboard Pixel / CAPI (full-width) ─────────── -->
+        <div class="adm-card" id="pixelDebugCard" style="margin-top:0">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+            <div class="adm-service-logo" style="background:linear-gradient(135deg,#0ea5e9,#0369a1);color:#fff;font-size:11px;font-weight:700;text-align:center;line-height:1.2;flex-shrink:0">📊</div>
+            <div style="flex:1;min-width:0">
+              <strong style="color:#e5e7eb;display:block">Debug de Pixel & CAPI</strong>
+              <span class="adm-service-subdesc">Monitorea en tiempo real cada evento enviado a Meta</span>
+            </div>
+            <div id="pixelHealthBadge" style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;background:#374151;color:#9ca3af">Cargando…</div>
+          </div>
+
+          <!-- Health + acciones -->
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:center">
+            <button class="adm-btn-outline" id="btnPixelHealth" style="font-size:12px">
+              🔍 Verificar configuración
+            </button>
+            <button class="adm-btn-outline" id="btnTestEvent" style="font-size:12px">
+              🚀 Disparar evento de prueba
+            </button>
+            <select id="testEventSelect" class="adm-input" style="width:auto;font-size:12px;padding:7px 10px">
+              <option value="ViewContent">ViewContent</option>
+              <option value="Lead">Lead</option>
+              <option value="Search">Search</option>
+              <option value="AddToWishlist">AddToWishlist</option>
+              <option value="PageView">PageView</option>
+            </select>
+            <div style="flex:1"></div>
+            <button class="adm-btn-outline" id="btnRefreshEvents" style="font-size:12px">↻ Actualizar</button>
+            <button class="adm-btn-outline" id="btnClearEvents" style="font-size:12px;color:#ef4444;border-color:#ef4444">🗑 Limpiar logs</button>
+          </div>
+
+          <!-- Health details -->
+          <div id="pixelHealthDetails" style="display:none;background:#0f172a;border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:12px;color:#94a3b8;line-height:1.8"></div>
+
+          <!-- Events table -->
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead>
+                <tr style="color:#64748b;border-bottom:1px solid #1e293b;text-align:left">
+                  <th style="padding:6px 8px;white-space:nowrap">Estado</th>
+                  <th style="padding:6px 8px;white-space:nowrap">Evento</th>
+                  <th style="padding:6px 8px;white-space:nowrap">Valor</th>
+                  <th style="padding:6px 8px;white-space:nowrap">User Data</th>
+                  <th style="padding:6px 8px;white-space:nowrap">CAPI</th>
+                  <th style="padding:6px 8px;white-space:nowrap">ms</th>
+                  <th style="padding:6px 8px;white-space:nowrap">Fecha</th>
+                </tr>
+              </thead>
+              <tbody id="pixelEventsBody">
+                <tr><td colspan="7" style="padding:20px;text-align:center;color:#64748b">Cargando eventos…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p id="pixelEventsTotal" style="font-size:11px;color:#64748b;margin-top:8px;text-align:right"></p>
+        </div>
+
       </div>
 
       <!-- Tab: API Keys -->
@@ -606,9 +663,10 @@
       <!-- Tipo de operación -->
       <div class="adm-form-section">
         <p class="adm-form-section-title">Tipo de operación</p>
-        <div class="adm-tipo-btns">
+        <div class="adm-tipo-btns adm-tipo-btns--3">
           <button type="button" class="adm-tipo-btn active" data-val="arriendo">Arriendo</button>
           <button type="button" class="adm-tipo-btn" data-val="venta">Venta</button>
+          <button type="button" class="adm-tipo-btn" data-val="combinado">Arriendo y Venta</button>
         </div>
         <div class="adm-estado-btns" style="margin-top:8px">
           <button type="button" class="adm-estado-btn active" data-val="libre">● Disponible</button>
@@ -636,15 +694,30 @@
       <!-- Precio y detalles -->
       <div class="adm-form-section">
         <p class="adm-form-section-title">Precio y detalles</p>
-        <div class="adm-form-row">
+        <!-- Precio simple (arriendo / venta) -->
+        <div id="pfPrecioSimple">
           <div class="adm-form-group">
             <label>Precio (COP) *</label>
             <div class="adm-input-prefix-wrap"><span class="adm-input-prefix">$</span><input type="number" id="pfPrecio" class="adm-input adm-input--prefix" placeholder="3500000" min="0" /></div>
           </div>
-          <div class="adm-form-group">
-            <label>Área</label>
-            <div class="adm-input-suffix-wrap"><input type="number" id="pfArea" class="adm-input adm-input--suffix" placeholder="87" /><span class="adm-input-suffix">m²</span></div>
+        </div>
+        <!-- Precio combinado (arriendo + venta) -->
+        <div id="pfPrecioCombinado" style="display:none">
+          <div class="adm-form-row">
+            <div class="adm-form-group">
+              <label>Precio Arriendo (COP)</label>
+              <div class="adm-input-prefix-wrap"><span class="adm-input-prefix">$</span><input type="number" id="pfPrecioArriendo" class="adm-input adm-input--prefix" placeholder="3500000" min="0" /></div>
+            </div>
+            <div class="adm-form-group">
+              <label>Precio Venta (COP)</label>
+              <div class="adm-input-prefix-wrap"><span class="adm-input-prefix">$</span><input type="number" id="pfPrecioVenta" class="adm-input adm-input--prefix" placeholder="450000000" min="0" /></div>
+            </div>
           </div>
+        </div>
+        <!-- Área siempre visible -->
+        <div class="adm-form-group">
+          <label>Área</label>
+          <div class="adm-input-suffix-wrap"><input type="number" id="pfArea" class="adm-input adm-input--suffix" placeholder="87" /><span class="adm-input-suffix">m²</span></div>
         </div>
         <div class="adm-form-row">
           <div class="adm-form-group">
@@ -675,8 +748,44 @@
 
       <!-- Amenidades -->
       <div class="adm-form-section">
-        <p class="adm-form-section-title">Amenidades</p>
-        <div class="adm-form-group"><textarea id="pfAmenidades" class="adm-textarea" rows="3" placeholder="Piscina, Gimnasio, Seguridad 24h…"></textarea><span class="adm-field-hint">Una por línea o separadas por coma</span></div>
+        <p class="adm-form-section-title">Amenidades y características adicionales</p>
+        <div class="adm-form-group">
+          <div class="adm-caract-sugerencias" id="pfSugChips">
+            <button type="button" class="adm-sug-pill" data-sug="Balcón">Balcón</button>
+            <button type="button" class="adm-sug-pill" data-sug="Terraza">Terraza</button>
+            <button type="button" class="adm-sug-pill" data-sug="Ascensor">Ascensor</button>
+            <button type="button" class="adm-sug-pill" data-sug="Depósito">Depósito</button>
+            <button type="button" class="adm-sug-pill" data-sug="Piscina">Piscina</button>
+            <button type="button" class="adm-sug-pill" data-sug="Gimnasio">Gimnasio</button>
+            <button type="button" class="adm-sug-pill" data-sug="Zona BBQ">Zona BBQ</button>
+            <button type="button" class="adm-sug-pill" data-sug="Portería 24h">Portería 24h</button>
+            <button type="button" class="adm-sug-pill" data-sug="Zona de ropas">Zona de ropas</button>
+            <button type="button" class="adm-sug-pill" data-sug="Cuarto de servicio">Cuarto de servicio</button>
+            <button type="button" class="adm-sug-pill" data-sug="Salón comunal">Salón comunal</button>
+            <button type="button" class="adm-sug-pill" data-sug="Jacuzzi">Jacuzzi</button>
+            <button type="button" class="adm-sug-pill" data-sug="Vista panorámica">Vista panorámica</button>
+            <button type="button" class="adm-sug-pill" data-sug="Calentador">Calentador</button>
+            <button type="button" class="adm-sug-pill" data-sug="Gas natural">Gas natural</button>
+            <button type="button" class="adm-sug-pill" data-sug="Cancha">Cancha</button>
+            <button type="button" class="adm-sug-pill" data-sug="Parque infantil">Parque infantil</button>
+            <button type="button" class="adm-sug-pill" data-sug="Zona de mascotas">Zona de mascotas</button>
+            <button type="button" class="adm-sug-pill" data-sug="Bikeroom">Bikeroom</button>
+            <button type="button" class="adm-sug-pill" data-sug="Coworking">Coworking</button>
+            <button type="button" class="adm-sug-pill" data-sug="Chimenea">Chimenea</button>
+            <button type="button" class="adm-sug-pill" data-sug="Sauna">Sauna</button>
+            <button type="button" class="adm-sug-pill" data-sug="Shut de basuras">Shut de basuras</button>
+            <button type="button" class="adm-sug-pill" data-sug="Closets">Closets</button>
+            <button type="button" class="adm-sug-pill" data-sug="Cocina integral">Cocina integral</button>
+            <button type="button" class="adm-sug-pill" data-sug="Patio">Patio</button>
+            <button type="button" class="adm-sug-pill" data-sug="Jardín">Jardín</button>
+          </div>
+          <div class="adm-tags-input-wrap" id="pfAmenTagsWrap">
+            <div class="adm-tags-list" id="pfAmenList"></div>
+            <input type="text" class="adm-tags-text-input" id="pfAmenInput" placeholder="Escribe y presiona Enter…" autocomplete="off" />
+          </div>
+          <input type="hidden" id="pfAmenidades" />
+          <span class="adm-field-hint">Clic en sugerencia o escribe y presiona Enter / coma</span>
+        </div>
       </div>
 
       <!-- Ubicación con mapa -->
@@ -1027,14 +1136,16 @@ function openPropPanel(prop = null) {
   document.getElementById('pfSector').value     = prop?.sector || '';
   document.getElementById('pfDireccion').value  = prop?.direccion || '';
   document.getElementById('pfPiso').value       = prop?.piso || '';
-  document.getElementById('pfPrecio').value     = prop?.precio || '';
+  document.getElementById('pfPrecio').value         = prop?.precio || '';
+  document.getElementById('pfPrecioArriendo').value = prop?.precioArriendo || '';
+  document.getElementById('pfPrecioVenta').value    = prop?.precioVenta    || '';
   document.getElementById('pfArea').value       = prop?.area || '';
   document.getElementById('pfHab').value        = prop?.habitaciones || '';
   document.getElementById('pfBanos').value      = prop?.banos || '';
   document.getElementById('pfParqueadero').checked = !!(prop?.parqueadero);
   document.getElementById('pfCuartoUtil').checked  = !!(prop?.cuarto_util);
   document.getElementById('pfEstudio').checked     = !!(prop?.estudio);
-  document.getElementById('pfAmenidades').value = (prop?.amenidades||[]).join('\n');
+  pfSetTags(prop?.amenidades || []);
   document.getElementById('pfDescripcion').value = prop?.descripcion || '';
   document.getElementById('pfLat').value        = prop?.lat || '';
   document.getElementById('pfLng').value        = prop?.lng || '';
@@ -1082,6 +1193,9 @@ document.getElementById('propPanelOverlay').addEventListener('click', closePropP
 function setTipo(val) {
   document.getElementById('pfTipo').value = val;
   document.querySelectorAll('.adm-tipo-btn').forEach(b => b.classList.toggle('active', b.dataset.val === val));
+  const isCombinado = val === 'combinado';
+  document.getElementById('pfPrecioSimple').style.display    = isCombinado ? 'none' : '';
+  document.getElementById('pfPrecioCombinado').style.display = isCombinado ? ''     : 'none';
 }
 function setEstado(val) {
   document.getElementById('pfEstado').value = val;
@@ -1120,7 +1234,14 @@ document.getElementById('propPanelSave').addEventListener('click', async () => {
   fd.append('sector',      document.getElementById('pfSector').value);
   fd.append('direccion',   document.getElementById('pfDireccion').value);
   fd.append('piso',        document.getElementById('pfPiso').value);
-  fd.append('precio',      document.getElementById('pfPrecio').value);
+  const _tipo = document.getElementById('pfTipo').value;
+  if (_tipo === 'combinado') {
+    fd.append('precioArriendo', document.getElementById('pfPrecioArriendo').value);
+    fd.append('precioVenta',    document.getElementById('pfPrecioVenta').value);
+    fd.append('precio',         document.getElementById('pfPrecioArriendo').value);
+  } else {
+    fd.append('precio', document.getElementById('pfPrecio').value);
+  }
   fd.append('area',        document.getElementById('pfArea').value);
   fd.append('habitaciones',document.getElementById('pfHab').value);
   fd.append('banos',       document.getElementById('pfBanos').value);
@@ -1264,9 +1385,9 @@ function parsePropText(txt) {
   if (/\bestudio\b/i.test(txt)) document.getElementById('pfEstudio').checked = true;
   const munis = ['Sabaneta','Envigado','Medellín','Itagüí','Bello','La Estrella','Caldas'];
   for (const m of munis) { if (new RegExp(m,'i').test(txt)) { document.getElementById('pfMunicipio').value = m; break; } }
-  if (!document.getElementById('pfAmenidades').value) {
+  if (!_pfAmenTags.length) {
     const amenLines = txt.split(/[,\n]/).map(s=>s.trim()).filter(s=>s.length>3 && !/^\$|m²|hab|baño|arriendo|venta|apto|casa/i.test(s)).slice(0,10);
-    if (amenLines.length) document.getElementById('pfAmenidades').value = amenLines.join('\n');
+    amenLines.forEach(a => pfAddTag(a));
   }
 }
 
@@ -2152,6 +2273,209 @@ document.addEventListener('click', function(e) {
   document.querySelectorAll('.adm-bottom-nav-item').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 });
+
+// ── AMENIDADES TAG INPUT (panel propiedad) ────────────────────
+let _pfAmenTags = [];
+
+function pfInitTagsInput() {
+  const wrap  = document.getElementById('pfAmenTagsWrap');
+  const input = document.getElementById('pfAmenInput');
+  if (!wrap || !input) return;
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const v = input.value.trim().replace(/,+$/, '');
+      if (v) pfAddTag(v);
+      input.value = '';
+    } else if (e.key === 'Backspace' && !input.value && _pfAmenTags.length) {
+      pfRemoveTag(_pfAmenTags.length - 1);
+    }
+  });
+
+  input.addEventListener('paste', e => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    text.split(/[,\n]+/).forEach(t => { const v = t.trim(); if (v) pfAddTag(v); });
+  });
+
+  wrap.addEventListener('click', e => {
+    if (!e.target.closest('.adm-amenidad-tag')) input.focus();
+  });
+
+  document.querySelectorAll('.adm-sug-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const sug = pill.dataset.sug;
+      if (_pfAmenTags.includes(sug)) {
+        pfRemoveTag(_pfAmenTags.indexOf(sug));
+      } else {
+        pfAddTag(sug);
+      }
+    });
+  });
+}
+
+function pfAddTag(text) {
+  const clean = text.trim();
+  if (!clean || _pfAmenTags.includes(clean)) return;
+  _pfAmenTags.push(clean);
+  pfRenderTags();
+}
+
+function pfRemoveTag(index) {
+  _pfAmenTags.splice(index, 1);
+  pfRenderTags();
+}
+
+function pfSetTags(arr) {
+  _pfAmenTags = Array.isArray(arr) ? [...arr] : [];
+  pfRenderTags();
+}
+
+function pfRenderTags() {
+  const list = document.getElementById('pfAmenList');
+  if (!list) return;
+  list.innerHTML = _pfAmenTags.map((tag, i) => `
+    <span class="adm-amenidad-tag">
+      ${tag.replace(/</g,'&lt;')}
+      <button type="button" class="adm-amenidad-tag-remove" data-idx="${i}" title="Quitar">✕</button>
+    </span>`).join('');
+  list.querySelectorAll('.adm-amenidad-tag-remove').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); pfRemoveTag(parseInt(btn.dataset.idx)); });
+  });
+  pfSyncSugChips();
+  pfSyncAmenHidden();
+}
+
+function pfSyncSugChips() {
+  document.querySelectorAll('.adm-sug-pill').forEach(pill => {
+    const added = _pfAmenTags.includes(pill.dataset.sug);
+    pill.classList.toggle('sug-added', added);
+    pill.disabled = false;
+  });
+}
+
+function pfSyncAmenHidden() {
+  const h = document.getElementById('pfAmenidades');
+  if (h) h.value = JSON.stringify(_pfAmenTags);
+}
+
+pfInitTagsInput();
+
+// ── PIXEL DEBUG DASHBOARD ─────────────────────────────────────
+async function loadPixelHealth() {
+  const badge   = document.getElementById('pixelHealthBadge');
+  const details = document.getElementById('pixelHealthDetails');
+  if (!badge) return;
+  try {
+    const r = await fetch('/api/pixel-health');
+    const d = await r.json();
+    if (d.ok) {
+      badge.style.background = '#14532d'; badge.style.color = '#4ade80';
+      badge.textContent = '✓ Pixel + CAPI activos';
+    } else if (d.pixel?.configured && !d.capi?.configured) {
+      badge.style.background = '#78350f'; badge.style.color = '#fbbf24';
+      badge.textContent = '⚠ Pixel OK · CAPI sin token';
+    } else {
+      badge.style.background = '#450a0a'; badge.style.color = '#f87171';
+      badge.textContent = '✕ Sin configurar';
+    }
+    if (details) {
+      details.style.display = 'block';
+      details.innerHTML = [
+        `<span style="color:#e2e8f0;font-weight:600">Pixel:</span> ${d.pixel.configured ? `<span style="color:#4ade80">✓ Configurado</span> — ID: <code style="color:#7dd3fc">${d.pixel.id || '?'}</code>` : '<span style="color:#f87171">✕ No configurado — agrega tu Pixel ID arriba</span>'}`,
+        `<span style="color:#e2e8f0;font-weight:600">CAPI Token:</span> ${d.capi.configured ? '<span style="color:#4ade80">✓ FB_ACCESS_TOKEN encontrado en .env</span>' : '<span style="color:#fbbf24">⚠ Falta FB_ACCESS_TOKEN en .env del servidor</span>'}`,
+        `<span style="color:#e2e8f0;font-weight:600">Test Mode:</span> ${d.testMode ? '<span style="color:#a78bfa">✓ FB_TEST_EVENT_CODE activo — los eventos aparecen en Events Manager → Test Events</span>' : '<span style="color:#64748b">— Producción (sin test code)</span>'}`
+      ].join('<br>');
+    }
+  } catch (_) {
+    if (badge) { badge.style.background = '#450a0a'; badge.style.color = '#f87171'; badge.textContent = '✕ Error al verificar'; }
+  }
+}
+
+async function loadPixelEvents() {
+  const tbody = document.getElementById('pixelEventsBody');
+  const total = document.getElementById('pixelEventsTotal');
+  if (!tbody) return;
+  try {
+    const r = await fetch('/api/admin/pixel-events?limit=50', { headers: { 'x-admin-password': pwd } });
+    const d = await r.json();
+    if (!d.ok || !d.events?.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="padding:20px;text-align:center;color:#64748b">Sin eventos registrados. Los eventos aparecerán aquí cuando alguien visite el sitio con Pixel configurado.</td></tr>';
+      if (total) total.textContent = '';
+      return;
+    }
+    const statusIcon = s => ({ success:'<span style="color:#4ade80">✓</span>', error:'<span style="color:#f87171">✕</span>', skipped:'<span style="color:#94a3b8">–</span>', sent:'<span style="color:#60a5fa">→</span>', pending:'<span style="color:#fbbf24">…</span>' }[s] || s);
+    const timeAgo = d => {
+      const s = Math.round((Date.now() - new Date(d).getTime()) / 1000);
+      if (s < 60) return `hace ${s}s`;
+      if (s < 3600) return `hace ${Math.round(s/60)}m`;
+      return new Date(d).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+    };
+    tbody.innerHTML = d.events.map(e => {
+      const isTest = e.eventName?.startsWith('[TEST]');
+      const capiOk = e.capiResponse?.events_received > 0;
+      return `<tr style="border-bottom:1px solid #1e293b;${isTest?'background:rgba(167,139,250,.04)':''}">
+        <td style="padding:5px 8px">${statusIcon(e.status)}</td>
+        <td style="padding:5px 8px;font-weight:500;color:${isTest?'#a78bfa':'#e2e8f0'};white-space:nowrap">${escHtml(e.eventName)}</td>
+        <td style="padding:5px 8px;color:#94a3b8">${e.customData?.value ? '$'+Number(e.customData.value).toLocaleString('es-CO') : '—'}</td>
+        <td style="padding:5px 8px">${e.hasUserData ? '<span style="color:#4ade80;font-size:10px">✓ email</span>' : '<span style="color:#475569;font-size:10px">anon</span>'}</td>
+        <td style="padding:5px 8px">${e.reason === 'no_config' ? '<span style="color:#64748b;font-size:10px">sin config</span>' : capiOk ? '<span style="color:#4ade80;font-size:10px">✓ recibido</span>' : e.capiResponse?.error ? '<span style="color:#f87171;font-size:10px" title="${escHtml(e.capiResponse.error.message||'')}">✕ error</span>' : '<span style="color:#94a3b8;font-size:10px">—</span>'}</td>
+        <td style="padding:5px 8px;color:#64748b">${e.ms||0}</td>
+        <td style="padding:5px 8px;color:#64748b;white-space:nowrap">${timeAgo(e.createdAt)}</td>
+      </tr>`;
+    }).join('');
+    if (total) total.textContent = `Mostrando últimos 50 de ${d.total} eventos totales`;
+  } catch (_) {
+    tbody.innerHTML = '<tr><td colspan="7" style="padding:20px;text-align:center;color:#f87171">Error al cargar eventos</td></tr>';
+  }
+}
+
+// Botones del dashboard
+document.getElementById('btnPixelHealth')?.addEventListener('click', loadPixelHealth);
+document.getElementById('btnRefreshEvents')?.addEventListener('click', loadPixelEvents);
+document.getElementById('btnClearEvents')?.addEventListener('click', () => {
+  showConfirm('¿Limpiar todos los logs?', 'Se eliminarán todos los registros de eventos Pixel/CAPI.', async () => {
+    await fetch('/api/admin/pixel-events', { method: 'DELETE', headers: { 'x-admin-password': pwd } });
+    loadPixelEvents();
+  });
+});
+document.getElementById('btnTestEvent')?.addEventListener('click', async () => {
+  const btn  = document.getElementById('btnTestEvent');
+  const evt  = document.getElementById('testEventSelect')?.value || 'ViewContent';
+  btn.disabled = true; btn.textContent = '⏳ Enviando…';
+  try {
+    const r = await fetch('/api/admin/test-event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': pwd },
+      body: JSON.stringify({ eventName: evt })
+    });
+    const d = await r.json();
+    if (d.ok && d.fb?.events_received > 0) {
+      btn.textContent = '✓ Enviado'; btn.style.color = '#4ade80';
+    } else {
+      btn.textContent = '✕ Error'; btn.style.color = '#f87171';
+      console.warn('Test event response:', d);
+    }
+    setTimeout(() => { btn.disabled = false; btn.textContent = '🚀 Disparar evento de prueba'; btn.style.color = ''; loadPixelEvents(); }, 2000);
+  } catch (_) {
+    btn.textContent = '✕ Error'; btn.disabled = false;
+    setTimeout(() => { btn.textContent = '🚀 Disparar evento de prueba'; btn.style.color = ''; }, 2000);
+  }
+});
+
+// Auto-cargar cuando se activa el tab de marketing
+document.querySelectorAll('.adm-integ-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.tab === 'marketing') {
+      setTimeout(() => { loadPixelHealth(); loadPixelEvents(); }, 100);
+    }
+  });
+});
+// Cargar si el tab de marketing ya está activo
+if (document.getElementById('aitab-marketing')?.style.display !== 'none') {
+  setTimeout(() => { loadPixelHealth(); loadPixelEvents(); }, 500);
+}
 
 // Sincronizar FAB y bottom nav cuando cambia sección (observer en sidebar nav)
 new MutationObserver(() => {

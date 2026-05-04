@@ -46,6 +46,78 @@ function encodeImgPath(filepath) {
   return filepath.split('/').map(s => encodeURIComponent(s)).join('/');
 }
 
+// ─── FACEBOOK / META HELPERS ───────────────────────────────────
+// Precio numérico para eventos Meta (nunca string, nunca NaN)
+function _fbPrice(val) { return Math.round(Number(val) || 0); }
+
+// Lee cookie por nombre (para _fbp / _fbc que Meta genera)
+function _getCookie(name) {
+  return document.cookie.split(';').map(c => c.trim())
+    .find(c => c.startsWith(name + '='))?.split('=')[1] || undefined;
+}
+
+// ID único para deduplicación Pixel ↔ CAPI
+function _fbEventId(name) {
+  return `${name}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+}
+
+// Precio principal de una propiedad (maneja combinado)
+function _propNumPrice(p) {
+  if (!p) return 0;
+  return _fbPrice(p.tipo === 'combinado'
+    ? (p.precioArriendo || p.precio)
+    : p.precio);
+}
+
+// Validación client-side del evento antes de enviarlo
+// Evita mandar basura a Meta y activa logs de error
+function _validateFbEvent(eventName, customData) {
+  if (!eventName || typeof eventName !== 'string') return false;
+  const d = customData || {};
+  // Precio debe ser número positivo razonable (hasta 10 mil millones COP)
+  if (d.value !== undefined && (isNaN(d.value) || d.value < 0 || d.value > 1e10)) return false;
+  // Moneda debe ser código ISO 3 letras
+  if (d.currency && !/^[A-Z]{3}$/.test(d.currency)) return false;
+  // content_ids debe ser array
+  if (d.content_ids !== undefined && !Array.isArray(d.content_ids)) return false;
+  return true;
+}
+
+// Envía evento al CAPI server-side (duplica el Pixel para blindar iOS 14+)
+// — Valida antes de enviar
+// — Incluye email del usuario si disponible (mejora attribution EM en Meta)
+// — Retry hasta 3 intentos con back-off exponencial (300ms, 600ms, 1200ms)
+// — Si no hay FB_ACCESS_TOKEN en el servidor, falla silenciosamente
+async function _sendCAPI(eventName, customData, eventId) {
+  if (!_validateFbEvent(eventName, customData)) return; // skip eventos inválidos
+
+  const body = JSON.stringify({
+    eventName,
+    eventId,
+    customData,
+    fbp:       _getCookie('_fbp'),
+    fbc:       _getCookie('_fbc') || new URLSearchParams(location.search).get('fbclid') || undefined,
+    userAgent: navigator.userAgent,
+    pageUrl:   location.href,
+    userEmail: window._fbUserEmail || undefined   // seteado cuando usuario hace login con Google
+  });
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const r = await fetch('/api/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      });
+      const d = await r.json();
+      if (d.ok || d.reason === 'no_config') return; // éxito o sin config → no reintentar
+      if (attempt < 2) await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 300));
+    } catch (_) {
+      if (attempt < 2) await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 300));
+    }
+  }
+}
+
 function debounce(fn, ms) {
   let t;
   return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
@@ -423,10 +495,6 @@ async function loadProperties() {
   const signal = _propertiesAbort.signal;
 
   pushFilterState();
-  // Facebook Pixel: Search (solo cuando hay filtros activos, no en la carga inicial)
-  if (typeof fbq === 'function' && (state.search || state.tipo !== 'todos' || state.municipio || state.barrio)) {
-    fbq('track', 'Search', { search_string: state.search || [state.tipo, state.municipio, state.barrio].filter(Boolean).join(', ') });
-  }
   const params = new URLSearchParams();
   if (state.tipo !== 'todos') params.set('tipo', state.tipo);
   if (state.municipio) params.set('municipio', state.municipio);
@@ -451,6 +519,27 @@ async function loadProperties() {
     state.filtered = state.properties;
     clearFavoritesFilter(); // nueva búsqueda → salir del modo favoritos
     logSearch(state.properties.length); // Log de búsqueda
+
+    // ── Facebook Pixel: Search ──────────────────────────────────
+    // Dispara DESPUÉS de tener resultados para incluir content_ids reales
+    if (typeof fbq === 'function' && (state.search || state.tipo !== 'todos' || state.municipio || state.barrio)) {
+      const searchStr = state.search || [state.tipo, state.municipio, state.barrio].filter(Boolean).join(', ');
+      const topIds    = state.properties.slice(0, 10).map(p => String(p.id));
+      const eid       = _fbEventId('Search');
+      fbq('track', 'Search', {
+        search_string:  searchStr,
+        content_type:   'home_listing',
+        content_ids:    topIds,
+        num_items:      state.properties.length,
+        eventID:        eid
+      });
+      _sendCAPI('Search', {
+        search_string: searchStr,
+        content_type:  'home_listing',
+        content_ids:   topIds,
+        num_items:     state.properties.length
+      }, eid);
+    }
     renderGrid();
     updateFilterDropdowns();
     updateDynamicFilterRanges(); // Actualiza rangos dinámicamente
@@ -778,7 +867,8 @@ function cardHTML(p) {
     return parts.length > 1 ? parts : [a];
   });
   const isLiked = state.likedIds.has(String(p.id));
-  const price = formatPrice(p.precio);
+  const isCombinado = p.tipo === 'combinado';
+  const price = isCombinado ? formatPrice(p.precioArriendo || p.precio) : formatPrice(p.precio);
   const statusClass = p.estado === 'ocupado' ? 'status-ocupado' : 'status-libre';
   const statusLabel = p.estado === 'ocupado' ? 'Ocupado' : 'Libre';
 
@@ -853,9 +943,12 @@ function cardHTML(p) {
               <div class="media-location">
                 <p class="location-municipio">${p.municipio || ''}</p>
                 <h2 class="location-barrio">${p.barrio || p.title}</h2>
-                <span class="tipo-overlay-badge">${p.tipo === 'venta' ? 'Venta' : 'Arriendo'}</span>
+                <span class="tipo-overlay-badge">${isCombinado ? 'Arriendo · Venta' : (p.tipo === 'venta' ? 'Venta' : 'Arriendo')}</span>
               </div>
-              <div class="card-price">${price}</div>
+              <div class="card-price-wrap">
+                <div class="card-price">${price}${isCombinado ? '<span class="price-sublabel">/mes</span>' : ''}</div>
+                ${isCombinado && p.precioVenta ? `<div class="card-price-secondary">Venta: ${formatPrice(p.precioVenta)}</div>` : ''}
+              </div>
             </div>
           </div>
         </div>
@@ -874,7 +967,7 @@ function cardHTML(p) {
             </svg>
             <span class="views-count" data-id="${p.id}">${p.views || 0}</span>
           </div>
-          <span class="tipo-badge tipo-badge--${p.tipo === 'venta' ? 'venta' : 'arriendo'}">${p.tipo === 'venta' ? 'Venta' : 'Arriendo'}</span>
+          <span class="tipo-badge tipo-badge--${isCombinado ? 'combinado' : (p.tipo === 'venta' ? 'venta' : 'arriendo')}">${isCombinado ? 'Arr · Venta' : (p.tipo === 'venta' ? 'Venta' : 'Arriendo')}</span>
           ${nuevoBadgeHtml}
           <button class="expand-toggle" type="button" aria-expanded="false" aria-label="Ver detalles">
             <svg viewBox="0 0 24 24" fill="none">
@@ -889,6 +982,18 @@ function cardHTML(p) {
               <h3>${p.title}</h3>
               <p class="detail-address">${[p.direccion, p.piso ? `Piso ${p.piso}` : '', p.sector].filter(Boolean).join(' · ')}</p>
             </div>
+
+            ${isCombinado ? `
+            <div class="dual-price-section">
+              <div class="dual-price-item">
+                <span class="dual-price-label">🔑 Arriendo / mes</span>
+                <span class="dual-price-value">${formatPrice(p.precioArriendo || p.precio)}</span>
+              </div>
+              <div class="dual-price-item">
+                <span class="dual-price-label">💰 Precio de Venta</span>
+                <span class="dual-price-value">${formatPrice(p.precioVenta)}</span>
+              </div>
+            </div>` : ''}
 
             ${stats.length ? `<div class="property-stats">${stats.join('')}</div>` : ''}
 
@@ -1065,12 +1170,28 @@ function openCard(card) {
       sidebar.classList.add('sheet-expanded');
     }
   }
-  // Facebook Pixel: ViewContent
+  // ── Facebook Pixel: ViewContent ────────────────────────────────
   if (typeof fbq === 'function') {
-    const propId = card.dataset.propId || '';
-    const title  = card.querySelector('.detail-header h3')?.textContent || card.querySelector('.map-card-title')?.textContent || '';
-    const price  = card.querySelector('.card-price')?.textContent || '';
-    fbq('track', 'ViewContent', { content_ids: [propId], content_type: 'home_listing', content_name: title, value: price });
+    const propId = card.dataset.cardId || card.dataset.mapCardId || '';
+    const prop   = state.properties.find(p => String(p.id) === propId);
+    const eid    = _fbEventId('ViewContent');
+    const vcData = {
+      content_ids:      [propId],
+      content_type:     'home_listing',
+      content_name:     prop?.title   || '',
+      content_category: [prop?.municipio, prop?.barrio].filter(Boolean).join(', '),
+      value:            _propNumPrice(prop),
+      currency:         'COP',
+      eventID:          eid
+    };
+    fbq('track', 'ViewContent', vcData);
+    _sendCAPI('ViewContent', {
+      content_ids:      [propId],
+      content_type:     'home_listing',
+      content_name:     prop?.title || '',
+      value:            _propNumPrice(prop),
+      currency:         'COP'
+    }, eid);
   }
   card.querySelector('.expand-toggle')?.setAttribute('aria-expanded', 'true');
   card.querySelector('.property-details-scroll')?.scrollTo(0, 0);
@@ -1100,18 +1221,48 @@ function closeCard(card) {
 
 // ─── FACEBOOK PIXEL: LEAD ────────────────────────────────────
 // Se dispara cada vez que alguien hace clic en un botón de contacto
-// o en un enlace de WhatsApp. Esto permite a Facebook optimizar
-// los anuncios para personas que realmente contactan.
+// o en un enlace de WhatsApp. Permite a Facebook optimizar anuncios
+// para personas que realmente contactan (CBO, Leads, ROAS).
 function trackLead(source, propTitle, propId, propPrice) {
-  if (typeof fbq !== 'function') return;
-  fbq('track', 'Lead', {
-    content_name: propTitle || 'Consulta general',
-    content_category: 'inmobiliaria',
-    source: source || 'web'
-  });
-  // Log del lead en base de datos
+  // Log del lead en base de datos (siempre, con o sin Pixel)
   const channel = source?.includes('whatsapp') || source?.includes('wa') ? 'whatsapp' : 'contact';
   logLead(propId, propTitle, propPrice, channel, source);
+
+  if (typeof fbq !== 'function') return;
+
+  const numPrice = _fbPrice(propPrice);
+  const ids      = propId ? [String(propId)] : [];
+  const eid      = _fbEventId('Lead');
+
+  // Evento Lead estándar — optimización de conversiones
+  fbq('track', 'Lead', {
+    content_ids:      ids,
+    content_type:     'home_listing',
+    content_name:     propTitle || 'Consulta general',
+    content_category: 'inmobiliaria',
+    value:            numPrice,
+    currency:         'COP',
+    eventID:          eid
+  });
+
+  // Evento personalizado para WhatsApp — segmentación granular
+  if (source?.includes('wa') || source?.includes('whatsapp')) {
+    fbq('trackCustom', 'ContactWhatsApp', {
+      content_ids:  ids,
+      content_name: propTitle || '',
+      value:        numPrice,
+      currency:     'COP'
+    });
+  }
+
+  // CAPI duplicado server-side (blinda iOS 14+ / navegadores sin cookies)
+  _sendCAPI('Lead', {
+    content_ids:      ids,
+    content_type:     'home_listing',
+    content_name:     propTitle || 'Consulta general',
+    value:            numPrice,
+    currency:         'COP'
+  }, eid);
 }
 
 function syncMobileHeight(card) {
@@ -1500,6 +1651,28 @@ function setupLikeBtn(card) {
     if (isLiked) state.likedIds.delete(id); else state.likedIds.add(id);
     saveLikedIds();
 
+    // ── Facebook Pixel: AddToWishlist (solo al agregar, no al quitar) ─
+    if (!isLiked && typeof fbq === 'function') {
+      const prop  = state.properties.find(p => String(p.id) === id);
+      const price = _propNumPrice(prop);
+      const eid   = _fbEventId('AddToWishlist');
+      fbq('track', 'AddToWishlist', {
+        content_ids:  [id],
+        content_type: 'home_listing',
+        content_name: prop?.title || '',
+        value:        price,
+        currency:     'COP',
+        eventID:      eid
+      });
+      _sendCAPI('AddToWishlist', {
+        content_ids:  [id],
+        content_type: 'home_listing',
+        content_name: prop?.title || '',
+        value:        price,
+        currency:     'COP'
+      }, eid);
+    }
+
     try {
       const res = await apiFetch(`/api/properties/${id}/like`, {
         method: 'POST',
@@ -1666,12 +1839,15 @@ function setupShareSheet() {
     const prop = state.properties.find(p => String(p.id) === String(state.shareTargetId));
     if (!prop) return;
     const url = `${window.location.origin}/?id=${prop.id}`;
-    const tipo = prop.tipo === 'arriendo' ? '🔑 Arriendo' : prop.tipo === 'venta' ? '🏷️ Venta' : '';
+    const tipo = prop.tipo === 'arriendo' ? '🔑 Arriendo' : prop.tipo === 'venta' ? '🏷️ Venta' : prop.tipo === 'combinado' ? '🔑🏷️ Arriendo y Venta' : '';
+    const precioLines = prop.tipo === 'combinado'
+      ? [`🔑 Arriendo: ${formatPrice(prop.precioArriendo || prop.precio)}/mes`, `💰 Venta: ${formatPrice(prop.precioVenta)}`]
+      : [`💰 ${formatPrice(prop.precio)}`];
     const lines = [
       `🏠 *${prop.title}*`,
       `📍 ${[prop.municipio, prop.barrio].filter(Boolean).join(', ')}`,
       tipo ? tipo : '',
-      `💰 ${formatPrice(prop.precio)}`,
+      ...precioLines,
       prop.area        ? `📐 ${prop.area} m²`                       : '',
       prop.habitaciones? `🛏️ ${prop.habitaciones} habitaciones`     : '',
       prop.banos       ? `🚿 ${prop.banos} baños`                   : '',
@@ -2426,9 +2602,10 @@ function formatPriceShort(price) {
 function mapCardHTML(prop) {
   const firstImg = prop.images?.[0]?.filename;
   const imgSrc   = firstImg ? `/${encodeImgPath(firstImg)}` : '';
-  const price    = formatPrice(prop.precio);
-  const tipoLbl  = prop.tipo === 'venta' ? 'Venta' : 'Arriendo';
-  const tipoClass= prop.tipo === 'venta' ? 'venta' : 'arriendo';
+  const isCombinadoMap = prop.tipo === 'combinado';
+  const price    = isCombinadoMap ? formatPrice(prop.precioArriendo || prop.precio) : formatPrice(prop.precio);
+  const tipoLbl  = isCombinadoMap ? 'Arr · Venta' : (prop.tipo === 'venta' ? 'Venta' : 'Arriendo');
+  const tipoClass= isCombinadoMap ? 'combinado'   : (prop.tipo === 'venta' ? 'venta' : 'arriendo');
   const statCls  = prop.estado === 'ocupado' ? 'ocupado' : 'libre';
   const statLbl  = prop.estado === 'ocupado' ? 'Ocupado' : 'Libre';
 
@@ -3210,6 +3387,99 @@ function toggleFavoritesFilter() {
   }
 }
 
+// ─── AMENIDADES TAG INPUT ──────────────────────────────────────
+let _amenidadesTags = [];
+
+function initTagsInput() {
+  const input = document.getElementById('amenidadesInput');
+  const wrap  = document.getElementById('amenidadesTagsWrap');
+  if (!input || !wrap) return;
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const val = input.value.trim().replace(/,$/, '');
+      if (val) { addAmenidadTag(val); input.value = ''; }
+    } else if (e.key === 'Backspace' && !input.value && _amenidadesTags.length) {
+      removeAmenidadTag(_amenidadesTags.length - 1);
+    }
+  });
+
+  // Pegar desde portapapeles: soporta listas separadas por coma o salto de línea
+  input.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    text.split(/[,\n]+/).map(s => s.trim()).filter(Boolean).forEach(addAmenidadTag);
+    input.value = '';
+  });
+
+  // Click en el contenedor enfoca el input
+  wrap.addEventListener('click', () => input.focus());
+
+  // Chips de sugerencias rápidas
+  document.querySelectorAll('.caract-sug-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sug = btn.dataset.sug;
+      if (!sug) return;
+      addAmenidadTag(sug);
+      // Feedback visual: marcar el chip como ya agregado
+      btn.classList.add('sug-added');
+      btn.disabled = true;
+    });
+  });
+}
+
+function addAmenidadTag(text) {
+  text = text.trim();
+  if (!text || _amenidadesTags.includes(text)) return;
+  _amenidadesTags.push(text);
+  _renderAmenidadesTags();
+  _syncAmenidadesHidden();
+}
+
+function removeAmenidadTag(index) {
+  _amenidadesTags.splice(index, 1);
+  _renderAmenidadesTags();
+  _syncAmenidadesHidden();
+}
+
+function setAmenidadesTags(arr) {
+  _amenidadesTags = Array.isArray(arr) ? [...arr] : [];
+  _renderAmenidadesTags();
+  _syncAmenidadesHidden();
+}
+
+function _renderAmenidadesTags() {
+  const list = document.getElementById('amenidadesList');
+  if (!list) return;
+  list.innerHTML = _amenidadesTags.map((tag, i) => `
+    <span class="amenidad-tag">
+      <span class="amenidad-tag-text">${tag}</span>
+      <button type="button" class="amenidad-tag-remove" data-idx="${i}" aria-label="Eliminar">×</button>
+    </span>`).join('');
+  list.querySelectorAll('.amenidad-tag-remove').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeAmenidadTag(Number(btn.dataset.idx));
+    });
+  });
+  // Sincronizar estado de chips de sugerencias (habilitar/deshabilitar según tags activos)
+  _syncSugChips();
+}
+
+function _syncSugChips() {
+  document.querySelectorAll('.caract-sug-pill').forEach(btn => {
+    const already = _amenidadesTags.includes(btn.dataset.sug);
+    btn.classList.toggle('sug-added', already);
+    btn.disabled = already;
+  });
+}
+
+function _syncAmenidadesHidden() {
+  const hidden = document.getElementById('fAmenidades');
+  if (hidden) hidden.value = JSON.stringify(_amenidadesTags);
+}
+
 // ─── UPLOAD MODAL ─────────────────────────────────────────────
 function setupUploadModal() {
   const modal = document.getElementById('uploadModal');
@@ -3221,6 +3491,9 @@ function setupUploadModal() {
   closeBtn.addEventListener('click', closeUploadModal);
   cancelBtn?.addEventListener('click', closeUploadModal);
   modal.addEventListener('click', e => { if (e.target === modal) closeUploadModal(); });
+
+  // Inicializar tag input de amenidades
+  initTagsInput();
 
   // Parse toggle
   document.getElementById('parseToggleBtn').addEventListener('click', () => {
@@ -3245,7 +3518,14 @@ function setupUploadModal() {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      document.getElementById('fTipo').value = btn.dataset.value;
+      const val = btn.dataset.value;
+      document.getElementById('fTipo').value = val;
+      // Mostrar/ocultar campos de precio según tipo
+      const isCombinado = val === 'combinado';
+      const precioSimple = document.getElementById('precioSimple');
+      const precioCombinado = document.getElementById('precioCombinado');
+      if (precioSimple)    precioSimple.style.display    = isCombinado ? 'none' : '';
+      if (precioCombinado) precioCombinado.style.display = isCombinado ? ''     : 'none';
     });
   });
   document.querySelectorAll('.estado-btn').forEach(btn => {
@@ -3432,13 +3712,22 @@ function openEditModal(prop) {
   document.querySelectorAll('.tipo-btn').forEach(b => b.classList.toggle('active', b.dataset.value === tipo));
   document.querySelectorAll('.estado-btn').forEach(b => b.classList.toggle('active', b.dataset.value === estado));
 
+  // Mostrar/ocultar precio según tipo
+  const isCombinado = tipo === 'combinado';
+  const precioSimpleEl    = document.getElementById('precioSimple');
+  const precioCombinadoEl = document.getElementById('precioCombinado');
+  if (precioSimpleEl)    precioSimpleEl.style.display    = isCombinado ? 'none' : '';
+  if (precioCombinadoEl) precioCombinadoEl.style.display = isCombinado ? ''     : 'none';
+
   document.getElementById('fTitle').value = prop.title || '';
   document.getElementById('fMunicipio').value = prop.municipio || '';
   document.getElementById('fBarrio').value = prop.barrio || '';
   document.getElementById('fSector').value = prop.sector || '';
   document.getElementById('fDireccion').value = prop.direccion || '';
   document.getElementById('fPiso').value = prop.piso || '';
-  document.getElementById('fPrecio').value = prop.precio || '';
+  document.getElementById('fPrecio').value         = prop.precio         || '';
+  document.getElementById('fPrecioArriendo').value = prop.precioArriendo || '';
+  document.getElementById('fPrecioVenta').value    = prop.precioVenta    || '';
   document.getElementById('fArea').value = prop.area || '';
   document.getElementById('fHab').value = prop.habitaciones || '';
   document.getElementById('fBanos').value = prop.banos || '';
@@ -3453,7 +3742,7 @@ function openEditModal(prop) {
   setTimeout(() => setFormMapLocation(propLat, propLng, 16), 120);
 
   const amenidades = Array.isArray(prop.amenidades) ? prop.amenidades : JSON.parse(prop.amenidades || '[]');
-  document.getElementById('fAmenidades').value = amenidades.join(', ');
+  setAmenidadesTags(amenidades);
   document.getElementById('fDescripcion').value = prop.descripcion || '';
 
   // Existing images
@@ -3505,6 +3794,15 @@ function resetForm() {
   // Reset tipo/estado visual buttons
   document.querySelectorAll('.tipo-btn').forEach(b => b.classList.toggle('active', b.dataset.value === 'arriendo'));
   document.querySelectorAll('.estado-btn').forEach(b => b.classList.toggle('active', b.dataset.value === 'libre'));
+
+  // Mostrar precio simple, ocultar combinado
+  const precioSimpleEl    = document.getElementById('precioSimple');
+  const precioCombinadoEl = document.getElementById('precioCombinado');
+  if (precioSimpleEl)    precioSimpleEl.style.display    = '';
+  if (precioCombinadoEl) precioCombinadoEl.style.display = 'none';
+
+  // Limpiar tags de amenidades
+  setAmenidadesTags([]);
 
   // Reset map to default location
   setTimeout(() => setFormMapLocation(6.1510, -75.6190, 14), 80);
@@ -3593,22 +3891,35 @@ async function submitProperty() {
   label.style.display = 'none';
 
   try {
-    const amenStr = document.getElementById('fAmenidades').value;
-    const amenidades = amenStr
-      ? amenStr.split(/[,\n]+/).map(s => s.trim()).filter(Boolean)
-      : [];
+    // Amenidades desde el sistema de tags
+    const amenHidden = document.getElementById('fAmenidades').value;
+    let amenidades = [];
+    try { amenidades = JSON.parse(amenHidden); } catch { amenidades = []; }
+
+    const tipo = document.getElementById('fTipo').value;
+    const isCombinado = tipo === 'combinado';
 
     const formData = new FormData();
     formData.append('adminPassword', state.adminPassword);
     formData.append('title', document.getElementById('fTitle').value);
-    formData.append('tipo', document.getElementById('fTipo').value);
+    formData.append('tipo', tipo);
     formData.append('estado', document.getElementById('fEstado').value);
     formData.append('municipio', document.getElementById('fMunicipio').value);
     formData.append('barrio', document.getElementById('fBarrio').value);
     formData.append('sector', document.getElementById('fSector').value);
     formData.append('direccion', document.getElementById('fDireccion').value);
     formData.append('piso', document.getElementById('fPiso').value);
-    formData.append('precio', document.getElementById('fPrecio').value);
+    if (isCombinado) {
+      const pArr = document.getElementById('fPrecioArriendo').value;
+      const pVta = document.getElementById('fPrecioVenta').value;
+      formData.append('precio',         pArr);   // precio principal = arriendo (para filtros)
+      formData.append('precioArriendo', pArr);
+      formData.append('precioVenta',    pVta);
+    } else {
+      formData.append('precio', document.getElementById('fPrecio').value);
+      formData.append('precioArriendo', '');
+      formData.append('precioVenta',    '');
+    }
     formData.append('area', document.getElementById('fArea').value);
     formData.append('habitaciones', document.getElementById('fHab').value);
     formData.append('banos', document.getElementById('fBanos').value);
@@ -3750,7 +4061,7 @@ function fillFormFromParsed(p) {
   document.getElementById('fParqueadero').checked = !!p.parqueadero;
   document.getElementById('fCuartoUtil').checked  = !!p.cuarto_util;
   document.getElementById('fEstudio').checked     = !!p.estudio;
-  if (p.amenidades?.length) document.getElementById('fAmenidades').value = p.amenidades.join(', ');
+  if (p.amenidades?.length) setAmenidadesTags(p.amenidades);
 }
 
 // ─── ADMIN UI REFRESH ─────────────────────────────────────────
@@ -4331,6 +4642,8 @@ function setupReviewsPanel() {
       const parts = _gCredential.split('.');
       const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
       _gUser = { name: payload.name, email: payload.email, photo: payload.picture };
+      // Exponer email globalmente para que CAPI lo hashee server-side y mejore la atribución
+      if (payload.email) window._fbUserEmail = payload.email;
     } catch (_) { _gUser = { name: 'Usuario', email: '', photo: '' }; }
     renderFormState();
   }

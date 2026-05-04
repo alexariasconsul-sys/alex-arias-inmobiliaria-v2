@@ -4,6 +4,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const multer = require('multer');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -25,6 +26,9 @@ const searchesDB = new Datastore({ filename: path.join(__dirname, 'searches.db')
 
 // Base de datos de leads (tracking de contactos)
 const leadsDB = new Datastore({ filename: path.join(__dirname, 'leads.db'), autoload: true });
+
+// Base de datos de eventos Pixel/CAPI — debug y auditoría (máx 500 entradas)
+const pixelEventsDB = new Datastore({ filename: path.join(__dirname, 'pixel_events.db'), autoload: true });
 
 // Base de datos de reseñas Google
 let _reviewsDB = null;
@@ -127,27 +131,33 @@ app.get('/', async (req, res) => {
     let ogUrl   = baseUrl;
 
     // Si viene ?id=, buscar la propiedad y personalizar OG tags
+    let ogType = 'website';
+    let prop   = null;
     if (propId) {
       try {
         const db = getDB();
-        const prop = await db.findOneAsync({ _id: propId });
+        prop = await db.findOneAsync({ _id: propId });
         if (prop) {
-          const precio = prop.precio
-            ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(prop.precio)
+          const isComb = prop.tipo === 'combinado';
+          const rawP   = isComb ? (prop.precioArriendo || prop.precio) : prop.precio;
+          const precio = rawP
+            ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(rawP)
+            : '';
+          const tipoLabel = isComb ? 'Arriendo y Venta'
+            : prop.tipo === 'arriendo' ? 'En arriendo'
+            : prop.tipo === 'venta'    ? 'En venta'
             : '';
           ogTitle = `${prop.title} — ${prop.municipio}`;
           ogDesc  = [
-            prop.tipo === 'arriendo' ? 'En arriendo' : prop.tipo === 'venta' ? 'En venta' : '',
-            precio,
-            prop.area   ? `${prop.area} m²`           : '',
-            prop.habitaciones ? `${prop.habitaciones} habitaciones` : '',
-            prop.banos  ? `${prop.banos} baños`        : '',
+            tipoLabel, precio,
+            prop.area         ? `${prop.area} m²`           : '',
+            prop.habitaciones ? `${prop.habitaciones} hab`  : '',
+            prop.banos        ? `${prop.banos} baños`       : '',
             prop.barrio || ''
           ].filter(Boolean).join(' · ');
-          if (prop.images && prop.images.length > 0) {
-            ogImage = `${baseUrl}/${prop.images[0].filename}`;
-          }
-          ogUrl = `${baseUrl}/?id=${propId}`;
+          if (prop.images?.length) ogImage = `${baseUrl}/${prop.images[0].filename}`;
+          ogUrl  = `${baseUrl}/?id=${propId}`;
+          ogType = 'product'; // mejor soporte en anuncios Meta que "website"
         }
       } catch (_) { /* propiedad no encontrada, usar defaults */ }
     }
@@ -155,16 +165,22 @@ app.get('/', async (req, res) => {
     // Escapar para atributos HTML
     const esc = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
+    // fb:app_id mejora la integración con Meta Pixel (usar Pixel ID como App ID proxy)
+    const s = readSettings();
+    const pixelId = (s.facebookPixelId || '').trim();
+
     const ogTags = `
-  <!-- OG tags dinámicos -->
-  <meta property="og:type"        content="website" />
+  <!-- Open Graph / Meta Ads -->
+  <meta property="og:type"        content="${ogType}" />
   <meta property="og:site_name"   content="Alex Arias · Consultor Inmobiliario" />
   <meta property="og:title"       content="${esc(ogTitle)}" />
   <meta property="og:description" content="${esc(ogDesc)}" />
   <meta property="og:image"       content="${esc(ogImage)}" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
+  <meta property="og:image:type"  content="image/jpeg" />
   <meta property="og:url"         content="${esc(ogUrl)}" />
+  <meta property="og:locale"      content="es_CO" />${pixelId ? `\n  <meta property="fb:app_id" content="${esc(pixelId)}" />` : ''}${prop ? `\n  <meta property="product:price:amount"   content="${prop.precio || ''}" />\n  <meta property="product:price:currency" content="COP" />` : ''}
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="${esc(ogTitle)}" />
   <meta name="twitter:description" content="${esc(ogDesc)}" />
@@ -485,7 +501,7 @@ app.get('/api/properties', async (req, res) => {
     const { tipo, municipio, barrio, search, minPrecio, maxPrecio, minHab, minBanos, parqueadero, amenidades, estado, orderBy } = req.query;
 
     const query = {};
-    if (tipo && tipo !== 'todos') query.tipo = tipo;
+    if (tipo && tipo !== 'todos') query.tipo = { $in: [tipo, 'combinado'] };
     if (estado && estado !== '') query.estado = estado;
     if (municipio) query.municipio = new RegExp(municipio, 'i');
     if (barrio) query.barrio = new RegExp(barrio, 'i');
@@ -554,7 +570,8 @@ app.post('/api/properties', requireAdmin, upload.array('images', 15), async (req
     const db = getDB();
     const {
       title, tipo, municipio, barrio, sector, direccion, piso,
-      precio, area, habitaciones, banos, parqueadero, cuarto_util, estudio,
+      precio, precioArriendo, precioVenta,
+      area, habitaciones, banos, parqueadero, cuarto_util, estudio,
       descripcion, amenidades, estado, lat, lng
     } = req.body;
 
@@ -576,6 +593,8 @@ app.post('/api/properties', requireAdmin, upload.array('images', 15), async (req
       municipio: municipio || '', barrio: barrio || '',
       sector: sector || '', direccion: direccion || '', piso: piso || '',
       precio: Number(precio) || 0, area: Number(area) || 0,
+      precioArriendo: Number(precioArriendo) || 0,
+      precioVenta: Number(precioVenta) || 0,
       habitaciones: Number(habitaciones) || 0, banos: Number(banos) || 0,
       parqueadero: parqueadero === '1' || parqueadero === true ? 1 : 0,
       cuarto_util: cuarto_util === '1' || cuarto_util === true ? 1 : 0,
@@ -604,7 +623,8 @@ app.put('/api/properties/:id', requireAdmin, upload.array('images', 15), async (
     const db = getDB();
     const {
       title, tipo, municipio, barrio, sector, direccion, piso,
-      precio, area, habitaciones, banos, parqueadero, cuarto_util, estudio,
+      precio, precioArriendo, precioVenta,
+      area, habitaciones, banos, parqueadero, cuarto_util, estudio,
       descripcion, amenidades, estado, lat, lng
     } = req.body;
 
@@ -636,6 +656,8 @@ app.put('/api/properties/:id', requireAdmin, upload.array('images', 15), async (
     if (direccion !== undefined) updateFields.direccion = direccion;
     if (piso      !== undefined) updateFields.piso      = piso;
     if (precio    !== undefined) updateFields.precio    = Number(precio);
+    if (precioArriendo !== undefined) updateFields.precioArriendo = Number(precioArriendo);
+    if (precioVenta    !== undefined) updateFields.precioVenta    = Number(precioVenta);
     if (area      !== undefined) updateFields.area      = Number(area);
     if (habitaciones !== undefined) updateFields.habitaciones = Number(habitaciones);
     if (banos     !== undefined) updateFields.banos     = Number(banos);
@@ -1185,6 +1207,201 @@ ${propsSummary}`;
   }
 });
 
+// ─── CONVERSIONS API (CAPI) — server-side Meta events ────────
+// Recibe eventos del cliente → los valida → los hashea → los envía a Meta
+// Requiere FB_ACCESS_TOKEN en .env (opcional — falla silenciosamente)
+// Eventos permitidos (estándar Meta + custom WA)
+const FB_VALID_EVENTS = new Set([
+  'ViewContent','Search','Lead','AddToWishlist','Purchase','Contact',
+  'InitiateCheckout','CompleteRegistration','FindLocation','Schedule',
+  'PageView','ContactWhatsApp'
+]);
+
+app.post('/api/track', async (req, res) => {
+  const t0 = Date.now();
+  const logEntry = {
+    createdAt: new Date(), eventName: req.body?.eventName || '?',
+    eventId: req.body?.eventId || '', status: 'pending',
+    reason: null, capiResponse: null, customData: {}, hasUserData: false, ms: 0
+  };
+
+  try {
+    const s           = readSettings();
+    const pixelId     = (s.facebookPixelId || '').trim();
+    const accessToken = (process.env.FB_ACCESS_TOKEN || '').trim();
+
+    if (!pixelId || !accessToken) {
+      logEntry.status = 'skipped'; logEntry.reason = 'no_config';
+      _logPixelEvent(logEntry);
+      return res.json({ ok: false, reason: 'no_config' });
+    }
+
+    const { eventName, eventId, customData, fbp, fbc, userAgent, pageUrl, userEmail } = req.body;
+
+    // ── Validación básica ─────────────────────────────────────
+    if (!eventName) {
+      logEntry.status = 'error'; logEntry.reason = 'no_event';
+      _logPixelEvent(logEntry);
+      return res.status(400).json({ ok: false, reason: 'no_event' });
+    }
+
+    // Sanitizar custom_data
+    const cd = { ...(customData || {}) };
+    if (cd.value !== undefined)  cd.value    = Math.max(0, Math.round(Number(cd.value) || 0));
+    if (!cd.currency)            cd.currency = 'COP';
+    if (cd.content_ids && !Array.isArray(cd.content_ids)) cd.content_ids = [String(cd.content_ids)];
+
+    logEntry.eventName  = eventName;
+    logEntry.eventId    = eventId || '';
+    logEntry.customData = cd;
+
+    // ── User Data con hashing SHA-256 (estándar Meta) ─────────
+    const sha256 = v => crypto.createHash('sha256').update(String(v).toLowerCase().trim()).digest('hex');
+    const ud = {
+      client_ip_address: req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || '',
+      client_user_agent: userAgent || req.headers['user-agent'] || '',
+      ...(fbp && { fbp }),
+      ...(fbc && { fbc })
+    };
+    // Hash email: cliente lo puede pasar, o lo obtenemos de la sesión admin
+    const emailRaw = userEmail || req.user?.email || '';
+    if (emailRaw && emailRaw.includes('@')) {
+      ud.em = sha256(emailRaw);
+      logEntry.hasUserData = true;
+    }
+
+    // ── Payload CAPI ──────────────────────────────────────────
+    const payload = {
+      data: [{
+        event_name:       eventName,
+        event_time:       Math.floor(Date.now() / 1000),
+        event_id:         eventId || `capi_${Date.now()}`,
+        action_source:    'website',
+        event_source_url: pageUrl || req.headers.referer || '',
+        user_data:        ud,
+        custom_data:      cd
+      }]
+    };
+    if (process.env.FB_TEST_EVENT_CODE) payload.test_event_code = process.env.FB_TEST_EVENT_CODE;
+
+    // ── Envío con retry (3 intentos, back-off exponencial) ────
+    let fbData = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const fbRes = await fetch(
+          `https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${accessToken}`,
+          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
+        );
+        fbData = await fbRes.json();
+        if (!fbData.error) break; // éxito
+        if (attempt < 2) await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 300));
+      } catch (_e) {
+        if (attempt < 2) await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 300));
+      }
+    }
+
+    logEntry.capiResponse = fbData;
+    logEntry.status = (fbData?.events_received > 0) ? 'success' : (fbData?.error ? 'error' : 'sent');
+    logEntry.reason = fbData?.error?.message || null;
+    logEntry.ms     = Date.now() - t0;
+    _logPixelEvent(logEntry);
+
+    res.json({ ok: true, fb: fbData });
+  } catch (err) {
+    logEntry.status = 'error'; logEntry.reason = err.message;
+    logEntry.ms = Date.now() - t0;
+    _logPixelEvent(logEntry);
+    res.json({ ok: false, error: err.message });
+  }
+});
+
+// Helper interno: inserta evento en DB y recorta si supera 500
+function _logPixelEvent(entry) {
+  pixelEventsDB.insertAsync(entry).then(() => {
+    pixelEventsDB.countAsync({}).then(count => {
+      if (count > 500) {
+        pixelEventsDB.findAsync({}).sort({ createdAt: 1 }).limit(count - 500).then(old => {
+          old.forEach(d => pixelEventsDB.removeAsync({ _id: d._id }, {}));
+        }).catch(() => {});
+      }
+    }).catch(() => {});
+  }).catch(() => {});
+}
+
+// ─── PIXEL: HEALTH CHECK ──────────────────────────────────────
+app.get('/api/pixel-health', (req, res) => {
+  const s       = readSettings();
+  const pixelId = (s.facebookPixelId || '').trim();
+  const hasToken = !!(process.env.FB_ACCESS_TOKEN || '').trim();
+  const hasTest  = !!(process.env.FB_TEST_EVENT_CODE || '').trim();
+  res.json({
+    ok:       !!(pixelId && hasToken),
+    pixel:    { configured: !!pixelId, id: pixelId ? pixelId.slice(0,4)+'…'+pixelId.slice(-4) : null },
+    capi:     { configured: hasToken },
+    testMode: hasTest
+  });
+});
+
+// ─── PIXEL: ADMIN — consultar logs ───────────────────────────
+app.get('/api/admin/pixel-events', requireAdmin, async (req, res) => {
+  try {
+    const limit  = Math.min(parseInt(req.query.limit) || 100, 500);
+    const query  = {};
+    if (req.query.event)  query.eventName = req.query.event;
+    if (req.query.status) query.status    = req.query.status;
+    const events = await pixelEventsDB.findAsync(query).sort({ createdAt: -1 }).limit(limit);
+    const total  = await pixelEventsDB.countAsync({});
+    res.json({ ok: true, events, total });
+  } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
+});
+
+// ─── PIXEL: ADMIN — limpiar logs ─────────────────────────────
+app.delete('/api/admin/pixel-events', requireAdmin, async (req, res) => {
+  try {
+    await pixelEventsDB.removeAsync({}, { multi: true });
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
+});
+
+// ─── PIXEL: ADMIN — disparar evento de prueba ────────────────
+app.post('/api/admin/test-event', requireAdmin, async (req, res) => {
+  try {
+    const s           = readSettings();
+    const pixelId     = (s.facebookPixelId || '').trim();
+    const accessToken = (process.env.FB_ACCESS_TOKEN || '').trim();
+    if (!pixelId || !accessToken) return res.json({ ok: false, reason: 'no_config' });
+
+    const eventName = req.body.eventName || 'ViewContent';
+    const payload = {
+      data: [{
+        event_name:       eventName,
+        event_time:       Math.floor(Date.now() / 1000),
+        event_id:         `test_${Date.now()}`,
+        action_source:    'website',
+        event_source_url: process.env.SITE_URL || 'https://alexariasc.com',
+        user_data:        { client_ip_address: req.ip || '127.0.0.1', client_user_agent: req.headers['user-agent'] || 'test' },
+        custom_data:      { content_type: 'home_listing', content_ids: ['test_prop'], value: 3500000, currency: 'COP' }
+      }]
+    };
+    if (process.env.FB_TEST_EVENT_CODE) payload.test_event_code = process.env.FB_TEST_EVENT_CODE;
+
+    const fbRes  = await fetch(
+      `https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${accessToken}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
+    );
+    const fbData = await fbRes.json();
+
+    _logPixelEvent({
+      createdAt: new Date(), eventName: `[TEST] ${eventName}`, eventId: payload.data[0].event_id,
+      status: (fbData?.events_received > 0) ? 'success' : 'error',
+      reason: fbData?.error?.message || null, capiResponse: fbData,
+      customData: payload.data[0].custom_data, hasUserData: false, ms: 0
+    });
+
+    res.json({ ok: true, fb: fbData });
+  } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
+});
+
 // ─── TRACKING.JS (Pixel FB + código personalizado) ───────────
 // Todas las páginas incluyen <script src="/tracking.js"> en el <head>
 // Este endpoint genera el JS dinámicamente según la config guardada
@@ -1193,18 +1410,28 @@ app.get('/tracking.js', (req, res) => {
   const pixelId = (s.facebookPixelId || '').trim();
   const customCode = (s.customHeadCode || '').trim();
 
-  let js = '/* Alex Arias Tracking */\n';
+  let js = '/* Alex Arias · Meta Pixel */\n';
 
   if (pixelId) {
+    const pid = pixelId.replace(/'/g, "\\'").replace(/`/g, '\\`');
     js += `
-// ── Facebook Pixel ──────────────────────────────────────────
+// ── Facebook / Meta Pixel ─────────────────────────────────────
 !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
 n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
 document,'script','https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '${pixelId.replace(/'/g,"\\'")}');
+fbq('init', '${pid}');
 fbq('track', 'PageView');
+// Noscript fallback (para bots / navegadores sin JS)
+(function(){
+  var ns=document.createElement('noscript');
+  var img=document.createElement('img');
+  img.height=1;img.width=1;img.style.cssText='display:none';
+  img.src='https://www.facebook.com/tr?id=${pid}&ev=PageView&noscript=1';
+  ns.appendChild(img);
+  (document.body||document.documentElement).appendChild(ns);
+})();
 `;
   }
 
@@ -1219,94 +1446,168 @@ fbq('track', 'PageView');
 });
 
 // ─── FEED FACEBOOK CATALOG (Real Estate) ─────────────────────
+// Genera una entrada por propiedad; para "combinado" genera DOS entradas
+// (una for_rent con precio arriendo + una for_sale con precio venta)
+// para que aparezca en ambos tipos de catálogo de Meta.
 app.get('/api/feed/facebook', async (req, res) => {
   try {
-    const db = getDB();
+    const db      = getDB();
     const profile = readProfile();
-    const docs = await db.findAsync({});
+    const docs    = await db.findAsync({});
     const baseUrl = `${req.protocol}://${req.get('host')}`;
 
-    const items = docs.map(p => {
-      const img = p.images?.[0]?.filename ? `${baseUrl}/${p.images[0].filename}` : '';
-      const price = p.precio ? `${Number(p.precio).toFixed(0)} COP` : '0 COP';
-      const listingType = p.tipo === 'venta' ? 'for_sale' : 'for_rent';
-      const avail = p.estado === 'ocupado' ? 'recently_sold' : listingType;
-      const propType = p.tipo_inmueble || 'apartment';
+    // Mapea property_type al enum válido de Meta Real Estate Catalog
+    const propTypeMap = {
+      apartamento: 'apartment', apto: 'apartment', casa: 'house',
+      local: 'commercial_space', bodega: 'warehouse', oficina: 'commercial_space',
+      lote: 'land', finca: 'house', penthouse: 'apartment',
+      townhouse: 'townhouse', studio: 'apartment', estudio: 'apartment'
+    };
+    const getType = p => {
+      const raw = (p.tipo_inmueble || '').toLowerCase();
+      return propTypeMap[raw] || 'apartment';
+    };
+
+    const brandName = profile.name || 'Alex Arias Consultor Inmobiliario';
+
+    function buildEntry(p, variant = 'default') {
+      const allImgs = (p.images || [])
+        .filter(i => i.filename)
+        .map(i => `${baseUrl}/${i.filename}`);
+      const imgUrl  = allImgs[0] || '';
+
+      const isComb  = p.tipo === 'combinado';
+      const useRent = variant === 'rent' || (!isComb && p.tipo !== 'venta');
+
+      const rawPrice = useRent
+        ? (p.precioArriendo || p.precio || 0)
+        : (p.precioVenta    || p.precio || 0);
+      const price       = `${Number(rawPrice).toFixed(0)} COP`;
+      const listingType = useRent ? 'for_rent' : 'for_sale';
+      const avail       = p.estado === 'ocupado' ? 'recently_sold' : listingType;
+
+      const listingId   = isComb
+        ? `${p._id}_${useRent ? 'arr' : 'vta'}`
+        : p._id;
+
+      const descBase = p.descripcion
+        || `${useRent ? 'En arriendo' : 'En venta'} en ${p.municipio || 'Antioquia'}. ${p.area ? p.area + ' m². ' : ''}${p.habitaciones ? p.habitaciones + ' hab. ' : ''}${p.banos ? p.banos + ' baños.' : ''}`;
+
       return {
-        home_listing_id: p._id,
-        name: p.title || 'Inmueble',
-        description: (p.descripcion || `${p.tipo === 'venta' ? 'Venta' : 'Arriendo'} en ${p.municipio || ''}`).slice(0, 5000),
+        home_listing_id:  listingId,
+        name:             p.title || 'Inmueble',
+        description:      descBase.slice(0, 5000),
         price,
-        listing_type: listingType,
-        availability: avail,
-        url: `${baseUrl}/?prop=${p._id}`,
-        image_url: img,
+        listing_type:     listingType,
+        availability:     avail,
+        url:              `${baseUrl}/?prop=${p._id}`,
+        image_url:        imgUrl,
+        image_cdn_urls:   allImgs,          // todas las fotos para el carrusel del anuncio
         address: {
-          addr1: p.direccion || p.barrio || '',
-          city: p.municipio || '',
-          region: 'Antioquia',
-          country: 'CO',
+          addr1:       p.direccion || '',
+          city:        p.municipio || 'Sabaneta',
+          region:      'Antioquia',
+          country:     'CO',
           postal_code: ''
         },
-        latitude: p.lat || null,
-        longitude: p.lng || null,
-        num_baths: p.banos || null,
-        num_rooms: p.habitaciones || null,
-        area_size: p.area || null,
-        area_size_unit: 'm2',
-        property_type: propType,
-        brand: profile.name || 'Alex Arias',
-        neighborhood: p.barrio || '',
-        applink: {
-          web_url: `${baseUrl}/?prop=${p._id}`
-        }
+        latitude:         p.lat   ? Number(p.lat)   : null,
+        longitude:        p.lng   ? Number(p.lng)   : null,
+        num_baths:        p.banos       ? Number(p.banos)       : null,
+        num_rooms:        p.habitaciones? Number(p.habitaciones): null,
+        area_size:        p.area        ? Number(p.area)        : null,
+        area_size_unit:   'square_meters',   // campo correcto según spec Meta
+        property_type:    getType(p),
+        year_built:       p.anio_construccion ? Number(p.anio_construccion) : null,
+        brand:            brandName,
+        neighborhood:     p.barrio || '',
+        applink:          { web_url: `${baseUrl}/?prop=${p._id}` }
       };
-    });
+    }
+
+    const items = [];
+    for (const p of docs) {
+      if (p.tipo === 'combinado') {
+        items.push(buildEntry(p, 'rent'));   // entrada arriendo
+        items.push(buildEntry(p, 'sale'));   // entrada venta
+      } else {
+        items.push(buildEntry(p));
+      }
+    }
 
     res.json({ data: items });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Feed XML (RSS) para catálogo alternativo
+// Feed XML — mismo catálogo pero en formato RSS para Meta Business
+// También genera doble entrada para propiedades "combinado"
 app.get('/api/feed/facebook.xml', async (req, res) => {
   try {
-    const db = getDB();
+    const db      = getDB();
     const profile = readProfile();
-    const docs = await db.findAsync({});
+    const docs    = await db.findAsync({});
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const esc = v => String(v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const brandName = profile.name || 'Alex Arias Consultor Inmobiliario';
 
-    const items = docs.map(p => {
-      const img  = p.images?.[0]?.filename ? `${baseUrl}/${p.images[0].filename}` : '';
-      const price = p.precio ? `${Number(p.precio).toFixed(0)} COP` : '0 COP';
+    function xmlEntry(p, variant = 'default') {
+      const isComb   = p.tipo === 'combinado';
+      const useRent  = variant === 'rent' || (!isComb && p.tipo !== 'venta');
+      const rawPrice = useRent
+        ? (p.precioArriendo || p.precio || 0)
+        : (p.precioVenta    || p.precio || 0);
+      const price       = `${Number(rawPrice).toFixed(0)} COP`;
+      const listingType = useRent ? 'for_rent' : 'for_sale';
+      const avail       = p.estado === 'ocupado' ? 'recently_sold' : listingType;
+      const listingId   = isComb ? `${p._id}_${useRent ? 'arr' : 'vta'}` : p._id;
+
+      const allImgs = (p.images || []).filter(i => i.filename).map(i => `${baseUrl}/${i.filename}`);
+      const mainImg = allImgs[0] || '';
+      const extraImgs = allImgs.slice(1).map(u => `      <additional_image_url>${esc(u)}</additional_image_url>`).join('\n');
+
+      const desc = esc((p.descripcion || `${useRent ? 'En arriendo' : 'En venta'} en ${p.municipio || 'Antioquia'}`).slice(0, 500));
+
       return `
     <item>
-      <id>${esc(p._id)}</id>
-      <title>${esc(p.title)}</title>
-      <description>${esc((p.descripcion || '').slice(0, 500))}</description>
-      <home_listing_id>${esc(p._id)}</home_listing_id>
-      <listing_type>${p.tipo === 'venta' ? 'for_sale' : 'for_rent'}</listing_type>
-      <availability>${p.estado === 'ocupado' ? 'recently_sold' : (p.tipo === 'venta' ? 'for_sale' : 'for_rent')}</availability>
+      <id>${esc(listingId)}</id>
+      <home_listing_id>${esc(listingId)}</home_listing_id>
+      <title>${esc(p.title || 'Inmueble')}</title>
+      <description>${desc}</description>
+      <listing_type>${listingType}</listing_type>
+      <availability>${avail}</availability>
       <price>${esc(price)}</price>
       <url>${esc(`${baseUrl}/?prop=${p._id}`)}</url>
-      <image_url>${esc(img)}</image_url>
+      <image_url>${esc(mainImg)}</image_url>
+${extraImgs}
       <address>${esc([p.direccion, p.barrio, p.municipio].filter(Boolean).join(', '))}</address>
-      <city>${esc(p.municipio)}</city>
+      <city>${esc(p.municipio || 'Sabaneta')}</city>
       <region>Antioquia</region>
       <country>CO</country>
-      <neighborhood>${esc(p.barrio)}</neighborhood>
+      <postal_code></postal_code>
+      <neighborhood>${esc(p.barrio || '')}</neighborhood>
       <num_baths>${p.banos || ''}</num_baths>
       <num_rooms>${p.habitaciones || ''}</num_rooms>
       <area_size>${p.area || ''}</area_size>
+      <area_size_unit>square_meters</area_size_unit>
       <latitude>${p.lat || ''}</latitude>
       <longitude>${p.lng || ''}</longitude>
-      <brand>${esc(profile.name || 'Alex Arias')}</brand>
+      <brand>${esc(brandName)}</brand>
     </item>`;
-    }).join('\n');
+    }
+
+    const itemParts = [];
+    for (const p of docs) {
+      if (p.tipo === 'combinado') {
+        itemParts.push(xmlEntry(p, 'rent'));
+        itemParts.push(xmlEntry(p, 'sale'));
+      } else {
+        itemParts.push(xmlEntry(p));
+      }
+    }
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <listings>
-  <platform_store_id>alexarias_inmobiliario</platform_store_id>${items}
+  <platform_store_id>alexarias_inmobiliario</platform_store_id>
+${itemParts.join('\n')}
 </listings>`;
 
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
