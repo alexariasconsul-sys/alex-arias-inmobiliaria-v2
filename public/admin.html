@@ -2415,13 +2415,24 @@ async function loadPixelEvents() {
     tbody.innerHTML = d.events.map(e => {
       const isTest = e.eventName?.startsWith('[TEST]');
       const capiOk = e.capiResponse?.events_received > 0;
-      return `<tr style="border-bottom:1px solid #1e293b;${isTest?'background:rgba(167,139,250,.04)':''}">
+      // Celda CAPI — extraída a variable para evitar comillas anidadas
+      let capiCell;
+      if (e.reason === 'no_config') {
+        capiCell = '<span style="color:#64748b;font-size:10px">sin config</span>';
+      } else if (capiOk) {
+        capiCell = '<span style="color:#4ade80;font-size:10px">&#10003; recibido</span>';
+      } else if (e.capiResponse && e.capiResponse.error) {
+        capiCell = '<span style="color:#f87171;font-size:10px">&#10005; error</span>';
+      } else {
+        capiCell = '<span style="color:#94a3b8;font-size:10px">&mdash;</span>';
+      }
+      return `<tr style="border-bottom:1px solid #1e293b;${isTest ? 'background:rgba(167,139,250,.04)' : ''}">
         <td style="padding:5px 8px">${statusIcon(e.status)}</td>
-        <td style="padding:5px 8px;font-weight:500;color:${isTest?'#a78bfa':'#e2e8f0'};white-space:nowrap">${escHtml(e.eventName)}</td>
-        <td style="padding:5px 8px;color:#94a3b8">${e.customData?.value ? '$'+Number(e.customData.value).toLocaleString('es-CO') : '—'}</td>
-        <td style="padding:5px 8px">${e.hasUserData ? '<span style="color:#4ade80;font-size:10px">✓ email</span>' : '<span style="color:#475569;font-size:10px">anon</span>'}</td>
-        <td style="padding:5px 8px">${e.reason === 'no_config' ? '<span style="color:#64748b;font-size:10px">sin config</span>' : capiOk ? '<span style="color:#4ade80;font-size:10px">✓ recibido</span>' : e.capiResponse?.error ? '<span style="color:#f87171;font-size:10px" title="${escHtml(e.capiResponse.error.message||'')}">✕ error</span>' : '<span style="color:#94a3b8;font-size:10px">—</span>'}</td>
-        <td style="padding:5px 8px;color:#64748b">${e.ms||0}</td>
+        <td style="padding:5px 8px;font-weight:500;color:${isTest ? '#a78bfa' : '#e2e8f0'};white-space:nowrap">${escHtml(e.eventName)}</td>
+        <td style="padding:5px 8px;color:#94a3b8">${e.customData && e.customData.value ? '$' + Number(e.customData.value).toLocaleString('es-CO') : '&mdash;'}</td>
+        <td style="padding:5px 8px">${e.hasUserData ? '<span style="color:#4ade80;font-size:10px">&#10003; email</span>' : '<span style="color:#475569;font-size:10px">anon</span>'}</td>
+        <td style="padding:5px 8px">${capiCell}</td>
+        <td style="padding:5px 8px;color:#64748b">${e.ms || 0}</td>
         <td style="padding:5px 8px;color:#64748b;white-space:nowrap">${timeAgo(e.createdAt)}</td>
       </tr>`;
     }).join('');
