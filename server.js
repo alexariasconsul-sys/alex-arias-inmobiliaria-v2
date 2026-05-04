@@ -41,6 +41,7 @@ function getReviewsDB() {
 }
 
 const app = express();
+app.set('trust proxy', 1); // Necesario para rate-limit detrás de Nginx en VPS
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
