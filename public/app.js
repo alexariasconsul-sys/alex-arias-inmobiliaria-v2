@@ -41,6 +41,22 @@ function formatPrice(price) {
   return '$' + Number(price).toLocaleString('es-CO');
 }
 
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  if (isNaN(diff) || diff < 0) return '';
+  const mins  = Math.floor(diff / 60000);
+  const hrs   = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+  const weeks = Math.floor(days / 7);
+  const months = Math.floor(days / 30);
+  if (mins < 60)   return 'hace unos minutos';
+  if (hrs  < 24)   return `hace ${hrs} ${hrs  === 1 ? 'hora'   : 'horas'}`;
+  if (days <  7)   return `hace ${days} ${days === 1 ? 'día'   : 'días'}`;
+  if (weeks < 5)   return `hace ${weeks} ${weeks === 1 ? 'semana' : 'semanas'}`;
+  return `hace ${months} ${months === 1 ? 'mes' : 'meses'}`;
+}
+
 function encodeImgPath(filepath) {
   if (!filepath) return '';
   return filepath.split('/').map(s => encodeURIComponent(s)).join('/');
@@ -856,6 +872,10 @@ function cardHTML(p) {
   const isLiked = state.likedIds.has(String(p.id));
   const isCombinado = p.tipo === 'combinado';
   const price = isCombinado ? formatPrice(p.precioArriendo || p.precio) : formatPrice(p.precio);
+  const precioM2 = (!isCombinado && p.precio && p.area)
+    ? Math.round(Number(p.precio) / Number(p.area)) : null;
+  const precioM2Html = precioM2
+    ? `<div class="card-price-m2">${formatPrice(precioM2)}<span>/m²</span></div>` : '';
   const statusClass = p.estado === 'ocupado' ? 'status-ocupado' : 'status-libre';
   const statusLabel = p.estado === 'ocupado' ? 'Ocupado' : 'Libre';
 
@@ -879,7 +899,7 @@ function cardHTML(p) {
             : `data-src="/${encodeImgPath(img.filename)}" src=""`
           } alt="${p.title} foto ${i + 1}" loading="lazy" class="lazy-img" />
         </div>`).join('')
-    : `<div class="property-slide is-active"><div style="background:#e5e7eb;width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:12px">Sin foto</div></div>`;
+    : `<div class="property-slide is-active"><div class="no-photo-placeholder"><svg viewBox="0 0 64 64" fill="none" width="44" height="44"><path d="M8 28L32 8l24 20v28H8V28z" fill="rgba(148,163,184,.25)" stroke="rgba(148,163,184,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 56V38h16v18" stroke="rgba(148,163,184,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Sin fotografía</span></div></div>`;
 
   const stripEmoji = s => s.replace(/\p{Extended_Pictographic}/gu, '').replace(/\s+/g, ' ').trim();
   const amenidadesHTML = [...amenidades]
@@ -937,6 +957,7 @@ function cardHTML(p) {
               <div class="card-price-wrap">
                 <div class="card-price">${price}${isCombinado ? '<span class="price-sublabel">/mes</span>' : ''}</div>
                 ${isCombinado && p.precioVenta ? `<div class="card-price-secondary">Venta: ${formatPrice(p.precioVenta)}</div>` : ''}
+                ${precioM2Html}
               </div>
             </div>
           </div>
@@ -970,6 +991,7 @@ function cardHTML(p) {
             <div class="detail-header">
               <h3>${p.title}</h3>
               <p class="detail-address">${[p.direccion, p.piso ? `Piso ${p.piso}` : '', p.sector].filter(Boolean).join(' · ')}</p>
+              ${timeAgo(p.created_at) ? `<span class="detail-date">Publicado ${timeAgo(p.created_at)}</span>` : ''}
             </div>
 
             ${isCombinado ? `
@@ -992,10 +1014,17 @@ function cardHTML(p) {
               <div class="amenities-list">${amenidadesHTML}</div>
             </div>` : ''}
 
-            ${p.descripcion ? `
-            <div class="property-description">
-              <p>${p.descripcion}</p>
-            </div>` : ''}
+            ${p.descripcion ? (() => {
+              const MAX = 130;
+              const long = p.descripcion.length > MAX;
+              return `<div class="property-description">
+                <p>${long
+                  ? `<span class="desc-truncated">${p.descripcion.slice(0, MAX)}…</span><span class="desc-full" hidden>${p.descripcion}</span>`
+                  : p.descripcion}
+                </p>
+                ${long ? `<button class="desc-toggle" type="button">Ver más</button>` : ''}
+              </div>`;
+            })() : ''}
 
             <div class="detail-actions">
               <button class="share-btn" data-id="${p.id}" type="button">
@@ -2033,6 +2062,18 @@ function setupFilters() {
       container.querySelectorAll('.hab-btn').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
     }
+  });
+
+  // Ver más / Ver menos en descripción
+  document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('desc-toggle')) return;
+    const desc = e.target.closest('.property-description');
+    const truncated = desc.querySelector('.desc-truncated');
+    const full      = desc.querySelector('.desc-full');
+    const expanded  = !full.hidden;
+    truncated.hidden = !expanded;
+    full.hidden      =  expanded;
+    e.target.textContent = expanded ? 'Ver más' : 'Ver menos';
   });
 
   // Baños pills — usar event delegation

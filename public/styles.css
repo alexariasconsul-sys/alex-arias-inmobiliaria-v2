@@ -1144,6 +1144,14 @@ a { text-decoration: none; color: inherit; }
   white-space: nowrap;
   text-shadow: 0 1px 4px rgba(0,0,0,.3);
 }
+.card-price-m2 {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255,255,255,.78);
+  margin-top: 2px;
+  white-space: nowrap;
+}
+.card-price-m2 span { opacity: .85; }
 
 /* Tipo pill inside image overlay — hidden by default, shown in carousel peek */
 .tipo-overlay-badge {
@@ -1369,6 +1377,10 @@ a { text-decoration: none; color: inherit; }
   font-size: 10px; font-weight: 600;
   color: var(--muted); letter-spacing: .06em;
 }
+.detail-date {
+  font-size: 10px; font-weight: 600;
+  color: #bbb; letter-spacing: .02em;
+}
 
 /* Stats */
 .property-stats {
@@ -1435,6 +1447,29 @@ a { text-decoration: none; color: inherit; }
   margin: 0;
   font-size: 12px; line-height: 1.65;
   color: #4b5563;
+}
+.desc-toggle {
+  background: none; border: none; padding: 0;
+  margin-top: 5px; display: inline-block;
+  font-size: 12px; font-weight: 700;
+  color: var(--brand); cursor: pointer;
+  font-family: inherit;
+  transition: opacity .15s;
+}
+.desc-toggle:hover { opacity: .75; }
+
+/* Placeholder sin foto */
+.no-photo-placeholder {
+  width: 100%; height: 100%;
+  background: linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px;
+}
+.no-photo-placeholder span {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: #94a3b8;
 }
 
 /* Detail actions */
