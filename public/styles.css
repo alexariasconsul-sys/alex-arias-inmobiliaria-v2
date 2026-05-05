@@ -1144,14 +1144,6 @@ a { text-decoration: none; color: inherit; }
   white-space: nowrap;
   text-shadow: 0 1px 4px rgba(0,0,0,.3);
 }
-.card-price-m2 {
-  font-size: 10px;
-  font-weight: 600;
-  color: rgba(255,255,255,.78);
-  margin-top: 2px;
-  white-space: nowrap;
-}
-.card-price-m2 span { opacity: .85; }
 
 /* Tipo pill inside image overlay — hidden by default, shown in carousel peek */
 .tipo-overlay-badge {

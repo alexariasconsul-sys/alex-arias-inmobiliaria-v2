@@ -872,10 +872,6 @@ function cardHTML(p) {
   const isLiked = state.likedIds.has(String(p.id));
   const isCombinado = p.tipo === 'combinado';
   const price = isCombinado ? formatPrice(p.precioArriendo || p.precio) : formatPrice(p.precio);
-  const precioM2 = (!isCombinado && p.precio && p.area)
-    ? Math.round(Number(p.precio) / Number(p.area)) : null;
-  const precioM2Html = precioM2
-    ? `<div class="card-price-m2">${formatPrice(precioM2)}<span>/m²</span></div>` : '';
   const statusClass = p.estado === 'ocupado' ? 'status-ocupado' : 'status-libre';
   const statusLabel = p.estado === 'ocupado' ? 'Ocupado' : 'Libre';
 
@@ -957,7 +953,6 @@ function cardHTML(p) {
               <div class="card-price-wrap">
                 <div class="card-price">${price}${isCombinado ? '<span class="price-sublabel">/mes</span>' : ''}</div>
                 ${isCombinado && p.precioVenta ? `<div class="card-price-secondary">Venta: ${formatPrice(p.precioVenta)}</div>` : ''}
-                ${precioM2Html}
               </div>
             </div>
           </div>
