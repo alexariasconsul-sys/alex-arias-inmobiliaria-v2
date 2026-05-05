@@ -441,29 +441,34 @@ function applySavedSearch(id) {
   state.filterAmenidades = f.filterAmenidades || [];
   syncUIFromState();
   pushFilterState();
-  document.getElementById('filtersModal').style.display = 'none';
+  if (window.closeFiltersModal) window.closeFiltersModal();
+  else document.getElementById('filtersModal').style.display = 'none';
   loadProperties();
   showToast(`Búsqueda "${s.name}" aplicada`);
 }
 
 function renderSavedSearches() {
   const searches = getSavedSearches();
-  const section = document.getElementById('savedSearchesSection');
-  const chipsEl = document.getElementById('savedSearchChips');
-  if (!section || !chipsEl) return;
-  if (!searches.length) { section.style.display = 'none'; return; }
-  section.style.display = 'block';
-  chipsEl.innerHTML = searches.map(s => `
-    <div class="saved-search-chip" data-id="${s.id}">
-      <span class="saved-chip-label">${s.name}</span>
-      <button class="saved-search-chip-del" data-del="${s.id}" title="Eliminar">✕</button>
-    </div>`).join('');
-  chipsEl.querySelectorAll('.saved-search-chip').forEach(el => {
-    el.querySelector('.saved-chip-label').addEventListener('click', () => applySavedSearch(el.dataset.id));
-  });
-  chipsEl.querySelectorAll('.saved-search-chip-del').forEach(btn => {
-    btn.addEventListener('click', (e) => { e.stopPropagation(); deleteSavedSearch(btn.dataset.del); });
-  });
+  const renderInto = (sectionId, chipsId) => {
+    const section = document.getElementById(sectionId);
+    const chipsEl = document.getElementById(chipsId);
+    if (!section || !chipsEl) return;
+    if (!searches.length) { section.style.display = 'none'; return; }
+    section.style.display = 'block';
+    chipsEl.innerHTML = searches.map(s => `
+      <div class="saved-search-chip" data-id="${s.id}">
+        <span class="saved-chip-label">${s.name}</span>
+        <button class="saved-search-chip-del" data-del="${s.id}" title="Eliminar">✕</button>
+      </div>`).join('');
+    chipsEl.querySelectorAll('.saved-search-chip').forEach(el => {
+      el.querySelector('.saved-chip-label').addEventListener('click', () => applySavedSearch(el.dataset.id));
+    });
+    chipsEl.querySelectorAll('.saved-search-chip-del').forEach(btn => {
+      btn.addEventListener('click', (e) => { e.stopPropagation(); deleteSavedSearch(btn.dataset.del); });
+    });
+  };
+  renderInto('savedSearchesSection', 'savedSearchChips');
+  renderInto('mobileSavedSearchesSection', 'mobileSavedSearchChips');
 }
 
 // ─── API ──────────────────────────────────────────────────────
@@ -719,57 +724,39 @@ function updateDynamicFilterRanges() {
     }
   });
 
-  const amenitiesContainer = document.querySelector('.filter-amenidades');
-  if (amenitiesContainer && amenitiesSet.size > 0) {
+  const amenitiesContainers = document.querySelectorAll('.filter-amenidades');
+  if (amenitiesContainers.length > 0 && amenitiesSet.size > 0) {
     const existingAmenities = Array.from(amenitiesSet).sort();
-    const allAmenitiesMap = {
-      'Piscina': '🏊',
-      'Gimnasio': '💪',
-      'Zona BBQ': '🔥',
-      'Zonas comunes': '🌳',
-      'Zonas Comunes': '🌳',
-      'Salón social': '🎉',
-      'Salón Social': '🎉',
-      'Portería 24h': '🔒',
-      'Ascensor': '🛗',
-      'Terraza': '🌅',
-      'Depósito': '📦',
-      'Cuarto de servicio': '🧹',
-      'Cuarto servicio': '🧹',
-      'Estudio': '📚',
-      'Cocina integral': '🍳',
-      'Balcón': '🌤️',
-      'Balcones': '🌤️',
-      '2 Balcones': '🌤️🌤️',
-      'Closet': '🗄️',
-      'Closets': '🗄️',
-      '3 Closets': '🗄️🗄️🗄️',
-      'Nicho de Estudio': '📖',
-      'Panel en japonés': '🏯',
-      'Persianas blackout': '🪟',
-      'Persians blackout': '🪟',
-      'Sala comedor': '🍽️',
-      'Seguridad 24h': '📹',
-      'Vestier': '👗',
-      'Zona de ropas': '👕',
-      'Zona ropas con calendario': '📅',
-      'Cocina Integral': '🍳',
-      'Cuarto Servicio': '🧹',
-      'Nicho Estudio': '📖'
+    const AMENITY_ICONS = {
+      'Piscina':         `<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0M2 17c2-3 4-3 6 0s4 3 6 0 4-3 6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="5" r="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 7v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+      'Gimnasio':        `<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M6 12h12M4 9v6M8 6v12M16 6v12M20 9v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+      'Zona BBQ':        `<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M6 8h12l-2 5H8L6 8z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 13v5M9 18h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 5c0-1 .5-2 1-2s1 1 1 1 .5-1 1-1 1 1 1 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+      'Portería 24h':    `<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M12 2L3 6.5v5c0 5.25 3.75 10.15 9 11.35C17.25 21.65 21 16.75 21 11.5v-5L12 2z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      'Seguridad 24h':   `<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M12 2L3 6.5v5c0 5.25 3.75 10.15 9 11.35C17.25 21.65 21 16.75 21 11.5v-5L12 2z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      'Ascensor':        `<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M9.5 10l2.5-3 2.5 3M9.5 14l2.5 3 2.5-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      'Terraza':         `<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M3 21h18M5 21V9l7-6 7 6v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 21v-5h6v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      'Depósito':        `<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.27 6.96L12 12l8.73-5.04M12 22V12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+      'Estudio':         `<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5V4.5A2.5 2.5 0 016.5 2z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8 7h8M8 11h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+      'Cocina integral': `<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><rect x="2" y="3" width="20" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M2 9h20" stroke="currentColor" stroke-width="1.8"/><circle cx="7" cy="6" r="1.2" fill="currentColor"/><circle cx="12" cy="6" r="1.2" fill="currentColor"/><circle cx="17" cy="6" r="1.2" fill="currentColor"/><rect x="6" y="12" width="12" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>`,
+      'Cocina Integral': `<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><rect x="2" y="3" width="20" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M2 9h20" stroke="currentColor" stroke-width="1.8"/><circle cx="7" cy="6" r="1.2" fill="currentColor"/><circle cx="12" cy="6" r="1.2" fill="currentColor"/><circle cx="17" cy="6" r="1.2" fill="currentColor"/><rect x="6" y="12" width="12" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>`,
     };
+    const GENERIC_ICON = `<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
 
     const checkedAmenities = new Set([...document.querySelectorAll('.amenity-check input:checked')].map(cb => cb.value));
-
-    amenitiesContainer.innerHTML = existingAmenities.map(amenity => {
-      const emoji = allAmenitiesMap[amenity] || '✨';
-      return `<label class="amenity-check" title="${amenity}">
+    const amenityHTML = existingAmenities.map(amenity => {
+      const icon = AMENITY_ICONS[amenity] || GENERIC_ICON;
+      return `<label class="amenity-check">
         <input type="checkbox" value="${amenity}"${checkedAmenities.has(amenity) ? ' checked' : ''}/>
-        <span class="amenity-icon">${emoji}</span>
-        <span>${amenity}</span>
+        <span class="amenity-card">
+          <span class="amenity-icon-wrap">${icon}</span>
+          <span class="amenity-label">${amenity}</span>
+        </span>
       </label>`;
     }).join('');
 
-    // No re-setup listeners aquí — se hace en setupFiltersPanel()
+    for (const container of amenitiesContainers) {
+      container.innerHTML = amenityHTML;
+    }
   }
 }
 
@@ -894,9 +881,11 @@ function cardHTML(p) {
         </div>`).join('')
     : `<div class="property-slide is-active"><div style="background:#e5e7eb;width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:12px">Sin foto</div></div>`;
 
-  const CHIP_PAL = ['chip-0','chip-1','chip-2','chip-3','chip-4','chip-5','chip-6','chip-7'];
-  const amenidadesHTML = amenidades.slice(0, 8).map((a, i) => `
-    <div class="amenity-chip ${CHIP_PAL[i % CHIP_PAL.length]}"><span>${a}</span></div>`).join('');
+  const stripEmoji = s => s.replace(/\p{Extended_Pictographic}/gu, '').replace(/\s+/g, ' ').trim();
+  const amenidadesHTML = [...amenidades]
+    .sort((a, b) => stripEmoji(a).localeCompare(stripEmoji(b), 'es'))
+    .map(a => `<span class="amenity-chip">${stripEmoji(a)}</span>`)
+    .join('');
 
   const stats = [];
   if (p.area) stats.push(`<div class="stat-item"><p>${p.area}</p><span>m²</span></div>`);
@@ -1163,6 +1152,16 @@ function openCard(card) {
     card.classList.add('is-open');
     card.style.zIndex = '10';
     syncMobileHeight(card);
+
+    // ── Scroll elegante: la tarjeta sube hacia el usuario al expandirse ──
+    // Se ejecuta en el siguiente frame para tener las coordenadas actualizadas
+    requestAnimationFrame(() => {
+      const headerH = document.querySelector('.top-bar')?.offsetHeight ?? 72;
+      const cardRect = card.getBoundingClientRect();
+      const scrollTarget = window.scrollY + cardRect.top - headerH - 10;
+      window.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' });
+    });
+
     // Fix #4: expandir sidebar del mapa para que botones no queden enterrados
     const sidebar = document.getElementById('mapSidebar');
     if (sidebar) {
@@ -2004,18 +2003,25 @@ function setupFilters() {
   });
 
   // Advanced filters modal
+  window.closeFiltersModal = () => {
+    const overlay = document.getElementById('filtersModal');
+    if (!overlay || overlay.classList.contains('is-closing')) return;
+    overlay.classList.add('is-closing');
+    setTimeout(() => {
+      overlay.classList.remove('is-closing');
+      overlay.style.display = 'none';
+    }, 200);
+  };
+
   const openFiltersHandler = () => {
     document.getElementById('filtersModal').style.display = 'flex';
     renderSavedSearches();
   };
   document.getElementById('openFilters').addEventListener('click', openFiltersHandler);
 
-  document.getElementById('closeFilters').addEventListener('click', () => {
-    document.getElementById('filtersModal').style.display = 'none';
-  });
+  document.getElementById('closeFilters').addEventListener('click', window.closeFiltersModal);
   document.getElementById('filtersModal').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('filtersModal'))
-      document.getElementById('filtersModal').style.display = 'none';
+    if (e.target === document.getElementById('filtersModal')) window.closeFiltersModal();
   });
 
   // Price inputs — actualizar label en tiempo real (manejado por updatePrecioLabel)
@@ -2107,7 +2113,7 @@ function setupFilters() {
     state.filterEstado = ''; state.orderBy = '';
     document.getElementById('filterBadge').style.display = 'none';
     loadProperties();
-    document.getElementById('filtersModal').style.display = 'none';
+    window.closeFiltersModal();
   });
 
   // Estado filter buttons (desktop)
@@ -2180,7 +2186,7 @@ function setupFilters() {
     badge.textContent = count;
 
     loadProperties();
-    document.getElementById('filtersModal').style.display = 'none';
+    window.closeFiltersModal();
   });
 
   // Save search button wiring
@@ -2200,6 +2206,26 @@ function setupFilters() {
   document.getElementById('savedSearchNameInput')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') document.getElementById('savedSearchConfirm')?.click();
     if (e.key === 'Escape') document.getElementById('savedSearchInline')?.classList.remove('is-open');
+  });
+
+  // ── GUARDAR BÚSQUEDA — MOBILE ─────────────────────────────────
+  document.getElementById('saveSearchBtnMobile')?.addEventListener('click', () => {
+    const inline = document.getElementById('savedSearchInlineMobile');
+    inline?.classList.toggle('is-open');
+    if (inline?.classList.contains('is-open')) {
+      document.getElementById('savedSearchNameInputMobile')?.focus();
+    }
+  });
+  document.getElementById('savedSearchConfirmMobile')?.addEventListener('click', () => {
+    const name = document.getElementById('savedSearchNameInputMobile')?.value || '';
+    saveCurrentSearch(name);
+    document.getElementById('savedSearchNameInputMobile').value = '';
+    document.getElementById('savedSearchInlineMobile')?.classList.remove('is-open');
+    renderSavedSearches();
+  });
+  document.getElementById('savedSearchNameInputMobile')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('savedSearchConfirmMobile')?.click();
+    if (e.key === 'Escape') document.getElementById('savedSearchInlineMobile')?.classList.remove('is-open');
   });
 
   // ── PANEL MÓVIL MEGAFILTRO ────────────────────────────────────
@@ -2234,6 +2260,29 @@ function setupFilters() {
     document.querySelectorAll('.mobile-tipo-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.tipoM === state.tipo);
     });
+    // Precio
+    document.getElementById('fMinPrecioMobile').value = state.minPrecio || '';
+    document.getElementById('fMaxPrecioMobile').value = state.maxPrecio || '';
+    document.querySelectorAll('.filter-preset[data-min-m]').forEach(b => {
+      const min = Number(b.dataset.minM) || 0;
+      const max = Number(b.dataset.maxM) || 0;
+      b.classList.toggle('active', (min || max) && state.minPrecio === min && state.maxPrecio === max);
+    });
+    // Habitaciones
+    document.querySelectorAll('.hab-btn-m').forEach(b => {
+      b.classList.toggle('active', Number(b.dataset.habM) === state.minHab);
+    });
+    // Baños
+    document.querySelectorAll('.ban-btn-m').forEach(b => {
+      b.classList.toggle('active', Number(b.dataset.banM) === state.minBanos);
+    });
+    // Amenidades
+    document.querySelectorAll('#mobileAmenitiesContainer .amenity-check input').forEach(cb => {
+      cb.checked = state.filterAmenidades.includes(cb.value);
+    });
+    // Parqueadero
+    const pqm = document.getElementById('fParqueaderoMobile');
+    if (pqm) pqm.checked = state.filterParqueadero;
     // Estado (mobile)
     document.querySelectorAll('.filter-state-btn[data-state-m]').forEach(b => {
       b.classList.toggle('active', b.dataset.stateM === state.filterEstado);
@@ -2242,6 +2291,8 @@ function setupFilters() {
     const fOrderByMobile = document.getElementById('fOrderByMobile');
     if (fOrderByMobile) fOrderByMobile.value = state.orderBy || '';
     searchMobile.value = state.search;
+    // Búsquedas guardadas
+    renderSavedSearches();
   }
 
   function updateMobileHint() {
@@ -2255,6 +2306,7 @@ function setupFilters() {
   if (openMobileBtn) {
     openMobileBtn.addEventListener('click', () => {
       syncMobileSelects();
+      mobileOverlay.classList.remove('is-closing');
       mobileOverlay.style.display = 'flex';
       document.body.style.overflow = 'hidden';
       setTimeout(() => document.getElementById('searchInputMobile')?.focus(), 100);
@@ -2262,8 +2314,13 @@ function setupFilters() {
   }
 
   function closeMobilePanel() {
-    mobileOverlay.style.display = 'none';
-    document.body.style.overflow = '';
+    if (mobileOverlay.classList.contains('is-closing')) return;
+    mobileOverlay.classList.add('is-closing');
+    setTimeout(() => {
+      mobileOverlay.classList.remove('is-closing');
+      mobileOverlay.style.display = 'none';
+      document.body.style.overflow = '';
+    }, 320); // coincide con duración de panelCollapse (.3s) + pequeño margen
   }
 
   if (closeMobileBtn) closeMobileBtn.addEventListener('click', closeMobilePanel);
@@ -2323,11 +2380,11 @@ function setupFilters() {
     const banM = document.querySelector('.ban-btn-m.active');
     state.minBanos = banM ? Number(banM.dataset.banM) : 0;
     state.filterParqueadero = document.getElementById('fParqueaderoMobile')?.checked || false;
-
+    // Capturar Amenidades (mobile)
+    state.filterAmenidades = [...document.querySelectorAll('#mobileAmenitiesContainer .amenity-check input:checked')].map(cb => cb.value);
     // Capturar Estado (mobile)
     const stateActiveMobile = document.querySelector('.filter-state-btn.active[data-state-m]');
     state.filterEstado = stateActiveMobile ? stateActiveMobile.dataset.stateM : '';
-
     // Capturar Ordenamiento (mobile)
     state.orderBy = document.getElementById('fOrderByMobile')?.value || '';
 
@@ -2358,6 +2415,8 @@ function setupFilters() {
     document.querySelectorAll('.ban-btn-m').forEach((b, i) => b.classList.toggle('active', i === 0));
     const pqm = document.getElementById('fParqueaderoMobile');
     if (pqm) pqm.checked = false;
+    // Resetear Amenidades (mobile)
+    document.querySelectorAll('#mobileAmenitiesContainer .amenity-check input').forEach(cb => cb.checked = false);
     // Resetear Estado (mobile)
     document.querySelectorAll('.filter-state-btn[data-state-m]').forEach((b, i) => b.classList.toggle('active', i === 0));
     // Resetear Ordenamiento (mobile)
@@ -2506,9 +2565,13 @@ function setupFilters() {
   });
 
   function closeProfile() {
-    profileOverlay.style.display = 'none';
-    document.body.style.overflow = '';
-    closeEditMode();
+    profileOverlay.classList.add('is-closing');
+    setTimeout(() => {
+      profileOverlay.classList.remove('is-closing');
+      profileOverlay.style.display = 'none';
+      document.body.style.overflow = '';
+      closeEditMode();
+    }, 260);
   }
 
   document.getElementById('closeProfile').addEventListener('click', closeProfile);
@@ -4916,11 +4979,14 @@ function setupReviewsPanel() {
   // Close reply panel
   window.closeReplyPanel = () => {
     const modal = document.getElementById('replyModal');
-    if (modal) {
+    if (!modal) return;
+    modal.classList.add('is-closing');
+    setTimeout(() => {
+      modal.classList.remove('is-closing');
       modal.style.display = 'none';
       document.getElementById('replyText').value = '';
       document.getElementById('replyCharCount').textContent = '0';
-    }
+    }, 240);
   };
 
   // Submit reply

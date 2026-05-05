@@ -336,20 +336,22 @@ a { text-decoration: none; color: inherit; }
   .mega-desktop { display: none; }
 
   .mega-mobile-trigger {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
     flex: 1;
     background: #fff;
     border: 1px solid #e2e2e2;
     border-radius: 999px;
-    padding: 10px 14px;
+    padding: 10px 50px; /* espacio para los iconos en los extremos */
     box-shadow: 0 2px 10px rgba(0,0,0,.08);
     cursor: pointer;
-    text-align: left;
     min-width: 0;
+    overflow: hidden;
   }
   .mobile-trigger-icon {
+    position: absolute; left: 12px;
     width: 32px; height: 32px;
     border-radius: 999px;
     background: #f5f5f5;
@@ -359,7 +361,8 @@ a { text-decoration: none; color: inherit; }
   }
   .mobile-trigger-text {
     display: flex; flex-direction: column; gap: 1px;
-    flex: 1; min-width: 0;
+    align-items: center;
+    min-width: 0;
   }
   .mobile-trigger-main {
     font-size: 13px; font-weight: 700; color: #111;
@@ -370,6 +373,7 @@ a { text-decoration: none; color: inherit; }
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .mobile-trigger-filter-btn {
+    position: absolute; right: 10px;
     width: 28px; height: 28px;
     border-radius: 999px;
     background: #111;
@@ -381,15 +385,44 @@ a { text-decoration: none; color: inherit; }
 }
 
 /* ─── PANEL MÓVIL MEGAFILTRO ────────────────────────────────── */
+/*
+  ANIMACIÓN ESTILO AIRBNB:
+  El panel nace exactamente desde la posición del botón trigger
+  y se expande para llenar la pantalla, como si el botón se
+  transformara en el panel completo (shared element transition).
+
+  Cálculo del botón trigger en viewport 390px:
+  ┌─ header ─────────────────────────────────────────────────┐ ← top: 0
+  │  border-top: 3px (brand red)                             │
+  │  ┌─ top-bar-inner h:64px (padding: 0 16px, gap: 8px) ─┐ │
+  │  │ brand(42) + gap(8) + [BOTÓN] + gap(8) + user(42)   │ │
+  │  │         izq: 66px ↔ BOTÓN ↔ der: 66px              │ │
+  │  │         top:7px  altura:56px  r:28px                │ │
+  │  └──────────────────────────────────────────────────────┘ │
+  └──────────────────────────────────────────────────────────┘ ← bottom: 67px
+*/
+
 .mobile-search-overlay {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(0,0,0,.45);
   display: flex;
   align-items: flex-start;
-  animation: fadeIn .2s ease;
+  animation: overlayBgIn .42s ease both;
 }
+.mobile-search-overlay.is-closing {
+  animation: overlayBgOut .3s ease both;
+  pointer-events: none;
+}
+@keyframes overlayBgIn {
+  0%   { background: rgba(0,0,0,0); }
+  100% { background: rgba(0,0,0,.45); }
+}
+@keyframes overlayBgOut {
+  0%   { background: rgba(0,0,0,.45); }
+  100% { background: rgba(0,0,0,0); }
+}
+
 .mobile-search-panel {
   width: 100%;
   background: #fff;
@@ -397,12 +430,99 @@ a { text-decoration: none; color: inherit; }
   display: flex; flex-direction: column;
   max-height: 92vh;
   overflow: hidden;
-  animation: slideDown .28s cubic-bezier(.4,0,.2,1);
+  /* Animación principal: el panel crece desde el botón trigger */
+  animation: panelExpand .42s cubic-bezier(.22,1,.36,1) both;
+  will-change: clip-path;
 }
-@keyframes slideDown {
-  from { transform: translateY(-100%); }
-  to   { transform: translateY(0); }
+.mobile-search-overlay.is-closing .mobile-search-panel {
+  animation: panelCollapse .3s cubic-bezier(.55,0,1,.45) both;
 }
+
+@keyframes panelExpand {
+  /* Estado inicial: recortado exactamente al área del botón trigger */
+  from {
+    clip-path: inset(7px 66px calc(100% - 63px) 66px round 28px);
+  }
+  /* Estado final: panel completo visible */
+  to {
+    clip-path: inset(0px 0px 0px 0px round 0px);
+  }
+}
+
+@keyframes panelCollapse {
+  from {
+    clip-path: inset(0px 0px 0px 0px round 0px);
+  }
+  to {
+    clip-path: inset(7px 66px calc(100% - 63px) 66px round 28px);
+  }
+}
+
+/* ── Stagger: contenido del panel aparece en cascada al abrir ── */
+@keyframes contentFadeUp {
+  from { opacity: 0; transform: translateY(7px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes contentFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Header y footer del panel */
+.mobile-search-overlay .mobile-panel-header {
+  animation: contentFadeIn .2s ease both;
+  animation-delay: .16s;
+}
+.mobile-search-overlay .mobile-panel-footer {
+  animation: contentFadeIn .2s ease both;
+  animation-delay: .2s;
+}
+
+/* Cada sección aparece escalonada (10 secciones, 30ms de diferencia) */
+.mobile-search-overlay .mobile-panel-body .mobile-filter-section {
+  animation: contentFadeUp .22s ease both;
+}
+.mobile-search-overlay .mobile-panel-body .mobile-filter-section:nth-child(1)  { animation-delay: .18s; }
+.mobile-search-overlay .mobile-panel-body .mobile-filter-section:nth-child(2)  { animation-delay: .21s; }
+.mobile-search-overlay .mobile-panel-body .mobile-filter-section:nth-child(3)  { animation-delay: .24s; }
+.mobile-search-overlay .mobile-panel-body .mobile-filter-section:nth-child(4)  { animation-delay: .27s; }
+.mobile-search-overlay .mobile-panel-body .mobile-filter-section:nth-child(5)  { animation-delay: .30s; }
+.mobile-search-overlay .mobile-panel-body .mobile-filter-section:nth-child(6)  { animation-delay: .33s; }
+.mobile-search-overlay .mobile-panel-body .mobile-filter-section:nth-child(7)  { animation-delay: .36s; }
+.mobile-search-overlay .mobile-panel-body .mobile-filter-section:nth-child(8)  { animation-delay: .38s; }
+.mobile-search-overlay .mobile-panel-body .mobile-filter-section:nth-child(9)  { animation-delay: .40s; }
+.mobile-search-overlay .mobile-panel-body .mobile-filter-section:nth-child(10) { animation-delay: .42s; }
+
+/* Al cerrar: cancelar todos los stagger para que el clip-path maneje el cierre limpio */
+.mobile-search-overlay.is-closing .mobile-panel-header,
+.mobile-search-overlay.is-closing .mobile-panel-footer,
+.mobile-search-overlay.is-closing .mobile-panel-body .mobile-filter-section {
+  animation: none !important;
+  opacity: 1;
+  transform: none;
+}
+
+/* ── Efecto táctil en el trigger (feedback visual al pulsar) ── */
+.mega-mobile-trigger {
+  transition: transform .12s ease, box-shadow .15s ease;
+}
+.mega-mobile-trigger:active {
+  transform: scale(0.97);
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+
+/* ── Scroll indicator: gradiente sutil al pie del body ── */
+.mobile-panel-body {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.mobile-panel-body::-webkit-scrollbar { display: none; }
+
+/* ── Separador visual entre secciones del panel ── */
+.mobile-search-overlay .mobile-panel-body .mobile-filter-section + .mobile-filter-section {
+  border-top: 1px solid #f0f0f0;
+}
+
 .mobile-panel-header {
   display: flex; align-items: center; gap: 12px;
   padding: 16px 20px 12px;
@@ -434,9 +554,11 @@ a { text-decoration: none; color: inherit; }
   text-transform: uppercase; letter-spacing: .1em;
   color: #999;
 }
-.mobile-tipo-group {
-  display: flex; gap: 6px;
+.mobile-filter-sub {
+  margin: 4px 0 10px;
+  font-size: 12px; color: #aaa; font-weight: 500;
 }
+.mobile-tipo-group { display: flex; gap: 6px; }
 .mobile-tipo-btn {
   flex: 1;
   display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -482,9 +604,17 @@ a { text-decoration: none; color: inherit; }
 .mobile-search-input-wrap input::placeholder { color: #aaa; }
 
 .mobile-panel-footer {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   padding: 14px 20px 20px;
   border-top: 1px solid var(--line-2);
+  background: #fff;
+  flex-shrink: 0;
+}
+.mobile-footer-row {
+  display: flex;
+  align-items: center;
   gap: 10px;
 }
 .btn-mobile-clear {
@@ -515,9 +645,39 @@ a { text-decoration: none; color: inherit; }
   background: rgba(0,0,0,.45);
   display: flex; align-items: center; justify-content: center;
   padding: 20px;
-  animation: fadeIn .2s ease;
+  animation: fadeIn .22s ease both;
 }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.profile-overlay.is-closing {
+  animation: fadeOut .26s ease both;
+  pointer-events: none;
+}
+.profile-overlay.is-closing .profile-card {
+  animation: popOut .24s cubic-bezier(.4,0,1,1) both;
+}
+@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+/* ─── Keyframes globales (usados en varios componentes) ─────── */
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes slideOutRight {
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(100%); opacity: 0; }
+}
+@keyframes slideUpModal {
+  from { transform: translateY(14px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes slideDownModal {
+  from { transform: translateY(0);    opacity: 1; }
+  to   { transform: translateY(14px); opacity: 0; }
+}
+@keyframes popOut {
+  from { transform: scale(1);   opacity: 1; }
+  to   { transform: scale(.94); opacity: 0; }
+}
 
 .profile-card {
   background: #fff;
@@ -1244,25 +1404,31 @@ a { text-decoration: none; color: inherit; }
   text-transform: uppercase; letter-spacing: .24em; color: var(--muted);
 }
 
-.amenities-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.amenities-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
 
 .amenity-chip {
-  display: inline-flex; align-items: center;
-  padding: 5px 10px;
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
   border-radius: 999px;
-  font-size: 10px; font-weight: 700;
+  font-size: 11px;
+  font-weight: 600;
   line-height: 1;
-  background: #f8fafc; color: #475569; /* fallback */
+  white-space: nowrap;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  transition: background .15s, border-color .15s;
 }
-/* Paleta rotativa de 8 colores para amenidades */
-.amenity-chip.chip-0 { background: #fecdd3; color: #9f1239; }
-.amenity-chip.chip-1 { background: #bfdbfe; color: #1e40af; }
-.amenity-chip.chip-2 { background: #bbf7d0; color: #14532d; }
-.amenity-chip.chip-3 { background: #e9d5ff; color: #581c87; }
-.amenity-chip.chip-4 { background: #fed7aa; color: #7c2d12; }
-.amenity-chip.chip-5 { background: #99f6e4; color: #134e4a; }
-.amenity-chip.chip-6 { background: #fde68a; color: #78350f; }
-.amenity-chip.chip-7 { background: #c7d2fe; color: #312e81; }
+.amenity-chip:hover {
+  background: #e9eaec;
+  border-color: #d1d5db;
+}
 
 /* Description */
 .property-description p {
@@ -2734,13 +2900,44 @@ a { text-decoration: none; color: inherit; }
 
 /* ── Filters Modal — Airbnb style ───────────────────────────── */
 .filters-modal {
-  max-width: 480px;
+  max-width: 640px;
   padding: 0 !important;
   border-radius: 24px !important;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   max-height: 90vh;
+}
+
+/* Filters modal entrance / exit */
+#filtersModal {
+  animation: filterOverlayIn .24s ease both;
+}
+#filtersModal.is-closing {
+  animation: filterOverlayOut .2s ease both;
+  pointer-events: none;
+}
+#filtersModal .filters-modal {
+  animation: filterPanelIn .3s cubic-bezier(.22,1,.36,1) both;
+}
+#filtersModal.is-closing .filters-modal {
+  animation: filterPanelOut .2s cubic-bezier(.4,0,1,1) both;
+}
+@keyframes filterOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes filterOverlayOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes filterPanelIn {
+  from { transform: translateY(20px) scale(.97); opacity: 0; }
+  to   { transform: translateY(0)    scale(1);   opacity: 1; }
+}
+@keyframes filterPanelOut {
+  from { transform: translateY(0)    scale(1);   opacity: 1; }
+  to   { transform: translateY(14px) scale(.96); opacity: 0; }
 }
 
 .filters-modal-header {
@@ -2917,63 +3114,76 @@ a { text-decoration: none; color: inherit; }
 .filter-preset:hover { border-color: #111; color: #111; }
 .filter-preset.active { background: #111; border-color: #111; color: #fff; }
 
-/* Amenidades */
+/* Amenidades — 3-column icon cards */
 .filter-amenidades {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
 }
 
 .amenity-check {
   cursor: pointer;
   display: flex;
-  align-items: center;
-  gap: 0;
+  align-items: stretch;
 }
 
 .amenity-check input {
   display: none;
 }
 
-.amenity-icon {
-  display: inline-flex;
+/* Amenity card — new design */
+.amenity-card {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-  transition: transform .15s ease;
-}
-
-.amenity-check span:not(.amenity-icon) {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
+  gap: 7px;
+  padding: 14px 8px 12px;
   width: 100%;
   border: 1.5px solid var(--line-2);
-  border-radius: 12px;
+  border-radius: 14px;
   background: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  color: #444;
-  transition: all .18s;
+  transition: border-color .18s, background .18s, box-shadow .18s;
   cursor: pointer;
+  text-align: center;
   box-sizing: border-box;
 }
 
-.amenity-check input:checked ~ .amenity-icon {
-  transform: scale(1.15);
+.amenity-icon-wrap {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #777;
+  transition: color .18s, transform .22s cubic-bezier(.22,1,.36,1);
 }
 
-.amenity-check input:checked ~ span:not(.amenity-icon) {
+.amenity-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #555;
+  line-height: 1.3;
+  transition: color .18s;
+}
+
+.amenity-check:hover .amenity-card {
+  border-color: #bbb;
+  background: #fafafa;
+}
+
+.amenity-check input:checked ~ .amenity-card {
   border-color: #111;
-  background: #f5f5f5;
-  color: #111;
-  font-weight: 700;
+  background: #111;
 }
 
-.amenity-check:hover span:not(.amenity-icon) {
-  border-color: #999;
+.amenity-check input:checked ~ .amenity-card .amenity-icon-wrap {
+  color: #fff;
+  transform: scale(1.12);
+}
+
+.amenity-check input:checked ~ .amenity-card .amenity-label {
+  color: #fff;
 }
 
 /* Toggle parqueadero */
@@ -3011,6 +3221,18 @@ a { text-decoration: none; color: inherit; }
   gap: 10px;
   flex-wrap: wrap;
 }
+
+.state-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: transform .18s;
+}
+.state-dot--libre  { background: #22c55e; }
+.state-dot--ocupado { background: #ef4444; }
+.filter-state-btn.active .state-dot--libre  { background: #fff; }
+.filter-state-btn.active .state-dot--ocupado { background: #fff; }
 
 .filter-state-btn {
   padding: 8px 14px;
@@ -3236,6 +3458,19 @@ a { text-decoration: none; color: inherit; }
   .property-card.is-open .property-card-inner {
     position: relative;
     height: var(--card-expanded-height-mobile);
+    /* Sombra de elevación: la tarjeta "sube" hacia el usuario */
+    box-shadow: 0 16px 56px rgba(0,0,0,.18), 0 4px 12px rgba(0,0,0,.08);
+    animation: cardRise .38s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes cardRise {
+    from {
+      transform: translateY(6px);
+      box-shadow: var(--shadow);
+    }
+    to {
+      transform: translateY(0);
+      box-shadow: 0 16px 56px rgba(0,0,0,.18), 0 4px 12px rgba(0,0,0,.08);
+    }
   }
 
   .slider-arrow { opacity: 1; }
@@ -3280,6 +3515,7 @@ a { text-decoration: none; color: inherit; }
 }
 
 @media (max-width: 479px) {
+  .filter-amenidades { grid-template-columns: repeat(2, 1fr); }
   .top-bar-inner { height: 56px; }
   .app-shell { padding-top: var(--top-bar-h, 60px); }
   .brand-name { font-size: 13px; }
@@ -4089,9 +4325,20 @@ a { text-decoration: none; color: inherit; }
 #replyModal {
   position: fixed; top: 0; left: 0;
   width: 100%; height: 100%;
-  background: rgba(0,0,0,0.5);
   display: none; align-items: center; justify-content: center;
   z-index: 9999;
+  animation: fadeIn .2s ease both;
+  background: rgba(0,0,0,0.5);
+}
+#replyModal.is-closing {
+  animation: fadeOut .24s ease both;
+  pointer-events: none;
+}
+#replyModal .reply-modal-content {
+  animation: slideUpModal .25s cubic-bezier(.22,1,.36,1) both;
+}
+#replyModal.is-closing .reply-modal-content {
+  animation: slideDownModal .22s cubic-bezier(.4,0,1,1) both;
 }
 
 .reply-modal-content {
