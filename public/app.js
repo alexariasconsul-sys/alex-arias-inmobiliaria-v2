@@ -827,7 +827,8 @@ function renderGrid() {
   );
   state._top3LikeIds = top3Ids;
 
-  grid.innerHTML = props.map(p => cardHTML(p)).join('');
+  grid.innerHTML = props.map(p => cardHTML(p)).join('') +
+    '<div class="grid-bottom-spacer" aria-hidden="true"></div>';
 
   // Animación de entrada (se agrega después de insertar en DOM)
   requestAnimationFrame(() => {
@@ -1164,6 +1165,22 @@ function openCard(card) {
   if (typeof closeMapOverlay === 'function') closeMapOverlay();
 
   const isMobile = window.innerWidth <= 767;
+
+  // ── Scroll para que el bottom de la tarjeta quede sobre el menú flotante ──
+  // Se llama DESPUÉS de que termine la transición CSS de expansión
+  function scrollCardAboveBar() {
+    const floatingBar = document.querySelector('.floating-bar');
+    const barH      = floatingBar ? floatingBar.offsetHeight : 60;
+    const barBottom = floatingBar ? parseFloat(getComputedStyle(floatingBar).bottom) || 0 : 40;
+    const gap       = 30; // espacio entre el bottom de la tarjeta y el top del menú
+    const clearance = window.innerHeight - barH - barBottom - gap;
+    const cardRect  = card.getBoundingClientRect();
+    if (cardRect.bottom > clearance) {
+      const extra = cardRect.bottom - clearance;
+      window.scrollBy({ top: extra, behavior: 'smooth' });
+    }
+  }
+
   if (!isMobile) {
     document.querySelectorAll('.property-card.is-open').forEach(c => {
       if (c !== card) c.style.zIndex = '70';
@@ -1171,20 +1188,23 @@ function openCard(card) {
     card.classList.add('is-open');
     card.style.zIndex = '90';
     card.style.height = 'var(--card-collapsed-height)';
+    // La transición CSS de height tarda 300ms — esperar a que termine
+    setTimeout(scrollCardAboveBar, 320);
   } else {
     document.querySelectorAll('.property-card.is-open').forEach(c => closeCard(c));
     card.classList.add('is-open');
     card.style.zIndex = '10';
     syncMobileHeight(card);
 
-    // ── Scroll elegante: la tarjeta sube hacia el usuario al expandirse ──
-    // Se ejecuta en el siguiente frame para tener las coordenadas actualizadas
+    // ── Scroll inicial: subir la tarjeta al top del viewport ──
     requestAnimationFrame(() => {
       const headerH = document.querySelector('.top-bar')?.offsetHeight ?? 72;
       const cardRect = card.getBoundingClientRect();
       const scrollTarget = window.scrollY + cardRect.top - headerH - 10;
       window.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' });
     });
+    // La animación cardRise tarda 380ms + scroll inicial ~300ms → esperar 700ms en total
+    setTimeout(scrollCardAboveBar, 700);
 
     // Fix #4: expandir sidebar del mapa para que botones no queden enterrados
     const sidebar = document.getElementById('mapSidebar');
@@ -1218,7 +1238,6 @@ function openCard(card) {
   }
   card.querySelector('.expand-toggle')?.setAttribute('aria-expanded', 'true');
   card.querySelector('.property-details-scroll')?.scrollTo(0, 0);
-
   // Mostrar tooltip de cierre (solo la primera vez que abre una tarjeta)
   setTimeout(() => showCloseHint(card), 420);
 
