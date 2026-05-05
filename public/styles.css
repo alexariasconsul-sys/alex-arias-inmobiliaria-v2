@@ -981,7 +981,14 @@ a { text-decoration: none; color: inherit; }
   animation: countUp .35s ease-out;
 }
 
-.property-card.is-open { z-index: 80; margin-bottom: 16px; }
+.property-card.is-open {
+  z-index: 80;
+  margin-bottom: 16px;
+  /* Espacio reservado sobre el floating-bar al usar scrollIntoView(block:'end').
+     floating-bar: bottom 40px + height ~46px = 86px desde viewport bottom.
+     120px = 86px barra + 34px de aire. */
+  scroll-margin-bottom: 120px;
+}
 
 .property-card-inner {
   position: absolute;
@@ -3541,9 +3548,11 @@ a { text-decoration: none; color: inherit; }
   /* Compensar el tab bar en la vista de grid */
   .app-shell { padding-bottom: calc(50px + env(safe-area-inset-bottom, 0px)); }
 
-  /* Espacio entre tarjeta expandida y la barra de navegación inferior */
+  /* En mobile la tab bar es full-width en bottom:0, altura ~40px.
+     Sobreescribir scroll-margin-bottom para este contexto. */
   .property-card.is-open {
     margin-bottom: 16px;
+    scroll-margin-bottom: 55px;
   }
 
   /* Padding interno para que los botones Compartir/Contactar

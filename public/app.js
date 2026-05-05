@@ -1166,12 +1166,17 @@ function openCard(card) {
 
   const isMobile = window.innerWidth <= 767;
 
-  // ── Scroll para que el bottom de la tarjeta quede sobre el menú flotante ──
-  function scrollCardAboveBar() {
+  // ── Scroll desktop: el CSS scroll-margin-bottom guarda espacio sobre el menú ──
+  function scrollDesktopCardIntoView() {
+    card.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }
+
+  // ── Scroll mobile: ajuste manual para esquivar la tab bar ──
+  function scrollMobileCardAboveBar() {
     const floatingBar = document.querySelector('.floating-bar');
     const barH      = floatingBar ? floatingBar.offsetHeight : 60;
-    const barBottom = floatingBar ? parseFloat(getComputedStyle(floatingBar).bottom) || 0 : 40;
-    const gap       = 30;
+    const barBottom = floatingBar ? parseFloat(getComputedStyle(floatingBar).bottom) || 0 : 0;
+    const gap       = 16;
     const clearance = window.innerHeight - barH - barBottom - gap;
     const cardRect  = card.getBoundingClientRect();
     if (cardRect.bottom > clearance) {
@@ -1186,25 +1191,9 @@ function openCard(card) {
     });
     card.classList.add('is-open');
     card.style.zIndex = '20';
-
-    // Esperar a que termine la transición (340ms) antes de calcular el scroll.
-    // transitionend garantiza que la tarjeta está en su altura final.
-    const inner = card.querySelector('.property-card-inner');
-    function onExpandEnd(e) {
-      if (e.propertyName !== 'height') return;
-      inner.removeEventListener('transitionend', onExpandEnd);
-      scrollCardAboveBar();
-    }
-    if (inner) {
-      inner.addEventListener('transitionend', onExpandEnd);
-      // Fallback por si transitionend no dispara (safari bug, etc.)
-      setTimeout(() => {
-        inner.removeEventListener('transitionend', onExpandEnd);
-        scrollCardAboveBar();
-      }, 400);
-    } else {
-      setTimeout(scrollCardAboveBar, 400);
-    }
+    // Esperar a que la transición (340ms) termine antes de hacer scroll.
+    // scroll-margin-bottom en CSS garantiza que la tarjeta no quede bajo el menú.
+    setTimeout(scrollDesktopCardIntoView, 380);
   } else {
     document.querySelectorAll('.property-card.is-open').forEach(c => closeCard(c));
     card.classList.add('is-open');
@@ -1217,7 +1206,7 @@ function openCard(card) {
       const scrollTarget = window.scrollY + cardRect.top - headerH - 10;
       window.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' });
     });
-    setTimeout(scrollCardAboveBar, 700);
+    setTimeout(scrollMobileCardAboveBar, 700);
 
     // Fix #4: expandir sidebar del mapa para que botones no queden enterrados
     const sidebar = document.getElementById('mapSidebar');

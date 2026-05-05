@@ -201,7 +201,12 @@ app.get('/', async (req, res) => {
   }
 });
 
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: '7d' }));
+// JS y CSS: sin caché para que el browser siempre pida la versión más reciente
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: 0,
+  etag: true,
+  lastModified: true
+}));
 app.use('/assets', express.static(path.join(__dirname, 'assets'), { maxAge: '30d' }));
 app.use('/uploads', express.static(uploadsDir, { maxAge: '365d', immutable: true }));
 
