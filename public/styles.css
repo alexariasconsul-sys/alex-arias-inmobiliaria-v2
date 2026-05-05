@@ -3522,11 +3522,11 @@ a { text-decoration: none; color: inherit; }
   .float-icon svg { width: 20px; height: 20px; }
 
   /* Compensar el tab bar en la vista de grid */
-  .app-shell { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+  .app-shell { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
 
   /* Espacio entre tarjeta expandida y la barra de navegación inferior */
   .property-card.is-open {
-    margin-bottom: 16px;
+    margin-bottom: 32px;
   }
 
   /* Padding interno para que los botones Compartir/Contactar
@@ -3551,7 +3551,7 @@ a { text-decoration: none; color: inherit; }
 
   /* Mantener el margen y padding también en pantallas muy pequeñas */
   .property-card.is-open {
-    margin-bottom: 16px;
+    margin-bottom: 32px;
   }
   .property-card.is-open .property-details-scroll {
     padding-bottom: 20px;
