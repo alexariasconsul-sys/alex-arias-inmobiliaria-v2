@@ -58,7 +58,7 @@ a { text-decoration: none; color: inherit; }
   min-height: 100vh;
   background: var(--bg);
   padding-top: var(--top-bar-h, 72px);  /* se actualiza dinámicamente via JS */
-  padding-bottom: 120px;
+  padding-bottom: 150px;
 }
 
 /* ─── TOP BAR FIJA ─────────────────────────────────────────── */
@@ -981,7 +981,7 @@ a { text-decoration: none; color: inherit; }
   animation: countUp .35s ease-out;
 }
 
-.property-card.is-open { z-index: 80; }
+.property-card.is-open { z-index: 80; margin-bottom: 32px; }
 
 .property-card-inner {
   position: absolute;
