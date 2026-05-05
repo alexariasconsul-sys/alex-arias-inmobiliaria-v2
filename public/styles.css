@@ -65,7 +65,7 @@ a { text-decoration: none; color: inherit; }
 .top-bar {
   position: fixed;
   top: 0; left: 0; right: 0;
-  z-index: 90;
+  z-index: 500;
   background: rgba(255,255,255,.96);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);

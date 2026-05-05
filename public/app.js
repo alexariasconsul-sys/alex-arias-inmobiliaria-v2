@@ -1183,10 +1183,10 @@ function openCard(card) {
 
   if (!isMobile) {
     document.querySelectorAll('.property-card.is-open').forEach(c => {
-      if (c !== card) c.style.zIndex = '70';
+      if (c !== card) c.style.zIndex = '10';
     });
     card.classList.add('is-open');
-    card.style.zIndex = '90';
+    card.style.zIndex = '20'; // nunca superar el top-bar (z-index: 500)
     card.style.height = 'var(--card-collapsed-height)';
     // La transición CSS de height tarda 300ms — esperar a que termine
     setTimeout(scrollCardAboveBar, 320);
