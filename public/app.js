@@ -1186,7 +1186,25 @@ function openCard(card) {
     });
     card.classList.add('is-open');
     card.style.zIndex = '20';
-    setTimeout(scrollCardAboveBar, 320);
+
+    // Esperar a que termine la transición (340ms) antes de calcular el scroll.
+    // transitionend garantiza que la tarjeta está en su altura final.
+    const inner = card.querySelector('.property-card-inner');
+    function onExpandEnd(e) {
+      if (e.propertyName !== 'height') return;
+      inner.removeEventListener('transitionend', onExpandEnd);
+      scrollCardAboveBar();
+    }
+    if (inner) {
+      inner.addEventListener('transitionend', onExpandEnd);
+      // Fallback por si transitionend no dispara (safari bug, etc.)
+      setTimeout(() => {
+        inner.removeEventListener('transitionend', onExpandEnd);
+        scrollCardAboveBar();
+      }, 400);
+    } else {
+      setTimeout(scrollCardAboveBar, 400);
+    }
   } else {
     document.querySelectorAll('.property-card.is-open').forEach(c => closeCard(c));
     card.classList.add('is-open');
