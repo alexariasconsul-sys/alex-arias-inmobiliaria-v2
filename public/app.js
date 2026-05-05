@@ -1160,6 +1160,25 @@ function showCloseHint(card) {
   document.addEventListener('touchstart', dismissHint, { once: true, passive: true });
 }
 
+// ── Muestra/oculta la floating-bar según si hay tarjetas abiertas cerca de ella ──
+function updateBarVisibility() {
+  const isMobile = window.innerWidth <= 767;
+  if (isMobile) return; // En mobile el menú es tab bar, no se oculta
+
+  const bar = document.querySelector('.floating-bar');
+  if (!bar) return;
+
+  // Borde superior del menú flotante (donde empieza visualmente)
+  const barRect   = bar.getBoundingClientRect();
+  const threshold = barRect.top - 24; // 24px de margen de seguridad
+
+  // ¿Alguna tarjeta abierta llega hasta la zona del menú?
+  const anyNear = Array.from(document.querySelectorAll('.property-card.is-open'))
+    .some(c => c.getBoundingClientRect().bottom > threshold);
+
+  bar.classList.toggle('bar-hidden', anyNear);
+}
+
 function openCard(card) {
   // Cerrar overlay del mapa si está abierto (fix conflicto #3)
   if (typeof closeMapOverlay === 'function') closeMapOverlay();
@@ -1193,7 +1212,12 @@ function openCard(card) {
     card.style.zIndex = '20';
     // Esperar a que la transición (340ms) termine antes de hacer scroll.
     // scroll-margin-bottom en CSS garantiza que la tarjeta no quede bajo el menú.
-    setTimeout(scrollDesktopCardIntoView, 380);
+    // Después de que la tarjeta termina de expandirse (380ms), verificar
+    // si tapa el menú y ocultarlo si es necesario
+    setTimeout(() => {
+      scrollDesktopCardIntoView();
+      updateBarVisibility();
+    }, 380);
   } else {
     document.querySelectorAll('.property-card.is-open').forEach(c => closeCard(c));
     card.classList.add('is-open');
@@ -1261,6 +1285,8 @@ function closeCard(card) {
     const sidebar = document.getElementById('mapSidebar');
     if (sidebar) sidebar.classList.remove('sheet-expanded');
   }
+  // Al cerrar, re-evaluar si el menú puede volver a mostrarse
+  updateBarVisibility();
 }
 
 // ─── FACEBOOK PIXEL: LEAD ────────────────────────────────────
