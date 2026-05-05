@@ -58,7 +58,7 @@ a { text-decoration: none; color: inherit; }
   min-height: 100vh;
   background: var(--bg);
   padding-top: var(--top-bar-h, 72px);  /* se actualiza dinámicamente via JS */
-  padding-bottom: 220px;
+  padding-bottom: 90px;
 }
 
 /* ─── TOP BAR FIJA ─────────────────────────────────────────── */
@@ -981,7 +981,7 @@ a { text-decoration: none; color: inherit; }
   animation: countUp .35s ease-out;
 }
 
-.property-card.is-open { z-index: 80; margin-bottom: 100px; }
+.property-card.is-open { z-index: 80; margin-bottom: 16px; }
 
 .property-card-inner {
   position: absolute;
@@ -2494,6 +2494,23 @@ a { text-decoration: none; color: inherit; }
   visibility: visible;
 }
 
+/* ─── PHANTOM FOOTER (Buffer barrier para tarjetas - Desktop only) ─ */
+.phantom-footer {
+  position: fixed;
+  bottom: 84px;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: transparent;
+  pointer-events: none;
+  z-index: 90;
+}
+
+/* Ocultar phantom footer en mobile (floating-bar es full-width en bottom:0) */
+@media (max-width: 767px) {
+  .phantom-footer { display: none; }
+}
+
 /* Favorites count badge */
 .fav-count-badge {
   position: absolute;
@@ -3522,11 +3539,11 @@ a { text-decoration: none; color: inherit; }
   .float-icon svg { width: 20px; height: 20px; }
 
   /* Compensar el tab bar en la vista de grid */
-  .app-shell { padding-bottom: calc(220px + env(safe-area-inset-bottom, 0px)); }
+  .app-shell { padding-bottom: calc(50px + env(safe-area-inset-bottom, 0px)); }
 
   /* Espacio entre tarjeta expandida y la barra de navegación inferior */
   .property-card.is-open {
-    margin-bottom: 100px;
+    margin-bottom: 16px;
   }
 
   /* Padding interno para que los botones Compartir/Contactar
@@ -3622,11 +3639,10 @@ a { text-decoration: none; color: inherit; }
 
 /* ─── GRID SPACER (espaciado invisible al final del grid) ───── */
 .grid-bottom-spacer {
-  grid-column: 1 / -1;   /* ocupa todo el ancho del grid */
-  height: 140px;          /* espacio suficiente para que la floating-bar no tape nada */
-  pointer-events: none;   /* completamente invisible e ininteractivo */
+  grid-column: 1 / -1;
+  height: 20px;
+  pointer-events: none;
   user-select: none;
-  aria-hidden: true;
 }
 
 /* When active filters bar is visible, push grid down — height set via JS */

@@ -1167,12 +1167,11 @@ function openCard(card) {
   const isMobile = window.innerWidth <= 767;
 
   // ── Scroll para que el bottom de la tarjeta quede sobre el menú flotante ──
-  // Se llama DESPUÉS de que termine la transición CSS de expansión
   function scrollCardAboveBar() {
     const floatingBar = document.querySelector('.floating-bar');
     const barH      = floatingBar ? floatingBar.offsetHeight : 60;
     const barBottom = floatingBar ? parseFloat(getComputedStyle(floatingBar).bottom) || 0 : 40;
-    const gap       = 30; // espacio entre el bottom de la tarjeta y el top del menú
+    const gap       = 30;
     const clearance = window.innerHeight - barH - barBottom - gap;
     const cardRect  = card.getBoundingClientRect();
     if (cardRect.bottom > clearance) {
@@ -1186,9 +1185,7 @@ function openCard(card) {
       if (c !== card) c.style.zIndex = '10';
     });
     card.classList.add('is-open');
-    card.style.zIndex = '20'; // nunca superar el top-bar (z-index: 500)
-    card.style.height = 'var(--card-collapsed-height)';
-    // La transición CSS de height tarda 300ms — esperar a que termine
+    card.style.zIndex = '20';
     setTimeout(scrollCardAboveBar, 320);
   } else {
     document.querySelectorAll('.property-card.is-open').forEach(c => closeCard(c));
@@ -1196,14 +1193,12 @@ function openCard(card) {
     card.style.zIndex = '10';
     syncMobileHeight(card);
 
-    // ── Scroll inicial: subir la tarjeta al top del viewport ──
     requestAnimationFrame(() => {
       const headerH = document.querySelector('.top-bar')?.offsetHeight ?? 72;
       const cardRect = card.getBoundingClientRect();
       const scrollTarget = window.scrollY + cardRect.top - headerH - 10;
       window.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' });
     });
-    // La animación cardRise tarda 380ms + scroll inicial ~300ms → esperar 700ms en total
     setTimeout(scrollCardAboveBar, 700);
 
     // Fix #4: expandir sidebar del mapa para que botones no queden enterrados
@@ -1306,6 +1301,7 @@ function trackLead(source, propTitle, propId, propPrice) {
     currency:         'COP'
   }, eid);
 }
+
 
 function syncMobileHeight(card) {
   card.style.height = window.innerWidth <= 479
