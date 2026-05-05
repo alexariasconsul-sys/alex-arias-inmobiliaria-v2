@@ -6,6 +6,8 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const multer = require('multer');
+const sharp = require('sharp');
+const compression = require('compression');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -52,23 +54,27 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-// Multer
-const storage = multer.diskStorage({
-  destination: uploadsDir,
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-    cb(null, `${Date.now()}_${Math.random().toString(36).substr(2, 8)}${ext}`);
-  }
-});
+// Multer — usa memoria para procesar con Sharp antes de guardar
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    /image\/(jpeg|jpg|png|webp|gif)/.test(file.mimetype)
+    /image\/(jpeg|jpg|png|webp|gif|heic|heif)/.test(file.mimetype)
       ? cb(null, true)
       : cb(new Error('Solo imágenes'));
   }
 });
+
+// Optimizar imagen: redimensionar + convertir a WebP + comprimir
+async function saveOptimizedImage(buffer) {
+  const filename = `${Date.now()}_${Math.random().toString(36).substr(2, 8)}.webp`;
+  const filepath = path.join(uploadsDir, filename);
+  await sharp(buffer)
+    .resize(1600, 1600, { fit: 'inside', withoutEnlargement: true })
+    .webp({ quality: 82, effort: 4 })
+    .toFile(filepath);
+  return filename;
+}
 
 // ── SEGURIDAD ────────────────────────────────────────────────
 app.use(helmet({
@@ -99,6 +105,7 @@ app.use('/auth/google', authLimiter);
 app.use('/api/', globalLimiter);
 
 // Middleware
+app.use(compression()); // Gzip para todas las respuestas
 app.use(cors());
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
@@ -194,9 +201,9 @@ app.get('/', async (req, res) => {
   }
 });
 
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/assets', express.static(path.join(__dirname, 'assets')));
-app.use('/uploads', express.static(uploadsDir));
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: '7d' }));
+app.use('/assets', express.static(path.join(__dirname, 'assets'), { maxAge: '30d' }));
+app.use('/uploads', express.static(uploadsDir, { maxAge: '365d', immutable: true }));
 
 // ── GOOGLE OAUTH ──────────────────────────────────────────────
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'alexariasconsul@gmail.com';
@@ -255,7 +262,7 @@ app.get('/api/profile', (req, res) => {
   res.json(readProfile());
 });
 
-app.put('/api/profile', requireAdmin, upload.single('avatar'), (req, res) => {
+app.put('/api/profile', requireAdmin, upload.single('avatar'), async (req, res) => {
   try {
     const current = readProfile();
     const fields = ['name','role','zone','bio','phone','phone_link','email','whatsapp','whatsapp_msg','instagram','linkedin','experience_years','license','languages'];
@@ -266,7 +273,15 @@ app.put('/api/profile', requireAdmin, upload.single('avatar'), (req, res) => {
         updated[f] = Array.isArray(req.body[f]) ? req.body[f][0] : req.body[f];
       }
     });
-    if (req.file) updated.avatar = `uploads/${req.file.filename}`;
+    if (req.file) {
+      const filename = await saveOptimizedImage(req.file.buffer);
+      updated.avatar = `uploads/${filename}`;
+      // Eliminar avatar anterior si era un upload local
+      if (current.avatar?.startsWith('uploads/')) {
+        const oldPath = path.join(__dirname, current.avatar);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+    }
     fs.writeFileSync(PROFILE_PATH, JSON.stringify(updated, null, 2));
     res.json(updated);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -582,9 +597,10 @@ app.post('/api/properties', requireAdmin, upload.array('images', 15), async (req
     })();
 
     const files = req.files || [];
-    const images = files.map((f, i) => ({
+    const imageFilenames = await Promise.all(files.map(f => saveOptimizedImage(f.buffer)));
+    const images = imageFilenames.map((filename, i) => ({
       id: genId(),
-      filename: `uploads/${f.filename}`,
+      filename: `uploads/${filename}`,
       order_index: i
     }));
 
@@ -639,9 +655,10 @@ app.put('/api/properties/:id', requireAdmin, upload.array('images', 15), async (
     const currentImages = existing?.images || [];
 
     const newFiles = req.files || [];
-    const newImages = newFiles.map((f, i) => ({
+    const newFilenames = await Promise.all(newFiles.map(f => saveOptimizedImage(f.buffer)));
+    const newImages = newFilenames.map((filename, i) => ({
       id: genId(),
-      filename: `uploads/${f.filename}`,
+      filename: `uploads/${filename}`,
       order_index: currentImages.length + i
     }));
 
@@ -885,7 +902,7 @@ app.post('/api/blog', requireAdmin, upload.single('cover'), async (req, res) => 
     const existing = await blogDB.findOneAsync({ slug });
     if (existing) slug = `${slug}-${Date.now()}`;
 
-    const cover = req.file ? `uploads/${req.file.filename}` : (req.body.cover || '');
+    const cover = req.file ? `uploads/${await saveOptimizedImage(req.file.buffer)}` : (req.body.cover || '');
     const tagsArr = (() => {
       try { return JSON.parse(tags); }
       catch { return tags ? tags.split(',').map(s => s.trim()).filter(Boolean) : []; }
@@ -928,7 +945,7 @@ app.put('/api/blog/:slug', requireAdmin, upload.single('cover'), async (req, res
       catch { return tags ? tags.split(',').map(s => s.trim()).filter(Boolean) : []; }
     })();
 
-    const cover = req.file ? `uploads/${req.file.filename}` : (req.body.cover || existing.cover || '');
+    const cover = req.file ? `uploads/${await saveOptimizedImage(req.file.buffer)}` : (req.body.cover || existing.cover || '');
     const wasPublished = existing.status === 'published';
     const nowPublishing = status === 'published' && !wasPublished;
 
