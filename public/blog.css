@@ -1236,3 +1236,258 @@
   .post-meta-row { flex-direction: column; align-items: flex-start; gap: 10px; }
   .topbar-blog-link { display: none; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   ESTILOS PARA CONTENIDO RICO DE POSTS
+   Usados por: Guía Compra Apartamento Medellín 2026 (y futuros posts)
+══════════════════════════════════════════════════════════════ */
+
+/* ─── PÁRRAFO INTRO DESTACADO ────────────────────────────── */
+.post-intro {
+  font-size: 1.125rem;
+  line-height: 1.75;
+  color: #374151;
+  background: #f0f9ff;
+  border-left: 4px solid var(--brand, #E71433);
+  border-radius: 0 8px 8px 0;
+  padding: 16px 20px;
+  margin: 0 0 2rem;
+}
+
+/* ─── TABLA DE CONTENIDOS ────────────────────────────────── */
+.post-toc {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 0 0 2.5rem;
+}
+.post-toc-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 12px;
+}
+.post-toc-list {
+  margin: 0;
+  padding-left: 20px;
+}
+.post-toc-list li {
+  margin: 6px 0;
+  font-size: 0.9rem;
+}
+.post-toc-list a {
+  color: var(--brand, #E71433);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color .15s;
+}
+.post-toc-list a:hover {
+  color: #b91c1c;
+  text-decoration: underline;
+}
+
+/* ─── IMÁGENES DEL ARTÍCULO ──────────────────────────────── */
+.post-img {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}
+.post-content figure {
+  margin: 2rem 0;
+}
+.post-content figcaption {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* ─── BLOCKQUOTE / TIP ───────────────────────────────────── */
+.post-tip {
+  background: #fffbeb;
+  border-left: 4px solid #f59e0b;
+  border-radius: 0 8px 8px 0;
+  padding: 14px 18px;
+  margin: 1.5rem 0;
+  color: #78350f;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.post-tip strong { color: #92400e; }
+
+/* ─── GRID DE ZONAS ──────────────────────────────────────── */
+.post-zones-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin: 1.5rem 0 2rem;
+}
+.post-zone-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  transition: box-shadow .2s, transform .2s;
+}
+.post-zone-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,.1);
+  transform: translateY(-2px);
+}
+.post-zone-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #1e293b;
+}
+.post-zone-card p {
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ─── TABLA DE COSTOS ────────────────────────────────────── */
+.post-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  margin: 1.5rem 0 2rem;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+.post-table thead tr {
+  background: var(--brand, #E71433);
+  color: #fff;
+}
+.post-table th {
+  padding: 12px 14px;
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.post-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #374151;
+  vertical-align: middle;
+}
+.post-table tbody tr:nth-child(even) { background: #f8fafc; }
+.post-table tbody tr:hover { background: #f0f9ff; }
+.post-table-total td {
+  background: #f0fdf4 !important;
+  font-weight: 700;
+  color: #166534 !important;
+  border-top: 2px solid #86efac;
+}
+
+/* ─── FAQ (details/summary) ──────────────────────────────── */
+.post-faq {
+  margin: 1.5rem 0 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.post-faq-item {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow .2s;
+}
+.post-faq-item[open] {
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
+  border-color: var(--brand, #E71433);
+}
+.post-faq-q {
+  cursor: pointer;
+  padding: 16px 20px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #1e293b;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+}
+.post-faq-q::after {
+  content: '＋';
+  font-size: 1.2rem;
+  color: var(--brand, #E71433);
+  transition: transform .25s;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+.post-faq-item[open] .post-faq-q::after {
+  content: '－';
+}
+.post-faq-q::-webkit-details-marker { display: none; }
+.post-faq-a {
+  padding: 0 20px 16px;
+  font-size: 0.875rem;
+  color: #475569;
+  line-height: 1.7;
+}
+.post-faq-a p { margin: 0; }
+
+/* ─── CTA BOX FINAL ──────────────────────────────────────── */
+.post-cta-box {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border-radius: 16px;
+  padding: 32px 28px;
+  text-align: center;
+  margin: 2.5rem 0 1rem;
+  color: #fff;
+}
+.post-cta-box h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0 0 10px;
+  color: #fff;
+}
+.post-cta-box p {
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  margin: 0 0 20px;
+  line-height: 1.6;
+}
+.post-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #25d366;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 14px 28px;
+  border-radius: 50px;
+  text-decoration: none;
+  transition: background .2s, transform .2s, box-shadow .2s;
+  box-shadow: 0 4px 16px rgba(37, 211, 102, .4);
+}
+.post-cta-btn:hover {
+  background: #20ba5a;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(37, 211, 102, .5);
+}
+
+/* ─── RESPONSIVE: CONTENIDO DEL POST ────────────────────── */
+@media (max-width: 640px) {
+  .post-intro { font-size: 1rem; padding: 14px 16px; }
+  .post-toc { padding: 16px; }
+  .post-zones-grid { grid-template-columns: 1fr; }
+  .post-table { font-size: 0.78rem; }
+  .post-table th, .post-table td { padding: 9px 10px; }
+  .post-table th:nth-child(4),
+  .post-table td:nth-child(4) { display: none; } /* Ocultar col ejemplo en mobile */
+  .post-cta-box { padding: 24px 18px; }
+  .post-cta-box h3 { font-size: 1.1rem; }
+  .post-cta-btn { font-size: 0.9rem; padding: 12px 20px; }
+  .post-img { max-height: 240px; }
+}
