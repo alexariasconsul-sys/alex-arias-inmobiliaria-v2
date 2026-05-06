@@ -1220,9 +1220,11 @@ a { text-decoration: none; color: inherit; }
 /* Imagen slide con fade-in suave */
 .property-slide img {
   opacity: 0;
-  transition: opacity .35s ease;
+  transition: opacity .3s ease;
+  /* Placeholder gris mientras carga — evita cuadros en blanco/roto */
+  background: var(--line-2, #e2e8f0);
 }
-.property-slide img.img-loaded { opacity: 1; }
+.property-slide img.img-loaded { opacity: 1; background: none; }
 
 /* Slider dots */
 .slider-dots {
@@ -3499,6 +3501,28 @@ a { text-decoration: none; color: inherit; }
 }
 
 @media (max-width: 767px) {
+  /* ── GPU: eliminar backdrop-filter en mobile (muy costoso durante scroll) ── */
+  .top-bar {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(255,255,255,1) !important; /* sólido en vez de translúcido */
+  }
+  .floating-bar {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--black, #000) !important;
+  }
+  .active-filters-bar {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(255,255,255,1) !important;
+  }
+  /* ── GPU: forzar compositing layer en cards para scroll fluido ── */
+  .property-card {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
   .main-content { width: 95vw; }
   .map-view { width: 100%; left: 0; right: 0; }
   .top-bar-inner { gap: 8px; }

@@ -36,6 +36,9 @@ const state = {
 };
 
 // ─── Lazy Loading Intersection Observer ────────────────────────
+// GIF transparente 1x1px — placeholder para evitar cuadros grises/rotos
+const BLANK_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
 const lazyLoadImages = () => {
   if (!('IntersectionObserver' in window)) {
     // Fallback: cargar todas las imágenes si no hay soporte
@@ -57,7 +60,7 @@ const lazyLoadImages = () => {
         }
       }
     });
-  }, { rootMargin: '50px' });
+  }, { rootMargin: '600px' }); // 600px: precarga mucho antes de ser visible
 
   document.querySelectorAll('img[data-src]').forEach(img => observer.observe(img));
 };
@@ -925,7 +928,7 @@ function cardHTML(p) {
         <div class="property-slide ${i === 0 ? 'is-active' : ''}">
           <img ${i === 0
             ? `src="/${encodeImgPath(img.filename)}"`
-            : `data-src="/${encodeImgPath(img.filename)}" src=""`
+            : `data-src="/${encodeImgPath(img.filename)}" src="${BLANK_PLACEHOLDER}"`
           } alt="${altText}" title="${p.title} - ${p.municipio}" loading="lazy" decoding="async" class="lazy-img" />
         </div>`;
       }).join('')
@@ -1454,6 +1457,8 @@ async function logLead(propId, propTitle, propPrice, contactChannel, source) {
 }
 
 // ─── LAZY LOADING (IntersectionObserver) ──────────────────────
+// rootMargin 600px: precarga imágenes 600px antes de que sean visibles
+// Esto evita los cuadros grises durante scroll en mobile
 const _lazyObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (!entry.isIntersecting) return;
@@ -1467,7 +1472,7 @@ const _lazyObserver = new IntersectionObserver((entries) => {
     img.addEventListener('error', () => img.classList.add('img-loaded'), { once: true });
     _lazyObserver.unobserve(img);
   });
-}, { rootMargin: '200px' });
+}, { rootMargin: '600px' });
 
 function initSliderLazy(card) {
   // Primera imagen: marcar como cargada cuando termine
