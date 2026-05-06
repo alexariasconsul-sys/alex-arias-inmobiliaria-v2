@@ -1,0 +1,34 @@
+# Robots.txt para Alex Arias Inmobiliaria
+# https://www.robotstxt.org
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /uploads/temp/
+Disallow: /*.json$
+Disallow: /api/
+
+# Google
+User-agent: Googlebot
+Allow: /
+
+# Bing
+User-agent: Bingbot
+Allow: /
+
+# Rastreadores específicos
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# Sitemap
+Sitemap: https://alexariasc.com/sitemap.xml
+
+# Crawl delay
+Crawl-delay: 1
+Request-rate: 30/60
+
+# Host
+Host: alexariasc.com

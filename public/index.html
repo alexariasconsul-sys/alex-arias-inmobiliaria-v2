@@ -3,8 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Alex Arias · Consultor Inmobiliario</title>
-  <meta name="description" content="Portafolio inmobiliario de Alexander Arias - Arriendo y venta de apartamentos en Sabaneta, Envigado y Medellín" />
+  <title>Alex Arias · Consultor Inmobiliario | Apartamentos en Medellín</title>
+  <meta name="description" content="Portafolio inmobiliario de Alexander Arias - Arriendo y venta de apartamentos en Sabaneta, Envigado y Medellín. Asesoría inmobiliaria especializada." />
+  <meta name="keywords" content="apartamentos, venta, arriendo, Medellín, Sabaneta, Envigado, inmuebles, asesoría inmobiliaria, propiedades" />
+  <meta name="author" content="Alexander Arias" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <link rel="canonical" href="https://alexariasc.com/" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://alexariasc.com/" />
+  <meta property="og:title" content="Alex Arias · Consultor Inmobiliario" />
+  <meta property="og:description" content="Portafolio inmobiliario de Alexander Arias - Arriendo y venta de apartamentos en Medellín, Sabaneta y Envigado." />
+  <meta property="og:image" content="https://alexariasc.com/assets/logo/Logo.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="es_CO" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://alexariasc.com/" />
+  <meta property="twitter:title" content="Alex Arias · Consultor Inmobiliario" />
+  <meta property="twitter:description" content="Portafolio inmobiliario de Alexander Arias - Apartamentos en Medellín." />
+  <meta property="twitter:image" content="https://alexariasc.com/assets/logo/Logo.png" />
+
+  <!-- Additional SEO -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#000000" />
+
   <link rel="icon" type="image/png" href="/assets/logo/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,6 +41,82 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.1/dist/MarkerCluster.Default.css" />
   <link rel="stylesheet" href="styles.css" />
   <script src="/tracking.js" defer></script>
+
+  <!-- Schema.org Structured Data - RealEstateAgent -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "RealEstateAgent",
+    "@id": "https://alexariasc.com",
+    "name": "Alex Arias",
+    "url": "https://alexariasc.com",
+    "telephone": "+57 312 2588521",
+    "email": "alexariasconsul@gmail.com",
+    "description": "Consultor Inmobiliario especializado en venta y arriendo de apartamentos en Medellín, Sabaneta y Envigado",
+    "areaServed": [
+      {
+        "@type": "City",
+        "name": "Medellín"
+      },
+      {
+        "@type": "City",
+        "name": "Sabaneta"
+      },
+      {
+        "@type": "City",
+        "name": "Envigado"
+      }
+    ],
+    "knowsAbout": [
+      "Arriendo de apartamentos",
+      "Venta de propiedades",
+      "Asesoría inmobiliaria",
+      "Inversión inmobiliaria"
+    ],
+    "image": "https://alexariasc.com/assets/logo/Logo.png",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://alexariasc.com/assets/logo/Logo.png"
+    },
+    "sameAs": [
+      "https://www.whatsapp.com"
+    ]
+  }
+  </script>
+
+  <!-- Schema.org - LocalBusiness (Alternativa) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "Alex Arias - Consultor Inmobiliario",
+    "url": "https://alexariasc.com",
+    "telephone": "+57 312 2588521",
+    "email": "alexariasconsul@gmail.com",
+    "areaServed": {
+      "@type": "City",
+      "name": "Medellín"
+    },
+    "priceRange": "COP",
+    "image": "https://alexariasc.com/assets/logo/Logo.png",
+    "description": "Consultor inmobiliario especializado en propiedades residenciales"
+  }
+  </script>
+
+  <!-- Preconnect to Google Fonts and Analytics -->
+  <link rel="preconnect" href="https://www.googletagmanager.com" />
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+
+  <!-- Google Analytics 4 -->
+  <!-- REEMPLAZAR "G-XXXXXXXXXX" CON TU ID DE GOOGLE ANALYTICS -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+
 </head>
 <body>
   <div class="app-shell">
@@ -518,6 +621,7 @@
 
     <!-- ═══ GRID VIEW ══════════════════════════════════════════════ -->
     <main class="main-content" id="gridView">
+      <h1 class="sr-only">Inmuebles en venta y arriendo - Alex Arias Consultor Inmobiliario</h1>
       <div class="properties-grid" id="propertiesGrid">
         <div class="loading-state" id="loadingState">
           <div class="skeleton-card"></div>

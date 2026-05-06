@@ -889,13 +889,16 @@ function cardHTML(p) {
     : '';
 
   const slides = images.length
-    ? images.map((img, i) => `
+    ? images.map((img, i) => {
+        const altText = `${p.title}, ${p.barrio}, ${p.municipio} - ${p.habitaciones} hab, ${p.banos} baño${p.banos !== 1 ? 's' : ''}, ${p.area} m² foto ${i + 1}`;
+        return `
         <div class="property-slide ${i === 0 ? 'is-active' : ''}">
           <img ${i === 0
             ? `src="/${encodeImgPath(img.filename)}"`
             : `data-src="/${encodeImgPath(img.filename)}" src=""`
-          } alt="${p.title} foto ${i + 1}" loading="lazy" decoding="async" class="lazy-img" />
-        </div>`).join('')
+          } alt="${altText}" title="${p.title} - ${p.municipio}" loading="lazy" decoding="async" class="lazy-img" />
+        </div>`;
+      }).join('')
     : `<div class="property-slide is-active"><div class="no-photo-placeholder"><svg viewBox="0 0 64 64" fill="none" width="44" height="44"><path d="M8 28L32 8l24 20v28H8V28z" fill="rgba(148,163,184,.25)" stroke="rgba(148,163,184,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 56V38h16v18" stroke="rgba(148,163,184,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Sin fotografía</span></div></div>`;
 
   const stripEmoji = s => s.replace(/\p{Extended_Pictographic}/gu, '').replace(/\s+/g, ' ').trim();

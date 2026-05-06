@@ -585,6 +585,51 @@ app.get('/api/properties/:id', async (req, res) => {
   }
 });
 
+// ─── SITEMAP.XML (SEO) ────────────────────────────────────────
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const db = getDB();
+    const docs = await db.findAsync({});
+
+    // URLs estáticas
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+
+    // Home
+    xml += '  <url>\n';
+    xml += '    <loc>https://alexariasc.com/</loc>\n';
+    xml += '    <lastmod>' + new Date().toISOString().split('T')[0] + '</lastmod>\n';
+    xml += '    <changefreq>daily</changefreq>\n';
+    xml += '    <priority>1.0</priority>\n';
+    xml += '  </url>\n';
+
+    // Admin
+    xml += '  <url>\n';
+    xml += '    <loc>https://alexariasc.com/admin</loc>\n';
+    xml += '    <changefreq>monthly</changefreq>\n';
+    xml += '    <priority>0.3</priority>\n';
+    xml += '  </url>\n';
+
+    // Propiedades dinámicas
+    docs.forEach(doc => {
+      xml += '  <url>\n';
+      xml += `    <loc>https://alexariasc.com/#property/${doc._id}</loc>\n`;
+      xml += `    <lastmod>${(doc.updated_at || doc.created_at || new Date()).toISOString().split('T')[0]}</lastmod>\n`;
+      xml += '    <changefreq>weekly</changefreq>\n';
+      xml += '    <priority>0.8</priority>\n';
+      xml += '  </url>\n';
+    });
+
+    xml += '</urlset>';
+
+    res.type('application/xml');
+    res.send(xml);
+  } catch (err) {
+    console.error('Error generating sitemap:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── CREAR PROPIEDAD ──────────────────────────────────────────
 app.post('/api/properties', requireAdmin, upload.array('images', 15), async (req, res) => {
   try {
