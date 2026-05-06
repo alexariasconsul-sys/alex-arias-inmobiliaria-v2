@@ -3585,6 +3585,16 @@ a { text-decoration: none; color: inherit; }
     min-height: 720px;
   }
 
+  /* Imagen más alta y con aspect ratio natural (4:3) en map view
+     con tarjeta abierta — para que la foto se vea completa, sin
+     recortes agresivos arriba/abajo. */
+  .map-sidebar.has-open-card .property-card.is-open .property-media {
+    height: auto !important;
+    aspect-ratio: 4 / 3;
+    max-height: 56vh;
+    min-height: 280px;
+  }
+
   /* El scroll interno de los detalles ya no es necesario:
      la lista exterior (.map-cards-list) hace scroll. Esto
      permite que detail-actions (botones) sean visibles

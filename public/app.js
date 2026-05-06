@@ -1275,6 +1275,13 @@ function openCard(card) {
       // queden visibles por encima del floating-bar.
       const mapSidebar = document.getElementById('mapSidebar');
       mapSidebar?.classList.add('has-open-card');
+      // Resetear scroll al tope para que la imagen completa se vea
+      // (el carousel horizontal previo podía dejar la lista en otra posición).
+      const mapList = document.getElementById('mapCardsList');
+      if (mapList) {
+        mapList.scrollLeft = 0;
+        mapList.scrollTop = 0;
+      }
     }
 
     card.classList.add('is-open');
