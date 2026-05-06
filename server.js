@@ -234,6 +234,62 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── RUTA /post.html CON OG TAGS DINÁMICOS (SSR para bots) ────
+// Debe ir ANTES de express.static para interceptar GET /post.html
+app.get('/post.html', async (req, res) => {
+  const slug    = req.query.slug || '';
+  const baseUrl = process.env.SITE_URL || 'https://alexariasc.com';
+  const postPath = path.join(__dirname, 'public', 'post.html');
+
+  if (!slug) return res.sendFile(postPath);
+
+  try {
+    const post = await blogDB.findOneAsync({ slug, status: 'published' });
+    if (!post) return res.sendFile(postPath);
+
+    const esc = s => String(s)
+      .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    const ogTitle = post.metaTitle || post.title || 'Alex Arias · Blog Inmobiliario';
+    const ogDesc  = post.metaDescription || post.excerpt || '';
+    const ogImage = post.cover || `${baseUrl}/assets/logo/Logo.png`;
+    const ogUrl   = `${baseUrl}/post.html?slug=${encodeURIComponent(slug)}`;
+
+    let html = fs.readFileSync(postPath, 'utf8');
+
+    // Rellenar título
+    html = html.replace(
+      '>Artículo · Alex Arias Blog<',
+      `>${esc(ogTitle)}<`
+    );
+    // Rellenar meta description
+    html = html.replace(
+      'id="metaDesc" content=""',
+      `id="metaDesc" content="${esc(ogDesc)}"`
+    );
+    // Rellenar canonical
+    html = html.replace(
+      'id="canonicalUrl" href="/blog"',
+      `id="canonicalUrl" href="${esc(ogUrl)}"`
+    );
+    // Rellenar OG tags
+    html = html.replace('id="ogTitle" content=""',  `id="ogTitle" content="${esc(ogTitle)}"`);
+    html = html.replace('id="ogDesc" content=""',   `id="ogDesc" content="${esc(ogDesc)}"`);
+    html = html.replace('id="ogImage" content=""',  `id="ogImage" content="${esc(ogImage)}"`);
+    html = html.replace('id="ogUrl" content=""',    `id="ogUrl" content="${esc(ogUrl)}"`);
+    // Rellenar Twitter Card tags
+    html = html.replace('id="twTitle" content=""',  `id="twTitle" content="${esc(ogTitle)}"`);
+    html = html.replace('id="twDesc" content=""',   `id="twDesc" content="${esc(ogDesc)}"`);
+    html = html.replace('id="twImage" content=""',  `id="twImage" content="${esc(ogImage)}"`);
+
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.sendFile(postPath);
+  }
+});
+
 // Static files con caché de 7 días
 app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: '7d',
