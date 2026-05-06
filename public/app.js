@@ -927,9 +927,9 @@ function cardHTML(p) {
         return `
         <div class="property-slide ${i === 0 ? 'is-active' : ''}">
           <img ${i === 0
-            ? `src="/${encodeImgPath(img.filename)}"`
-            : `data-src="/${encodeImgPath(img.filename)}" src="${BLANK_PLACEHOLDER}"`
-          } alt="${altText}" title="${p.title} - ${p.municipio}" loading="lazy" decoding="async" class="lazy-img" />
+            ? `src="/${encodeImgPath(img.filename)}" decoding="async"`
+            : `data-src="/${encodeImgPath(img.filename)}" src="${BLANK_PLACEHOLDER}" loading="lazy" decoding="async"`
+          } alt="${altText}" title="${p.title} - ${p.municipio}" class="lazy-img img-loaded" />
         </div>`;
       }).join('')
     : `<div class="property-slide is-active"><div class="no-photo-placeholder"><svg viewBox="0 0 64 64" fill="none" width="44" height="44"><path d="M8 28L32 8l24 20v28H8V28z" fill="rgba(148,163,184,.25)" stroke="rgba(148,163,184,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 56V38h16v18" stroke="rgba(148,163,184,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Sin fotografía</span></div></div>`;
@@ -1475,13 +1475,9 @@ const _lazyObserver = new IntersectionObserver((entries) => {
 }, { rootMargin: '600px' });
 
 function initSliderLazy(card) {
-  // Primera imagen: marcar como cargada cuando termine
-  card.querySelectorAll('.property-slide:first-child img.lazy-img').forEach(img => {
-    if (img.complete) img.classList.add('img-loaded');
-    else img.addEventListener('load', () => img.classList.add('img-loaded'), { once: true });
-  });
-  // Resto: observar con IntersectionObserver
-  card.querySelectorAll('.property-slide:not(:first-child) img.lazy-img[data-src]').forEach(img => {
+  // Solo observar las imágenes no-activas (slides 2, 3...) para cargarlas con IntersectionObserver
+  // La primera imagen ya tiene src real y carga inmediatamente sin loading=lazy
+  card.querySelectorAll('img.lazy-img[data-src]').forEach(img => {
     _lazyObserver.observe(img);
   });
 }

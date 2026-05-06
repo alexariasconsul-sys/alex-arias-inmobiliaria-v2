@@ -1018,6 +1018,7 @@ a { text-decoration: none; color: inherit; }
   position: relative;
   width: 100%;
   height: var(--media-height);
+  background: #dde1e7; /* placeholder gris mientras carga la imagen */
   flex-shrink: 0;
   overflow: hidden;
   border-radius: var(--radius-lg);
@@ -1217,14 +1218,12 @@ a { text-decoration: none; color: inherit; }
 .lightbox-trigger:hover { background: rgba(0,0,0,.72); }
 .lightbox-trigger svg { flex-shrink: 0; }
 
-/* Imagen slide con fade-in suave */
+/* Imagen slide: siempre visible — el placeholder gris es el fondo del contenedor */
 .property-slide img {
-  opacity: 0;
-  transition: opacity .3s ease;
-  /* Placeholder gris mientras carga — evita cuadros en blanco/roto */
-  background: var(--line-2, #e2e8f0);
+  opacity: 1; /* visible inmediatamente, sin esperar a img-loaded */
 }
-.property-slide img.img-loaded { opacity: 1; background: none; }
+/* img-loaded se mantiene para compatibilidad con JS existente (no rompe nada) */
+.property-slide img.img-loaded { opacity: 1; }
 
 /* Slider dots */
 .slider-dots {
