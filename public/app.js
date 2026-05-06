@@ -1160,21 +1160,29 @@ function showCloseHint(card) {
   document.addEventListener('touchstart', dismissHint, { once: true, passive: true });
 }
 
-// ── Muestra/oculta la floating-bar según si hay tarjetas abiertas cerca de ella ──
+// ── Muestra/oculta la floating-bar según si hay tarjetas cerca del menú ──
 function updateBarVisibility() {
   const isMobile = window.innerWidth <= 767;
-  if (isMobile) return; // En mobile el menú es tab bar, no se oculta
+  if (isMobile) return;
 
   const bar = document.querySelector('.floating-bar');
   if (!bar) return;
 
-  // Borde superior del menú flotante (donde empieza visualmente)
-  const barRect   = bar.getBoundingClientRect();
-  const threshold = barRect.top - 24; // 24px de margen de seguridad
+  const barTop     = bar.getBoundingClientRect().top;
+  // Altura expandida de una tarjeta desktop (variable CSS)
+  const expandedH  = parseInt(
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--card-expanded-height-desktop')
+  ) || 690;
 
-  // ¿Alguna tarjeta abierta llega hasta la zona del menú?
+  // Para cada tarjeta abierta, usamos el mayor valor entre:
+  // • Su borde inferior actual (post-transición)
+  // • Su borde superior + altura expandida (predicción pre-transición)
   const anyNear = Array.from(document.querySelectorAll('.property-card.is-open'))
-    .some(c => c.getBoundingClientRect().bottom > threshold);
+    .some(c => {
+      const r = c.getBoundingClientRect();
+      return Math.max(r.bottom, r.top + expandedH) > barTop - 10;
+    });
 
   bar.classList.toggle('bar-hidden', anyNear);
 }
@@ -1210,14 +1218,11 @@ function openCard(card) {
     });
     card.classList.add('is-open');
     card.style.zIndex = '20';
-    // Esperar a que la transición (340ms) termine antes de hacer scroll.
-    // scroll-margin-bottom en CSS garantiza que la tarjeta no quede bajo el menú.
-    // Después de que la tarjeta termina de expandirse (380ms), verificar
-    // si tapa el menú y ocultarlo si es necesario
-    setTimeout(() => {
-      scrollDesktopCardIntoView();
-      updateBarVisibility();
-    }, 380);
+    // Detección inmediata: antes de cualquier scroll, predecir si la tarjeta
+    // expandida llegará al menú y ocultarlo si es necesario
+    updateBarVisibility();
+    // Scroll después de que la transición termine (340ms + buffer)
+    setTimeout(scrollDesktopCardIntoView, 380);
   } else {
     document.querySelectorAll('.property-card.is-open').forEach(c => closeCard(c));
     card.classList.add('is-open');
