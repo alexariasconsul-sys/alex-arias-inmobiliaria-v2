@@ -3565,6 +3565,30 @@ a { text-decoration: none; color: inherit; }
     pointer-events: none;
   }
 
+  /* ════════════════════════════════════════════════════════
+     TARJETA ABIERTA EN MAP VIEW — Sheet fullscreen
+     Cuando el usuario abre una tarjeta en el mapa, el sheet
+     pasa a 100vh y se oculta el floating-bar para que TODO
+     el contenido de la tarjeta sea visible (incluyendo los
+     botones de Compartir/Contactar al final).
+     ════════════════════════════════════════════════════════ */
+  .map-sidebar.has-open-card {
+    height: 100vh !important;
+    border-radius: 0 !important;
+    transition: height .3s cubic-bezier(.32,.72,0,1) !important;
+  }
+  /* Padding bottom para safe-area (notch / home indicator iOS) */
+  .map-sidebar.has-open-card .map-cards-list {
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  /* Ocultar floating bar cuando hay tarjeta abierta en mapa */
+  body.map-card-open .floating-bar {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(100%) !important;
+    transition: opacity .25s, transform .25s !important;
+  }
+
   .main-content { width: 95vw; }
   .map-view { width: 100%; left: 0; right: 0; }
   .top-bar-inner { gap: 8px; }
