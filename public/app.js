@@ -2440,16 +2440,6 @@ function setupFilters() {
 
   setupMobileBarrioFilter();
 
-  if (openMobileBtn) {
-    openMobileBtn.addEventListener('click', () => {
-      syncMobileSelects();
-      mobileOverlay.classList.remove('is-closing');
-      mobileOverlay.style.display = 'flex';
-      document.body.style.overflow = 'hidden';
-      setTimeout(() => document.getElementById('searchInputMobile')?.focus(), 100);
-    });
-  }
-
   function closeMobilePanel() {
     if (mobileOverlay.classList.contains('is-closing')) return;
     mobileOverlay.classList.add('is-closing');
@@ -2458,6 +2448,27 @@ function setupFilters() {
       mobileOverlay.style.display = 'none';
       document.body.style.overflow = '';
     }, 320); // coincide con duración de panelCollapse (.3s) + pequeño margen
+  }
+
+  function openMobilePanel() {
+    syncMobileSelects();
+    mobileOverlay.classList.remove('is-closing');
+    mobileOverlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('searchInputMobile')?.focus(), 100);
+  }
+
+  if (openMobileBtn) {
+    openMobileBtn.addEventListener('click', () => {
+      // Toggle: si está abierto (y no animándose para cerrar), ciérralo
+      const isOpen = mobileOverlay.style.display === 'flex'
+                  && !mobileOverlay.classList.contains('is-closing');
+      if (isOpen) {
+        closeMobilePanel();
+      } else {
+        openMobilePanel();
+      }
+    });
   }
 
   if (closeMobileBtn) closeMobileBtn.addEventListener('click', closeMobilePanel);
