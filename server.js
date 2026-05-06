@@ -107,6 +107,14 @@ app.use('/api/', globalLimiter);
 // Middleware
 app.use(compression()); // Gzip para todas las respuestas
 app.use(cors());
+
+// ── OPTIMIZACIÓN: Headers de rendimiento ─────────────────────
+app.use((req, res, next) => {
+  // Prefetch DNS y preconnect a dominios críticos
+  res.set('Link', '</styles.css>; rel=preload; as=style, </app.js>; rel=preload; as=script');
+  res.set('X-Content-Type-Options', 'nosniff');
+  next();
+});
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 if (!process.env.SESSION_SECRET) {
@@ -202,13 +210,33 @@ app.get('/', async (req, res) => {
 });
 
 // JS y CSS: sin caché para que el browser siempre pida la versión más reciente
+// ── CACHÉING OPTIMIZADO PARA VELOCIDAD ──────────────────────
+// HTML: Sin caché (cambios frecuentes)
+app.use((req, res, next) => {
+  if (req.path.endsWith('.html') || req.path === '/') {
+    res.set('Cache-Control', 'public, max-age=3600'); // 1 hora
+  }
+  next();
+});
+
+// Static files con caché de 7 días
 app.use(express.static(path.join(__dirname, 'public'), {
-  maxAge: 0,
+  maxAge: '7d',
   etag: true,
   lastModified: true
 }));
-app.use('/assets', express.static(path.join(__dirname, 'assets'), { maxAge: '30d' }));
-app.use('/uploads', express.static(uploadsDir, { maxAge: '365d', immutable: true }));
+
+// Assets (logo, fuentes) con caché de 30 días
+app.use('/assets', express.static(path.join(__dirname, 'assets'), {
+  maxAge: '30d',
+  immutable: true
+}));
+
+// Uploads (propiedades) con caché de 365 días
+app.use('/uploads', express.static(uploadsDir, {
+  maxAge: '365d',
+  immutable: true
+}));
 
 // ── GOOGLE OAUTH ──────────────────────────────────────────────
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'alexariasconsul@gmail.com';
