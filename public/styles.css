@@ -2239,7 +2239,11 @@ a { text-decoration: none; color: inherit; }
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    will-change: height;
+    /* will-change se aplica dinámicamente desde JS solo durante drag */
+    overscroll-behavior: contain; /* previene pull-to-refresh */
+    /* Forzar capa de composición para mejor performance */
+    transform: translateZ(0);
+    backface-visibility: hidden;
   }
 
   /* Snap 1: colapsado — solo handle+contador */
@@ -2307,8 +2311,9 @@ a { text-decoration: none; color: inherit; }
     flex: 1;
     height: auto;
     gap: 12px;
-    scroll-behavior: smooth;
+    /* scroll-behavior: smooth removido — causa lag en mobile */
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain; /* previene pull-to-refresh y scroll chaining */
   }
 
   /* ── LISTA: HORIZONTAL en modo peek (carousel) ──────────── */

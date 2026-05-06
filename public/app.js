@@ -1274,10 +1274,9 @@ function openCard(card) {
     setTimeout(scrollMobileCardAboveBar, 700);
 
     // Fix #4: expandir sidebar del mapa para que botones no queden enterrados
-    const sidebar = document.getElementById('mapSidebar');
-    if (sidebar) {
-      sidebar.classList.remove('sheet-hidden');
-      sidebar.classList.add('sheet-expanded');
+    // Usar snapTo (si existe) para mantener consistencia entre clase + height
+    if (window._snapMapSheet) {
+      window._snapMapSheet('expanded');
     }
   }
   // ── Facebook Pixel: ViewContent ────────────────────────────────
@@ -1321,10 +1320,13 @@ function closeCard(card) {
   card.style.zIndex = '1';
   card.style.height = '';
   card.querySelector('.expand-toggle')?.setAttribute('aria-expanded', 'false');
-  // Si en mapa, colapsar sidebar al estado normal
+  // Si en mapa: snap al estado peek (carousel) en lugar de simplemente
+  // remover la clase (que dejaba el inline style.height pegado)
   if (window.innerWidth <= 768) {
     const sidebar = document.getElementById('mapSidebar');
-    if (sidebar) sidebar.classList.remove('sheet-expanded');
+    if (sidebar?.classList.contains('sheet-expanded') && window._snapMapSheet) {
+      window._snapMapSheet('peek');
+    }
   }
   // Al cerrar, re-evaluar si el menú puede volver a mostrarse
   updateBarVisibility();
@@ -2984,7 +2986,11 @@ function initMap() {
     if (!state.mapPanningToMarker) {
       closeMapOverlay();
       if (window.innerWidth <= 768) {
-        document.querySelectorAll('.property-card.is-open').forEach(c => closeCard(c));
+        // Solo procesar tarjetas si hay alguna abierta (evita query innecesario)
+        const openCards = document.querySelectorAll('.property-card.is-open');
+        if (openCards.length > 0) {
+          openCards.forEach(c => closeCard(c));
+        }
         window._snapMapSheet?.('hidden');
       }
     }
@@ -3373,10 +3379,13 @@ function initBottomSheet() {
       if (fab) fab.style.display = 'none';
     }
 
-    setTimeout(() => {
-      if (!animate) sidebar.style.transition = '';
-      state.leafletMap?.invalidateSize();
-    }, animate ? 400 : 0);
+    if (!animate) {
+      void sidebar.offsetHeight; // forzar reflow sincrónico
+      sidebar.style.transition = '';
+    }
+    // NOTA: NO llamamos invalidateSize() — el sheet OVERLAY el mapa
+    // (position: absolute), por lo que el contenedor del mapa no cambia
+    // de tamaño. Llamarlo en cada snap causaba lag innecesario.
   }
 
   // Estado inicial: hidden
@@ -3401,53 +3410,79 @@ function initBottomSheet() {
     else                     snapTo('hidden');
   });
 
-  // ── DRAG en header ────────────────────────────────────────
+  // ── DRAG en header con rAF (60fps máx, evita lag) ────────
   let startY = 0, startH = 0, isDragging = false;
+  let pendingDy = 0, dragRafId = null;
 
-  header.addEventListener('touchstart', (e) => {
-    startY = e.touches[0].clientY;
-    startH = sidebar.getBoundingClientRect().height;
-    isDragging = false;
-    sidebar.style.transition = 'none';
-  }, { passive: true });
-
-  header.addEventListener('touchmove', (e) => {
-    const dy = startY - e.touches[0].clientY;
-    if (Math.abs(dy) < 5) return;
-    isDragging = true;
-    sidebar.classList.add('sheet-dragging');
-    const newH = Math.max(SHEET_H.hidden, Math.min(SHEET_H.expanded, startH + dy));
+  function applyDragHeight() {
+    dragRafId = null;
+    const newH = Math.max(SHEET_H.hidden, Math.min(SHEET_H.expanded, startH + pendingDy));
     sidebar.style.height = newH + 'px';
-    // Actualizar clase dinámica para el chevron
-    sidebar.classList.remove('sheet-hidden', 'sheet-peek', 'sheet-expanded');
-    if (newH < 180)            sidebar.classList.add('sheet-hidden');
-    else if (newH < SHEET_H.expanded * 0.6) sidebar.classList.add('sheet-peek');
-    else                       sidebar.classList.add('sheet-expanded');
-  }, { passive: true });
+  }
 
-  header.addEventListener('touchend', () => {
-    if (!isDragging) return;
+  function endDrag() {
+    if (dragRafId !== null) {
+      cancelAnimationFrame(dragRafId);
+      dragRafId = null;
+    }
+    if (!isDragging) {
+      sidebar.style.transition = '';
+      sidebar.style.willChange = '';
+      return;
+    }
     isDragging = false;
     sidebar.classList.remove('sheet-dragging');
     sidebar.style.transition = '';
-    const h    = sidebar.getBoundingClientRect().height;
-    const winH = window.innerHeight;
-    // Snap al punto más cercano de los 3
+    sidebar.style.willChange = '';
+    const h = sidebar.getBoundingClientRect().height;
     const dHidden   = Math.abs(h - SHEET_H.hidden);
     const dPeek     = Math.abs(h - SHEET_H.peek);
     const dExpanded = Math.abs(h - SHEET_H.expanded);
     if (dHidden <= dPeek && dHidden <= dExpanded) snapTo('hidden');
     else if (dPeek <= dExpanded)                  snapTo('peek');
     else                                           snapTo('expanded');
-  });
+  }
+
+  header.addEventListener('touchstart', (e) => {
+    startY = e.touches[0].clientY;
+    startH = sidebar.getBoundingClientRect().height;
+    isDragging = false;
+    pendingDy = 0;
+    sidebar.style.transition = 'none';
+    sidebar.style.willChange = 'height';
+  }, { passive: true });
+
+  header.addEventListener('touchmove', (e) => {
+    const dy = startY - e.touches[0].clientY;
+    if (!isDragging && Math.abs(dy) < 5) return;
+    if (!isDragging) {
+      isDragging = true;
+      sidebar.classList.add('sheet-dragging');
+      // Quitar TODAS las clases de snap UNA SOLA VEZ al inicio del drag
+      // (evitar reflows en cada touchmove)
+      sidebar.classList.remove('sheet-hidden', 'sheet-peek', 'sheet-expanded');
+    }
+    pendingDy = dy;
+    if (dragRafId === null) {
+      dragRafId = requestAnimationFrame(applyDragHeight);
+    }
+  }, { passive: true });
+
+  header.addEventListener('touchend',    endDrag);
+  header.addEventListener('touchcancel', endDrag);
 
   // ── Scroll vertical en expanded → si llega al top vuelve a peek
   if (list) {
     let lastST = 0;
+    let scrollRaf = null;
     list.addEventListener('scroll', () => {
-      if (isDragging || !sidebar.classList.contains('sheet-expanded')) return;
-      if (list.scrollTop < lastST && list.scrollTop === 0) snapTo('peek');
-      lastST = list.scrollTop;
+      if (scrollRaf !== null) return;
+      scrollRaf = requestAnimationFrame(() => {
+        scrollRaf = null;
+        if (isDragging || !sidebar.classList.contains('sheet-expanded')) return;
+        if (list.scrollTop < lastST && list.scrollTop === 0) snapTo('peek');
+        lastST = list.scrollTop;
+      });
     }, { passive: true });
   }
 
