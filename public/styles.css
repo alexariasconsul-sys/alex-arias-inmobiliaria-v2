@@ -3566,27 +3566,40 @@ a { text-decoration: none; color: inherit; }
   }
 
   /* ════════════════════════════════════════════════════════
-     TARJETA ABIERTA EN MAP VIEW — Sheet fullscreen
-     Cuando el usuario abre una tarjeta en el mapa, el sheet
-     pasa a 100vh y se oculta el floating-bar para que TODO
-     el contenido de la tarjeta sea visible (incluyendo los
-     botones de Compartir/Contactar al final).
+     TARJETA ABIERTA EN MAP VIEW — Mostrar TODO el contenido
+     incluyendo botones Compartir/Contactar al final.
+     El menú flotante (floating-bar) permanece visible.
      ════════════════════════════════════════════════════════ */
   .map-sidebar.has-open-card {
     height: 100vh !important;
     border-radius: 0 !important;
     transition: height .3s cubic-bezier(.32,.72,0,1) !important;
   }
-  /* Padding bottom para safe-area (notch / home indicator iOS) */
-  .map-sidebar.has-open-card .map-cards-list {
-    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+
+  /* La tarjeta crece con su contenido (height auto) en lugar de
+     forzar 720px que cortaba los botones de Compartir/Contactar.
+     La lista padre maneja el scroll vertical. */
+  .map-sidebar.has-open-card .property-card.is-open,
+  .map-sidebar.has-open-card .property-card.is-open .property-card-inner {
+    height: auto !important;
+    min-height: 720px;
   }
-  /* Ocultar floating bar cuando hay tarjeta abierta en mapa */
-  body.map-card-open .floating-bar {
-    opacity: 0 !important;
-    pointer-events: none !important;
-    transform: translateY(100%) !important;
-    transition: opacity .25s, transform .25s !important;
+
+  /* El scroll interno de los detalles ya no es necesario:
+     la lista exterior (.map-cards-list) hace scroll. Esto
+     permite que detail-actions (botones) sean visibles
+     simplemente scrolleando hacia abajo. */
+  .map-sidebar.has-open-card .property-card.is-open .property-details-scroll {
+    overflow: visible !important;
+    padding-bottom: 12px !important;
+  }
+
+  /* Padding inferior en la lista para que los botones
+     Compartir/Contactar QUEDEN POR ENCIMA del floating-bar
+     (que mide ~60px + safe-area en mobile). */
+  .map-sidebar.has-open-card .map-cards-list {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+    overflow-y: auto !important;
   }
 
   .main-content { width: 95vw; }

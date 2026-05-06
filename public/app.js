@@ -1269,12 +1269,12 @@ function openCard(card) {
     // (evita que sheet+card animen simultaneamente — gran fuente de lag)
     if (isInMapView && window._snapMapSheet) {
       window._snapMapSheet('expanded', false); // animate=false
-      // Marcar el sheet como "tarjeta abierta" → CSS lo pone fullscreen (100vh)
-      // y oculta el floating-bar para que el contenido completo de la tarjeta
-      // sea visible, sin que se corte por el menú inferior.
+      // Marcar el sheet como "tarjeta abierta" → CSS lo pone fullscreen
+      // (100vh), permite que la tarjeta crezca con su contenido y agrega
+      // padding-bottom suficiente para que los botones Compartir/Contactar
+      // queden visibles por encima del floating-bar.
       const mapSidebar = document.getElementById('mapSidebar');
       mapSidebar?.classList.add('has-open-card');
-      document.body.classList.add('map-card-open');
     }
 
     card.classList.add('is-open');
@@ -1338,9 +1338,8 @@ function closeCard(card) {
   // remover la clase (que dejaba el inline style.height pegado)
   if (window.innerWidth <= 768) {
     const sidebar = document.getElementById('mapSidebar');
-    // Limpiar las clases de "tarjeta abierta" → restaurar floating-bar
+    // Limpiar la clase de "tarjeta abierta"
     sidebar?.classList.remove('has-open-card');
-    document.body.classList.remove('map-card-open');
     if (sidebar?.classList.contains('sheet-expanded') && window._snapMapSheet) {
       window._snapMapSheet('peek');
     }
