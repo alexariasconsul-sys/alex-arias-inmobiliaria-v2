@@ -612,9 +612,19 @@ app.get('/sitemap.xml', async (req, res) => {
 
     // Propiedades dinámicas
     docs.forEach(doc => {
+      // Obtener fecha válida: updated_at > created_at > fecha actual
+      let dateStr = new Date().toISOString().split('T')[0];
+      if (doc.updated_at) {
+        const d = new Date(doc.updated_at);
+        if (!isNaN(d.getTime())) dateStr = d.toISOString().split('T')[0];
+      } else if (doc.created_at) {
+        const d = new Date(doc.created_at);
+        if (!isNaN(d.getTime())) dateStr = d.toISOString().split('T')[0];
+      }
+
       xml += '  <url>\n';
       xml += `    <loc>https://alexariasc.com/#property/${doc._id}</loc>\n`;
-      xml += `    <lastmod>${(doc.updated_at || doc.created_at || new Date()).toISOString().split('T')[0]}</lastmod>\n`;
+      xml += `    <lastmod>${dateStr}</lastmod>\n`;
       xml += '    <changefreq>weekly</changefreq>\n';
       xml += '    <priority>0.8</priority>\n';
       xml += '  </url>\n';
