@@ -3545,30 +3545,31 @@ a { text-decoration: none; color: inherit; }
   .map-overlay-counter   { background: rgba(0,0,0,.65) !important; }
   .modal-overlay         { background: rgba(0,0,0,.7) !important; }
 
-  /* ── GPU: containment + compositing para cards ────────── */
+  /* ── GPU: compositing layer en cards (SIN contain:paint
+     que clipa hijos y oculta botones) ──────────────────── */
   .property-card {
     transform: translateZ(0);
     backface-visibility: hidden;
-    contain: layout paint style; /* aisla reflows del card del resto */
   }
 
-  /* Pausar el render del mapa cuando no se ve
-     (sheet expandido o tarjeta abierta) — gran ahorro de GPU.
-     La clase 'map-paused' la maneja JS desde initBottomSheet/openCard */
+  /* Pausar el render del mapa cuando no se ve.
+     La clase '.map-paused' la aplica/quita JS desde snapTo() —
+     evita el costo de un selector :has() que el navegador
+     re-evalúa en cada cambio de DOM. */
   #mapView.map-paused #leafletMap {
-    visibility: hidden;
-    pointer-events: none;
-  }
-  /* También pausar tiles cuando el sheet está expandido a 88vh */
-  #mapView:has(.map-sidebar.sheet-expanded) #leafletMap {
     visibility: hidden;
     pointer-events: none;
   }
 
   /* ════════════════════════════════════════════════════════
-     TARJETA ABIERTA EN MAP VIEW — Mostrar TODO el contenido
-     incluyendo botones Compartir/Contactar al final.
-     El menú flotante (floating-bar) permanece visible.
+     TARJETA ABIERTA EN MAP VIEW
+     Estrategia simple:
+     - Sheet a 100vh (más espacio vertical)
+     - Botones detail-actions STICKY al fondo del scroll
+       interno → siempre visibles sin importar dónde scrollee.
+     - Imagen más grande (35vh) para que se vea completa.
+     - Card y resto MANTIENEN su altura normal (no auto, no
+       cambios raros que rompen el layout).
      ════════════════════════════════════════════════════════ */
   .map-sidebar.has-open-card {
     height: 100vh !important;
@@ -3576,40 +3577,24 @@ a { text-decoration: none; color: inherit; }
     transition: height .3s cubic-bezier(.32,.72,0,1) !important;
   }
 
-  /* La tarjeta crece con su contenido (height auto) en lugar de
-     forzar 720px que cortaba los botones de Compartir/Contactar.
-     La lista padre maneja el scroll vertical. */
-  .map-sidebar.has-open-card .property-card.is-open,
-  .map-sidebar.has-open-card .property-card.is-open .property-card-inner {
-    height: auto !important;
-    min-height: 720px;
-  }
-
-  /* Imagen más alta y con aspect ratio natural (4:3) en map view
-     con tarjeta abierta — para que la foto se vea completa, sin
-     recortes agresivos arriba/abajo. */
+  /* Imagen más alta para verla mejor */
   .map-sidebar.has-open-card .property-card.is-open .property-media {
-    height: auto !important;
-    aspect-ratio: 4 / 3;
-    max-height: 56vh;
-    min-height: 280px;
+    height: 35vh !important;
+    min-height: 260px;
+    max-height: 380px;
   }
 
-  /* El scroll interno de los detalles ya no es necesario:
-     la lista exterior (.map-cards-list) hace scroll. Esto
-     permite que detail-actions (botones) sean visibles
-     simplemente scrolleando hacia abajo. */
-  .map-sidebar.has-open-card .property-card.is-open .property-details-scroll {
-    overflow: visible !important;
-    padding-bottom: 12px !important;
-  }
-
-  /* Padding inferior en la lista para que los botones
-     Compartir/Contactar QUEDEN POR ENCIMA del floating-bar
-     (que mide ~60px + safe-area en mobile). */
-  .map-sidebar.has-open-card .map-cards-list {
-    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
-    overflow-y: auto !important;
+  /* Botones de Compartir/Contactar STICKY al fondo del scroll
+     interno de la tarjeta. Siempre visibles, sin importar
+     cuánto haya scrolleado el usuario en los detalles. */
+  .map-sidebar.has-open-card .property-card.is-open .detail-actions {
+    position: sticky;
+    bottom: 0;
+    background: var(--card-bg, #fff);
+    padding: 10px 4px 6px;
+    margin: 8px -4px -8px;
+    border-top: 1px solid var(--line-2);
+    z-index: 2;
   }
 
   .main-content { width: 95vw; }
