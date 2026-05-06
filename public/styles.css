@@ -1002,9 +1002,9 @@ a { text-decoration: none; color: inherit; }
   padding: 10px;
   padding-top: 12px;
   overflow: hidden;
-  transition: height .34s cubic-bezier(.4,0,.2,1),
-              box-shadow .25s ease,
-              border .25s ease;
+  /* Solo height en transition — animar box-shadow es muy caro
+     y causa re-rasterización en cada frame durante scroll. */
+  transition: height .34s cubic-bezier(.4,0,.2,1);
 }
 
 .property-card.is-open .property-card-inner {
@@ -3545,11 +3545,26 @@ a { text-decoration: none; color: inherit; }
   .map-overlay-counter   { background: rgba(0,0,0,.65) !important; }
   .modal-overlay         { background: rgba(0,0,0,.7) !important; }
 
-  /* ── GPU: compositing layer en cards (SIN contain:paint
-     que clipa hijos y oculta botones) ──────────────────── */
+  /* ── GPU: compositing layer en cards ─────────────────────
+     - content-visibility: auto → el navegador SKIPEA el render
+       de tarjetas fuera de pantalla. Mejora masiva en scroll
+       cuando hay muchas tarjetas.
+     - contain-intrinsic-size → reserva espacio para que
+       layout no salte cuando las tarjetas entran/salen.
+     - contain: layout style (NO paint, que clipa hijos).
+     - translateZ + backface-visibility → capa GPU dedicada.
+  */
   .property-card {
     transform: translateZ(0);
     backface-visibility: hidden;
+    contain: layout style;
+    content-visibility: auto;
+    contain-intrinsic-size: 320px;
+  }
+  /* Cuando la tarjeta está abierta, deshabilitar content-visibility
+     (no queremos que el contenido se "salte" durante la animación). */
+  .property-card.is-open {
+    content-visibility: visible;
   }
 
   /* Pausar el render del mapa cuando no se ve.
@@ -3609,7 +3624,13 @@ a { text-decoration: none; color: inherit; }
   .properties-grid { grid-template-columns: 1fr; gap: 12px; }
 
   .property-card { position: relative; height: var(--card-collapsed-height); }
-  .property-card-inner { position: relative; height: var(--card-collapsed-height); }
+  .property-card-inner {
+    position: relative;
+    height: var(--card-collapsed-height);
+    /* Sombra simple en mobile (1 sombra en vez de 2) → menos
+       re-rasterización por frame durante scroll. */
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  }
 
   .property-card.is-open { height: var(--card-expanded-height-mobile); }
   .property-card.is-open .property-card-inner {
