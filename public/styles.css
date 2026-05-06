@@ -1018,10 +1018,32 @@ a { text-decoration: none; color: inherit; }
   position: relative;
   width: 100%;
   height: var(--media-height);
-  background: #dde1e7; /* placeholder gris mientras carga la imagen */
+  background: #d4d8de; /* placeholder mientras carga la imagen */
   flex-shrink: 0;
   overflow: hidden;
   border-radius: var(--radius-lg);
+}
+
+/* Spinner de carga — desaparece cuando la imagen termina de cargar */
+.property-media::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border: 3px solid rgba(0, 0, 0, 0.15);
+  border-top-color: rgba(0, 0, 0, 0.45);
+  border-radius: 50%;
+  animation: media-spin 0.7s linear infinite;
+  pointer-events: none;
+}
+.property-media.img-ready::after {
+  display: none;
+}
+@keyframes media-spin {
+  to { transform: rotate(360deg); }
 }
 /* Garantizar overflow hidden en todos los contextos */
 .property-media,

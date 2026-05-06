@@ -1475,8 +1475,20 @@ const _lazyObserver = new IntersectionObserver((entries) => {
 }, { rootMargin: '600px' });
 
 function initSliderLazy(card) {
-  // Solo observar las imágenes no-activas (slides 2, 3...) para cargarlas con IntersectionObserver
-  // La primera imagen ya tiene src real y carga inmediatamente sin loading=lazy
+  // Ocultar spinner cuando la primera imagen termina de cargar
+  const firstImg = card.querySelector('.property-slide img:not([data-src])');
+  if (firstImg) {
+    const media = card.querySelector('.property-media');
+    if (media) {
+      if (firstImg.complete && firstImg.naturalHeight !== 0) {
+        media.classList.add('img-ready');
+      } else {
+        firstImg.addEventListener('load',  () => media.classList.add('img-ready'), { once: true });
+        firstImg.addEventListener('error', () => media.classList.add('img-ready'), { once: true });
+      }
+    }
+  }
+  // Observar imágenes de slides 2, 3... para cargarlas con IntersectionObserver
   card.querySelectorAll('img.lazy-img[data-src]').forEach(img => {
     _lazyObserver.observe(img);
   });
