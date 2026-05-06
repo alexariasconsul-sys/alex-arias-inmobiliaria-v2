@@ -33,12 +33,29 @@
   <meta name="theme-color" content="#000000" />
 
   <link rel="icon" type="image/png" href="/assets/logo/favicon.png" />
+  <!-- DNS Prefetch y Preconnect para terceros -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+  <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+  <link rel="dns-prefetch" href="https://unpkg.com" />
+
+  <!-- Google Fonts con display=swap para mejor CLS -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
-  <!-- Optimización: Preload crítico -->
-  <link rel="preload" href="styles.css" as="style" />
+  <!-- Optimización: Critical CSS inline para FCP rápido -->
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { font-family: "Inter", sans-serif; }
+    body { background: #fff; color: #111; }
+    .app-shell { min-height: 100vh; }
+    .top-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 200; background: #000; height: 60px; }
+    .loading-state { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; padding: 16px; margin-top: 76px; }
+    .skeleton-card { height: 400px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 2s infinite; }
+    @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  </style>
+
+  <!-- CSS completo diferido -->
   <link rel="stylesheet" href="styles.css" />
 
   <!-- Leaflet CSS: Lazy load (media=print, onload para cambiar a all) -->
