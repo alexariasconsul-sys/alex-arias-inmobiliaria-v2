@@ -3612,6 +3612,44 @@ a { text-decoration: none; color: inherit; }
     z-index: 2;
   }
 
+  /* ════════════════════════════════════════════════════════
+     PERFIL DEL CONSULTOR EN MOBILE
+     Antes: card centrado con padding 20px, sin scroll → en
+     pantallas pequeñas el contenido se enterraba arriba/abajo.
+     Ahora: overlay scrolleable + card a pantalla completa
+     con header sticky para que el botón cerrar siempre
+     sea accesible.
+     ════════════════════════════════════════════════════════ */
+  .profile-overlay {
+    padding: 0 !important;
+    align-items: stretch !important;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .profile-card {
+    max-width: none !important;
+    width: 100%;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 14px 18px calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+    min-height: 100vh;
+    margin: 0 !important;
+    animation: slideUpModal .28s cubic-bezier(.32,.72,0,1);
+  }
+  /* Header sticky con botón cerrar SIEMPRE visible al hacer scroll */
+  .profile-card .profile-card-header {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #fff;
+    padding: 10px 0 12px;
+    margin: -14px -18px 8px;
+    padding-left: 18px;
+    padding-right: 18px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
   .main-content { width: 95vw; }
   .map-view { width: 100%; left: 0; right: 0; }
   .top-bar-inner { gap: 8px; }
