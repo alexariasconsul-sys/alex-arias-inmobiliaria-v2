@@ -3527,26 +3527,42 @@ a { text-decoration: none; color: inherit; }
 }
 
 @media (max-width: 767px) {
-  /* ── GPU: eliminar backdrop-filter en mobile (muy costoso durante scroll) ── */
-  .top-bar {
+  /* ════════════════════════════════════════════════════════
+     PERFORMANCE: ELIMINAR backdrop-filter en TODO mobile
+     Es la causa #1 de lag — fuerza repintar grandes áreas
+     en cada frame de scroll/animación. En GPUs móviles
+     puede bajar de 60fps a 15fps trivialmente.
+     ════════════════════════════════════════════════════════ */
+  *, *::before, *::after {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    background: rgba(255,255,255,1) !important; /* sólido en vez de translúcido */
   }
-  .floating-bar {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    background: var(--black, #000) !important;
-  }
-  .active-filters-bar {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    background: rgba(255,255,255,1) !important;
-  }
-  /* ── GPU: forzar compositing layer en cards para scroll fluido ── */
+  .top-bar               { background: rgba(255,255,255,1) !important; }
+  .floating-bar          { background: var(--black, #000) !important; }
+  .active-filters-bar    { background: rgba(255,255,255,1) !important; }
+  .map-overlay-close     { background: rgba(0,0,0,.7) !important; }
+  .map-overlay-status    { background: rgba(0,0,0,.7) !important; }
+  .map-overlay-counter   { background: rgba(0,0,0,.65) !important; }
+  .modal-overlay         { background: rgba(0,0,0,.7) !important; }
+
+  /* ── GPU: containment + compositing para cards ────────── */
   .property-card {
     transform: translateZ(0);
     backface-visibility: hidden;
+    contain: layout paint style; /* aisla reflows del card del resto */
+  }
+
+  /* Pausar el render del mapa cuando no se ve
+     (sheet expandido o tarjeta abierta) — gran ahorro de GPU.
+     La clase 'map-paused' la maneja JS desde initBottomSheet/openCard */
+  #mapView.map-paused #leafletMap {
+    visibility: hidden;
+    pointer-events: none;
+  }
+  /* También pausar tiles cuando el sheet está expandido a 88vh */
+  #mapView:has(.map-sidebar.sheet-expanded) #leafletMap {
+    visibility: hidden;
+    pointer-events: none;
   }
 
   .main-content { width: 95vw; }

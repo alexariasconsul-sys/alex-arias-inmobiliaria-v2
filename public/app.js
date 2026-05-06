@@ -1261,6 +1261,16 @@ function openCard(card) {
     setTimeout(scrollDesktopCardIntoView, 380);
   } else {
     document.querySelectorAll('.property-card.is-open').forEach(c => closeCard(c));
+
+    // Detectar si estamos en map view ANTES de animar nada
+    const isInMapView = state.currentView === 'map';
+
+    // En map view: snap el sheet a expanded SIN animación PRIMERO
+    // (evita que sheet+card animen simultaneamente — gran fuente de lag)
+    if (isInMapView && window._snapMapSheet) {
+      window._snapMapSheet('expanded', false); // animate=false
+    }
+
     card.classList.add('is-open');
     card.style.zIndex = '10';
     syncMobileHeight(card);
@@ -1269,15 +1279,13 @@ function openCard(card) {
       const headerH = document.querySelector('.top-bar')?.offsetHeight ?? 72;
       const cardRect = card.getBoundingClientRect();
       const scrollTarget = window.scrollY + cardRect.top - headerH - 10;
-      window.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' });
+      // En map view: scroll instantáneo (no smooth) para no competir con la animación de la card
+      window.scrollTo({
+        top: Math.max(0, scrollTarget),
+        behavior: isInMapView ? 'instant' : 'smooth'
+      });
     });
-    setTimeout(scrollMobileCardAboveBar, 700);
-
-    // Fix #4: expandir sidebar del mapa para que botones no queden enterrados
-    // Usar snapTo (si existe) para mantener consistencia entre clase + height
-    if (window._snapMapSheet) {
-      window._snapMapSheet('expanded');
-    }
+    if (!isInMapView) setTimeout(scrollMobileCardAboveBar, 700);
   }
   // ── Facebook Pixel: ViewContent ────────────────────────────────
   if (typeof fbq === 'function') {
@@ -3372,6 +3380,7 @@ function initBottomSheet() {
   SHEET_H.expanded = Math.floor(window.innerHeight * 0.88);
 
   // ── Funciones de snap ─────────────────────────────────────
+  const mapView = document.getElementById('mapView');
   function snapTo(snap, animate = true) {
     if (!animate) sidebar.style.transition = 'none';
     sidebar.classList.remove('sheet-hidden', 'sheet-peek', 'sheet-expanded', 'sheet-dragging');
@@ -3388,6 +3397,16 @@ function initBottomSheet() {
       sidebar.classList.add('sheet-expanded');
       sidebar.style.height = SHEET_H.expanded + 'px';
       if (fab) fab.style.display = 'none';
+    }
+
+    // PAUSAR Leaflet cuando el sheet está expandido (no se ve el mapa)
+    // El mapa sigue rendereando tiles aunque no se vea = lag enorme.
+    if (mapView && state.leafletMap) {
+      if (snap === 'expanded') {
+        mapView.classList.add('map-paused');
+      } else {
+        mapView.classList.remove('map-paused');
+      }
     }
 
     if (!animate) {
