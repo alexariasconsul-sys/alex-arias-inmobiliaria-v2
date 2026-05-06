@@ -105,14 +105,29 @@ app.use('/auth/google', authLimiter);
 app.use('/api/', globalLimiter);
 
 // Middleware
-app.use(compression()); // Gzip para todas las respuestas
+// Compresión Brotli si está disponible, sino Gzip
+app.use(compression({
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) return false;
+    return compression.filter(req, res);
+  },
+  level: 6 // Nivel de compresión: 1-6 (más alto = más lento)
+}));
 app.use(cors());
 
 // ── OPTIMIZACIÓN: Headers de rendimiento ─────────────────────
 app.use((req, res, next) => {
-  // Prefetch DNS y preconnect a dominios críticos
+  // Preload recursos críticos
   res.set('Link', '</styles.css>; rel=preload; as=style, </app.js>; rel=preload; as=script');
+
+  // Security headers
   res.set('X-Content-Type-Options', 'nosniff');
+  res.set('X-Frame-Options', 'DENY');
+
+  // Performance hints
+  res.set('X-UA-Compatible', 'IE=edge');
+  res.set('X-DNS-Prefetch-Control', 'on');
+
   next();
 });
 app.use(express.json({ limit: '20mb' }));

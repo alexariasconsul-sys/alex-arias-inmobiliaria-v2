@@ -35,6 +35,33 @@ const state = {
   pendingEditProp: null, // prop a editar cuando el modal aún está autenticando
 };
 
+// ─── Lazy Loading Intersection Observer ────────────────────────
+const lazyLoadImages = () => {
+  if (!('IntersectionObserver' in window)) {
+    // Fallback: cargar todas las imágenes si no hay soporte
+    document.querySelectorAll('img[data-src]').forEach(img => {
+      img.src = img.dataset.src;
+      img.removeAttribute('data-src');
+    });
+    return;
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        if (img.dataset.src) {
+          img.src = img.dataset.src;
+          img.removeAttribute('data-src');
+          observer.unobserve(img);
+        }
+      }
+    });
+  }, { rootMargin: '50px' });
+
+  document.querySelectorAll('img[data-src]').forEach(img => observer.observe(img));
+};
+
 // ─── Utilidades ────────────────────────────────────────────────
 function formatPrice(price) {
   if (!price) return 'Precio a consultar';
@@ -856,6 +883,9 @@ function renderGrid() {
       }, 300);
     }
   }
+
+  // Activar lazy loading de imágenes
+  lazyLoadImages();
 }
 
 // ─── CARD HTML ────────────────────────────────────────────────

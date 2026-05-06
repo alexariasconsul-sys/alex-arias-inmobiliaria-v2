@@ -39,10 +39,17 @@
 
   <!-- Optimización: Preload crítico -->
   <link rel="preload" href="styles.css" as="style" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.1/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.1/dist/MarkerCluster.Default.css" />
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- Leaflet CSS: Lazy load (media=print, onload para cambiar a all) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.1/dist/MarkerCluster.css" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.1/dist/MarkerCluster.Default.css" media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.1/dist/MarkerCluster.Default.css" />
+  </noscript>
   <script src="/tracking.js" defer></script>
 
   <!-- Schema.org Structured Data - RealEstateAgent -->
@@ -1509,9 +1516,14 @@
   <div class="reviews-overlay" id="reviewsOverlay" style="display:none"></div>
 
   <!-- Scripts -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
+  <!-- Socket.io (crítico, debe ser sincrónico) -->
   <script src="/socket.io/socket.io.js"></script>
+
+  <!-- Leaflet: Lazy load (se carga cuando se abre el mapa) -->
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script defer src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
+
+  <!-- App.js: Aplicación principal -->
   <script src="app.js"></script>
 </body>
 </html>
