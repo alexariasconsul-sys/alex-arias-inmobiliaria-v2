@@ -225,6 +225,11 @@ app.get('/', async (req, res) => {
   <meta name="twitter:description" content="${esc(ogDesc)}" />
   <meta name="twitter:image"       content="${esc(ogImage)}" />`;
 
+    // Actualizar canonical dinámicamente (evita "página alternativa con canónica adecuada" en GSC)
+    html = html.replace(
+      'id="canonicalUrl" rel="canonical" href="https://alexariasc.com/"',
+      `id="canonicalUrl" rel="canonical" href="${esc(ogUrl)}"`
+    );
     html = html.replace('</head>', ogTags + '\n</head>');
     res.send(html);
   } catch (err) {
@@ -695,50 +700,38 @@ app.get('/api/properties/:id', async (req, res) => {
 // ─── SITEMAP.XML (SEO) ────────────────────────────────────────
 app.get('/sitemap.xml', async (req, res) => {
   try {
-    const db = getDB();
+    const db   = getDB();
     const docs = await db.findAsync({});
+    const posts = await blogDB.findAsync({ status: 'published' });
+    const today = new Date().toISOString().split('T')[0];
 
-    // URLs estáticas
+    const getDate = doc => {
+      for (const f of ['updated_at', 'created_at']) {
+        if (doc[f]) { const d = new Date(doc[f]); if (!isNaN(d)) return d.toISOString().split('T')[0]; }
+      }
+      return today;
+    };
+
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
     xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
     // Home
-    xml += '  <url>\n';
-    xml += '    <loc>https://alexariasc.com/</loc>\n';
-    xml += '    <lastmod>' + new Date().toISOString().split('T')[0] + '</lastmod>\n';
-    xml += '    <changefreq>daily</changefreq>\n';
-    xml += '    <priority>1.0</priority>\n';
-    xml += '  </url>\n';
+    xml += `  <url>\n    <loc>https://alexariasc.com/</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
 
-    // Admin
-    xml += '  <url>\n';
-    xml += '    <loc>https://alexariasc.com/admin</loc>\n';
-    xml += '    <changefreq>monthly</changefreq>\n';
-    xml += '    <priority>0.3</priority>\n';
-    xml += '  </url>\n';
+    // Blog listing
+    xml += `  <url>\n    <loc>https://alexariasc.com/blog</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
 
-    // Propiedades dinámicas
+    // Propiedades — URL con ?id= (crawleable por Google, con SSR de OG tags)
     docs.forEach(doc => {
-      // Obtener fecha válida: updated_at > created_at > fecha actual
-      let dateStr = new Date().toISOString().split('T')[0];
-      if (doc.updated_at) {
-        const d = new Date(doc.updated_at);
-        if (!isNaN(d.getTime())) dateStr = d.toISOString().split('T')[0];
-      } else if (doc.created_at) {
-        const d = new Date(doc.created_at);
-        if (!isNaN(d.getTime())) dateStr = d.toISOString().split('T')[0];
-      }
+      xml += `  <url>\n    <loc>https://alexariasc.com/?id=${doc._id}</loc>\n    <lastmod>${getDate(doc)}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+    });
 
-      xml += '  <url>\n';
-      xml += `    <loc>https://alexariasc.com/#property/${doc._id}</loc>\n`;
-      xml += `    <lastmod>${dateStr}</lastmod>\n`;
-      xml += '    <changefreq>weekly</changefreq>\n';
-      xml += '    <priority>0.8</priority>\n';
-      xml += '  </url>\n';
+    // Artículos del blog publicados
+    posts.forEach(post => {
+      xml += `  <url>\n    <loc>https://alexariasc.com/post.html?slug=${encodeURIComponent(post.slug)}</loc>\n    <lastmod>${getDate(post)}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
     });
 
     xml += '</urlset>';
-
     res.type('application/xml');
     res.send(xml);
   } catch (err) {
