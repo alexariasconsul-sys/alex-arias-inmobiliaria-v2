@@ -225,6 +225,8 @@ function readURLParams() {
   if (p.get('ord')) state.orderBy = p.get('ord');
   // Guardar ?id= antes de que pushFilterState() sobrescriba la URL
   if (p.get('id')) state.autoOpenId = p.get('id');
+  // Auto-abrir panel de reseñas
+  if (p.get('reviews') === 'open') state.autoOpenReviews = true;
 }
 
 function syncUIFromState() {
@@ -4361,6 +4363,9 @@ function refreshAdminUI() {
   if (state.isAdmin) renderGrid();
   const logoutBtn = document.getElementById('profileLogoutBtn');
   const editBtn   = document.getElementById('profileEditBtn');
+  // Botón "Pedir reseña" — solo visible para admin
+  const shareReviewsBtn = document.getElementById('shareReviewsLink');
+  if (shareReviewsBtn) shareReviewsBtn.style.display = state.isAdmin ? 'inline-flex' : 'none';
   // "Salir" solo visible cuando está logueado
   if (logoutBtn) logoutBtn.style.display = state.isAdmin ? 'inline-flex' : 'none';
   // El botón siempre visible: cuando admin → "Editar perfil", cuando no → "Admin" (login)
@@ -4868,6 +4873,25 @@ function setupReviewsPanel() {
   btnClose.addEventListener('click', closePanel);
   overlay.addEventListener('click', closePanel);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
+
+  // Botón "Compartir enlace de reseñas" — solo visible para admin
+  const shareReviewsBtn = document.getElementById('shareReviewsLink');
+  if (shareReviewsBtn) {
+    shareReviewsBtn.addEventListener('click', () => {
+      const link = `${window.location.origin}/?reviews=open`;
+      navigator.clipboard.writeText(link).then(() => {
+        showToast('¡Enlace copiado! Compártelo con tus clientes');
+      }).catch(() => {
+        prompt('Copia este enlace para pedir reseñas:', link);
+      });
+    });
+  }
+
+  // Auto-abrir si viene de ?reviews=open
+  if (state.autoOpenReviews) {
+    state.autoOpenReviews = false;
+    setTimeout(openPanel, 700);
+  }
 
   // ── Load Google GSI dynamically ───────────────────────────────
   async function ensureGSI() {
