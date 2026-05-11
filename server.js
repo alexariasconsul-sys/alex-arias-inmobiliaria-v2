@@ -161,6 +161,14 @@ app.get('/', async (req, res) => {
     let ogImage = `${baseUrl}/assets/logo/Logo.png`;
     let ogUrl   = baseUrl;
 
+    // Si viene ?reviews=open, personalizar OG tags para solicitar reseña
+    if (req.query.reviews === 'open') {
+      ogTitle = '⭐ Deja tu opinión · Alex Arias';
+      ogDesc  = '¿Trabajaste con Alex Arias? Tu reseña nos ayuda a seguir mejorando y a que más familias encuentren su hogar ideal. ¡Solo toma 2 minutos!';
+      ogImage = `${baseUrl}/assets/logo/Logo.png`;
+      ogUrl   = `${baseUrl}/?reviews=open`;
+    }
+
     // Si viene ?id=, buscar la propiedad y personalizar OG tags
     let ogType = 'website';
     let prop   = null;
@@ -988,8 +996,8 @@ app.get('/api/filters', async (req, res) => {
   try {
     const db = getDB();
     const all = await db.findAsync({});
-    const municipios = [...new Set(all.map(p => p.municipio).filter(Boolean))].sort();
-    const barrios = [...new Set(all.map(p => p.barrio).filter(Boolean))].sort();
+    const municipios = [...new Set(all.map(p => p.municipio?.trim()).filter(Boolean))].sort();
+    const barrios    = [...new Set(all.map(p => p.barrio?.trim()).filter(Boolean))].sort();
     res.json({ municipios, barrios });
   } catch (err) {
     res.status(500).json({ error: err.message });

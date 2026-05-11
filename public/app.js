@@ -632,13 +632,13 @@ function populateSelect(id, options, placeholder) {
 }
 
 function updateFilterDropdowns() {
-  const municipios = [...new Set(state.properties.map(p => p.municipio).filter(Boolean))].sort();
+  const municipios = [...new Set(state.properties.map(p => p.municipio?.trim()).filter(Boolean))].sort();
   populateSelect('filterMunicipio', municipios, 'Municipio');
 
   const municipio = document.getElementById('filterMunicipio')?.value || '';
   const barriosFiltrados = [...new Set(state.properties
-    .filter(p => !municipio || p.municipio === municipio)
-    .map(p => p.barrio).filter(Boolean))].sort();
+    .filter(p => !municipio || p.municipio?.trim() === municipio)
+    .map(p => p.barrio?.trim()).filter(Boolean))].sort();
   populateSelect('filterBarrio', barriosFiltrados, 'Barrio');
 
   // Sincronizar selectores del panel móvil
@@ -4874,16 +4874,23 @@ function setupReviewsPanel() {
   overlay.addEventListener('click', closePanel);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
 
-  // Botón "Compartir enlace de reseñas" — solo visible para admin
+  // Botón "Pedir reseña" — abre WhatsApp con mensaje personalizado
   const shareReviewsBtn = document.getElementById('shareReviewsLink');
   if (shareReviewsBtn) {
     shareReviewsBtn.addEventListener('click', () => {
       const link = `${window.location.origin}/?reviews=open`;
-      navigator.clipboard.writeText(link).then(() => {
-        showToast('¡Enlace copiado! Compártelo con tus clientes');
-      }).catch(() => {
-        prompt('Copia este enlace para pedir reseñas:', link);
-      });
+      const msg = [
+        `Hola 👋`,
+        ``,
+        `Fue un gusto acompañarte en este proceso. Espero que estés muy contento/a con tu nuevo inmueble 🏠`,
+        ``,
+        `Te pido un favor muy especial: ¿me regalas 2 minutos para dejar tu opinión? Tu reseña me ayuda a seguir ayudando a más familias a encontrar su hogar ideal. 🙏`,
+        ``,
+        `👉 ${link}`,
+        ``,
+        `¡Muchas gracias! — Alex Arias · Consultor Inmobiliario`
+      ].join('\n');
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
     });
   }
 
@@ -4891,6 +4898,37 @@ function setupReviewsPanel() {
   if (state.autoOpenReviews) {
     state.autoOpenReviews = false;
     setTimeout(openPanel, 700);
+  }
+
+  // ── Burbuja sutil "¿Nos calificas?" ──────────────────────────
+  const nudge = document.getElementById('reviewsNudge');
+  if (nudge) {
+    const NUDGE_KEY = 'reviews_nudge_last';
+    const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
+    const lastShown = Number(localStorage.getItem(NUDGE_KEY) || 0);
+    const shouldShow = Date.now() - lastShown > THREE_DAYS;
+
+    if (shouldShow) {
+      // Mostrar después de 4 segundos
+      const nudgeTimer = setTimeout(() => {
+        nudge.classList.add('is-visible');
+        localStorage.setItem(NUDGE_KEY, String(Date.now()));
+        // Auto-ocultar tras 6 segundos
+        setTimeout(() => nudge.classList.remove('is-visible'), 6000);
+      }, 4000);
+
+      // Ocultar si hace clic en la estrella
+      btnOpen.addEventListener('click', () => {
+        clearTimeout(nudgeTimer);
+        nudge.classList.remove('is-visible');
+      }, { once: true });
+
+      // Ocultar si hace clic en la burbuja (abre el panel)
+      nudge.addEventListener('click', () => {
+        nudge.classList.remove('is-visible');
+        openPanel();
+      });
+    }
   }
 
   // ── Load Google GSI dynamically ───────────────────────────────
