@@ -3623,31 +3623,36 @@ a { text-decoration: none; color: inherit; }
   .profile-overlay {
     padding: 0 !important;
     align-items: stretch !important;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+    overflow: hidden !important; /* El overlay NO scrollea — evita el "freeze" en iOS */
   }
   .profile-card {
     max-width: none !important;
     width: 100%;
     border-radius: 0 !important;
     box-shadow: none !important;
-    padding: 14px 18px calc(80px + env(safe-area-inset-bottom, 0px)) !important;
-    min-height: 100vh;
+    /* La tarjeta ES el scroll container */
+    padding: 0 !important;
+    height: 100dvh;           /* dvh descuenta la barra del browser */
+    height: 100vh;            /* fallback para Safari < 15.4 */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
     margin: 0 !important;
     animation: slideUpModal .28s cubic-bezier(.32,.72,0,1);
   }
-  /* Header sticky con botón cerrar SIEMPRE visible al hacer scroll */
+  /* Header sticky — padding propio, sin márgenes negativos */
   .profile-card .profile-card-header {
     position: sticky;
     top: 0;
     z-index: 5;
     background: #fff;
-    padding: 10px 0 12px;
-    margin: -14px -18px 8px;
-    padding-left: 18px;
-    padding-right: 18px;
+    padding: 10px 18px 12px;
     border-bottom: 1px solid #f0f0f0;
+  }
+  /* Padding del contenido debajo del header sticky */
+  .profile-card #profileView,
+  .profile-card #profileEdit {
+    padding: 4px 18px calc(80px + env(safe-area-inset-bottom, 0px));
   }
 
   .main-content { width: 95vw; }

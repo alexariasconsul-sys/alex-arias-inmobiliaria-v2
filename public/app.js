@@ -24,6 +24,7 @@ const state = {
   adminPassword: '',
   likedIds: new Set(),
   shareTargetId: null,
+  autoOpenId: null,       // id de inmueble a abrir automáticamente (desde ?id= en URL)
   editingId: null,
   leafletMap: null,
   markerClusterGroup: null,
@@ -222,6 +223,8 @@ function readURLParams() {
   if (p.get('amen')) state.filterAmenidades = p.get('amen').split(',').filter(Boolean);
   if (p.get('est')) state.filterEstado = p.get('est');
   if (p.get('ord')) state.orderBy = p.get('ord');
+  // Guardar ?id= antes de que pushFilterState() sobrescriba la URL
+  if (p.get('id')) state.autoOpenId = p.get('id');
 }
 
 function syncUIFromState() {
@@ -875,15 +878,17 @@ function renderGrid() {
     if (state.isAdmin) setupAdminActions(card);
   });
 
-  // Handle URL param ?id=
-  const urlId = new URLSearchParams(window.location.search).get('id');
+  // Auto-abrir inmueble desde ?id= en URL (guardado en state antes de que
+  // pushFilterState() sobrescriba la URL)
+  const urlId = state.autoOpenId;
   if (urlId) {
+    state.autoOpenId = null; // consumir una sola vez
     const targetCard = grid.querySelector(`[data-card-id="${urlId}"]`);
     if (targetCard) {
       setTimeout(() => {
         targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
         openCard(targetCard);
-      }, 300);
+      }, 400);
     }
   }
 
@@ -1999,6 +2004,7 @@ function setupShareSheet() {
       prop.habitaciones? `🛏️ ${prop.habitaciones} habitaciones`     : '',
       prop.banos       ? `🚿 ${prop.banos} baños`                   : '',
       prop.parqueadero ? `🚗 Parqueadero incluido`                   : '',
+      prop.cuarto_util ? `🛎️ Cuarto útil`                           : '',
       '',
       `🔗 Ver propiedad: ${url}`
     ].filter(s => s !== null && s !== undefined);
@@ -2727,11 +2733,19 @@ function setupFilters() {
   }
 
   document.getElementById('openProfile').addEventListener('click', () => {
-    // Asegurar que abre en modo vista, no edición
+    // Toggle: si ya está abierto lo cierra, si no lo abre
+    const isOpen = profileOverlay.style.display === 'flex' &&
+                   !profileOverlay.classList.contains('is-closing');
+    if (isOpen) { closeProfile(); return; }
+
+    // Abrir en modo vista (no edición)
     document.getElementById('profileView').style.display = 'block';
     document.getElementById('profileEdit').style.display = 'none';
     profileOverlay.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+    // Resetear scroll al inicio cada vez que se abre
+    const card = document.getElementById('profileCard');
+    if (card) card.scrollTop = 0;
     loadProfile();
   });
 
