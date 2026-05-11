@@ -2511,6 +2511,42 @@ a { text-decoration: none; color: inherit; }
 }
 .float-icon:active { transform: scale(.92); }
 
+/* ── Burbuja "¿Nos calificas?" sobre la estrella ── */
+/* El botón #btnReviews ya tiene position:relative, la burbuja se posiciona dentro de él */
+.reviews-nudge {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: #fff;
+  color: #111;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 6px 12px;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.18);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .35s ease, transform .35s ease;
+}
+.reviews-nudge.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+/* Flechita hacia abajo */
+.reviews-nudge-arrow {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #fff;
+}
+
 /* Tooltips en hover */
 .float-icon::after {
   content: attr(aria-label);
