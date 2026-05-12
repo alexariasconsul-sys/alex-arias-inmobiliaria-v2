@@ -212,6 +212,8 @@ function pushFilterState() {
 function readURLParams() {
   const p = new URLSearchParams(location.search);
   if (p.get('tipo')) state.tipo = p.get('tipo');
+  // Filtro de ciudad pre-inyectado por páginas de aterrizaje (/sabaneta, etc.)
+  if (window._cityFilter) state.municipio = window._cityFilter;
   if (p.get('municipio')) state.municipio = p.get('municipio');
   if (p.get('barrio')) state.barrio = p.get('barrio');
   if (p.get('q')) state.search = p.get('q');
