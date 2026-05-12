@@ -697,6 +697,13 @@ function initCustDrops() {
       document.querySelectorAll('.cust-drop.is-open').forEach(d => d.classList.remove('is-open'));
       if (!isOpen) {
         syncCustDrop(selId); // actualizar antes de abrir
+        // Posicionar panel con position:fixed para escapar de overflow:hidden
+        const panel = drop.querySelector('.cust-drop-panel');
+        if (panel) {
+          const rect = btn.getBoundingClientRect();
+          panel.style.top  = (rect.bottom + 8) + 'px';
+          panel.style.left = (rect.left + rect.width / 2) + 'px';
+        }
         drop.classList.add('is-open');
       }
     });

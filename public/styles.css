@@ -297,6 +297,7 @@ a { text-decoration: none; color: inherit; }
   gap: 5px;
   background: none;
   border: none;
+  outline: none;
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
@@ -307,6 +308,7 @@ a { text-decoration: none; color: inherit; }
   transition: color .15s;
 }
 .cust-drop-btn:hover { color: #111; }
+.cust-drop-btn:focus-visible { outline: 2px solid rgba(0,0,0,.15); border-radius: 4px; }
 
 .cust-drop-chev {
   transition: transform .2s ease;
@@ -315,11 +317,10 @@ a { text-decoration: none; color: inherit; }
 }
 .cust-drop.is-open .cust-drop-chev { transform: rotate(180deg); color: #777; }
 
-/* Panel flotante */
+/* Panel flotante — position:fixed para escapar del overflow:hidden del mega-desktop */
 .cust-drop-panel {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 50%;
+  position: fixed;
+  /* top / left se calculan por JS al abrir */
   transform: translateX(-50%) translateY(-6px);
   background: #ffffff;
   border: 1px solid rgba(0,0,0,.1);
@@ -328,7 +329,7 @@ a { text-decoration: none; color: inherit; }
   min-width: 170px;
   max-height: 270px;
   overflow-y: auto;
-  z-index: 600;
+  z-index: 9999;
   box-shadow: 0 8px 30px rgba(0,0,0,.13), 0 2px 6px rgba(0,0,0,.07);
   opacity: 0;
   pointer-events: none;
