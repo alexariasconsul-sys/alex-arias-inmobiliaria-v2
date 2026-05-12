@@ -150,67 +150,152 @@ app.use(passport.session());
 // Debe ir ANTES de express.static para interceptar GET /
 app.get('/', async (req, res) => {
   try {
-    const propId = req.query.id;
+    const propId  = req.query.id;
     const baseUrl = process.env.SITE_URL || 'https://alexariasc.com';
     const indexPath = path.join(__dirname, 'public', 'index.html');
     let html = fs.readFileSync(indexPath, 'utf8');
 
-    // Valores por defecto
-    let ogTitle = 'Alex Arias · Consultor Inmobiliario';
-    let ogDesc  = 'Portafolio inmobiliario de Alexander Arias — Arriendo y venta de apartamentos en Sabaneta, Envigado y Medellín';
-    let ogImage = `${baseUrl}/assets/logo/Logo.png`;
-    let ogUrl   = baseUrl;
+    // Escapar para atributos HTML
+    const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-    // Si viene ?reviews=open, personalizar OG tags para solicitar reseña
+    // Formatear precio COP
+    const fmtPrecio = n => n
+      ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
+      : '';
+
+    // ── Valores por defecto (home) ──────────────────────────────
+    let pageTitle = 'Alex Arias · Consultor Inmobiliario | Apartamentos en Medellín';
+    let metaDesc  = 'Portafolio inmobiliario de Alexander Arias — Arriendo y venta de apartamentos en Sabaneta, Envigado y Medellín. Asesoría inmobiliaria especializada.';
+    let ogTitle   = 'Alex Arias · Consultor Inmobiliario';
+    let ogDesc    = metaDesc;
+    let ogImage   = `${baseUrl}/assets/logo/Logo.png`;
+    let ogUrl     = baseUrl;
+    let ogType    = 'website';
+    let prop      = null;
+    let schemaExtra = '';
+
+    // ── Schema.org WebSite + SearchAction (home) ────────────────
+    const schemaWebsite = `
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Alex Arias · Consultor Inmobiliario",
+    "url": "${baseUrl}",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "${baseUrl}/?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>`;
+
+    // ── ?reviews=open ───────────────────────────────────────────
     if (req.query.reviews === 'open') {
-      ogTitle = '⭐ Deja tu opinión · Alex Arias';
-      ogDesc  = '¿Trabajaste con Alex Arias? Tu reseña nos ayuda a seguir mejorando y a que más familias encuentren su hogar ideal. ¡Solo toma 2 minutos!';
-      ogImage = `${baseUrl}/assets/logo/Logo.png`;
-      ogUrl   = `${baseUrl}/?reviews=open`;
+      pageTitle = 'Deja tu reseña · Alex Arias Consultor Inmobiliario';
+      ogTitle   = '⭐ Deja tu opinión · Alex Arias';
+      metaDesc  = '¿Trabajaste con Alex Arias? Tu reseña nos ayuda a seguir mejorando y a que más familias encuentren su hogar ideal. ¡Solo toma 2 minutos!';
+      ogDesc    = metaDesc;
+      ogUrl     = `${baseUrl}/?reviews=open`;
     }
 
-    // Si viene ?id=, buscar la propiedad y personalizar OG tags
-    let ogType = 'website';
-    let prop   = null;
+    // ── ?id= → propiedad específica ─────────────────────────────
     if (propId) {
       try {
         const db = getDB();
         prop = await db.findOneAsync({ _id: propId });
         if (prop) {
-          const isComb = prop.tipo === 'combinado';
-          const rawP   = isComb ? (prop.precioArriendo || prop.precio) : prop.precio;
-          const precio = rawP
-            ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(rawP)
-            : '';
-          const tipoLabel = isComb ? 'Arriendo y Venta'
-            : prop.tipo === 'arriendo' ? 'En arriendo'
-            : prop.tipo === 'venta'    ? 'En venta'
-            : '';
-          ogTitle = `${prop.title} — ${prop.municipio}`;
-          ogDesc  = [
-            tipoLabel, precio,
-            prop.area         ? `${prop.area} m²`           : '',
-            prop.habitaciones ? `${prop.habitaciones} hab`  : '',
-            prop.banos        ? `${prop.banos} baños`       : '',
-            prop.barrio || ''
+          const isComb    = prop.tipo === 'combinado';
+          const rawP      = isComb ? (prop.precioArriendo || prop.precio) : prop.precio;
+          const precio    = fmtPrecio(rawP);
+          const tipoLabel = isComb      ? 'En arriendo y venta'
+            : prop.tipo === 'arriendo'  ? 'En arriendo'
+            : prop.tipo === 'venta'     ? 'En venta' : '';
+
+          // Title: "Apartamento en Arriendo en Ecoh · Sabaneta | Alex Arias"
+          pageTitle = `${prop.title}${prop.municipio ? ` · ${prop.municipio}` : ''} | Alex Arias Inmobiliaria`;
+
+          // Meta description: datos clave + CTA
+          const detalles = [
+            tipoLabel,
+            precio ? `${precio}${prop.tipo === 'arriendo' ? '/mes' : ''}` : '',
+            prop.area         ? `${prop.area} m²`                    : '',
+            prop.habitaciones ? `${prop.habitaciones} habitaciones`   : '',
+            prop.banos        ? `${prop.banos} baños`                 : '',
+            prop.parqueadero  ? 'parqueadero incluido'                : '',
+            prop.barrio       ? `en ${prop.barrio}`                   : '',
           ].filter(Boolean).join(' · ');
+          const descExtra = prop.descripcion
+            ? ` ${prop.descripcion.slice(0, 80).replace(/\s+$/, '')}…`
+            : '';
+          metaDesc = `${detalles}.${descExtra} Consulta con Alex Arias, tu asesor inmobiliario en ${prop.municipio || 'Medellín'}.`;
+
+          ogTitle = `${prop.title} — ${prop.municipio || ''}`;
+          ogDesc  = metaDesc;
+          ogType  = 'product';
+          ogUrl   = `${baseUrl}/?id=${propId}`;
           if (prop.images?.length) ogImage = `${baseUrl}/${prop.images[0].filename}`;
-          ogUrl  = `${baseUrl}/?id=${propId}`;
-          ogType = 'product'; // mejor soporte en anuncios Meta que "website"
+
+          // ── Schema.org RealEstateListing ─────────────────────
+          const amenidades = [];
+          if (prop.parqueadero)  amenidades.push({ '@type': 'LocationFeatureSpecification', name: 'Parqueadero', value: true });
+          if (prop.cuarto_util)  amenidades.push({ '@type': 'LocationFeatureSpecification', name: 'Cuarto útil', value: true });
+          if (prop.estudio)      amenidades.push({ '@type': 'LocationFeatureSpecification', name: 'Estudio',     value: true });
+          if (prop.amenidades?.length) {
+            prop.amenidades.forEach(a => amenidades.push({ '@type': 'LocationFeatureSpecification', name: a, value: true }));
+          }
+
+          const listingSchema = {
+            '@context': 'https://schema.org',
+            '@type': 'RealEstateListing',
+            name: prop.title,
+            description: prop.descripcion || metaDesc,
+            url: ogUrl,
+            datePosted: prop.created_at ? new Date(prop.created_at).toISOString() : undefined,
+            image: prop.images?.map(img => `${baseUrl}/${img.filename}`) || [],
+            address: {
+              '@type': 'PostalAddress',
+              streetAddress:   prop.direccion  || undefined,
+              addressLocality: prop.municipio  || 'Medellín',
+              addressRegion:   'Antioquia',
+              addressCountry:  'CO',
+              ...(prop.barrio ? { neighborhood: prop.barrio } : {})
+            },
+            ...(prop.area ? { floorSize: { '@type': 'QuantitativeValue', value: prop.area, unitCode: 'MTK' } } : {}),
+            ...(prop.habitaciones ? { numberOfRooms: prop.habitaciones } : {}),
+            ...(prop.banos        ? { numberOfBathroomsTotal: prop.banos } : {}),
+            ...(amenidades.length ? { amenityFeature: amenidades } : {}),
+            offers: {
+              '@type': 'Offer',
+              priceCurrency: 'COP',
+              price: rawP || prop.precio || 0,
+              availability: prop.estado === 'ocupado'
+                ? 'https://schema.org/SoldOut'
+                : 'https://schema.org/InStock',
+              businessFunction: prop.tipo === 'venta'
+                ? 'https://schema.org/Sell'
+                : 'https://schema.org/LeaseOut'
+            },
+            broker: {
+              '@type': 'RealEstateAgent',
+              name: 'Alexander Arias',
+              url: baseUrl,
+              telephone: '+573122588521',
+              areaServed: ['Sabaneta', 'Envigado', 'Medellín']
+            }
+          };
+          // Limpiar undefined del schema
+          schemaExtra = `\n  <script type="application/ld+json">\n  ${JSON.stringify(listingSchema, (k,v) => v === undefined ? undefined : v, 2)}\n  </script>`;
         }
       } catch (_) { /* propiedad no encontrada, usar defaults */ }
     }
 
-    // Escapar para atributos HTML
-    const esc = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const settings = readSettings();
+    const pixelId  = (settings.facebookPixelId || '').trim();
 
-    // fb:app_id mejora la integración con Meta Pixel (usar Pixel ID como App ID proxy)
-    const s = readSettings();
-    const pixelId = (s.facebookPixelId || '').trim();
-
-    const ogTags = `
-  <!-- Open Graph / Meta Ads -->
-  <meta property="og:type"        content="${ogType}" />
+    const injectedTags = `
+  <!-- SEO dinámico generado por servidor -->
+  <meta property="og:type"        content="${esc(ogType)}" />
   <meta property="og:site_name"   content="Alex Arias · Consultor Inmobiliario" />
   <meta property="og:title"       content="${esc(ogTitle)}" />
   <meta property="og:description" content="${esc(ogDesc)}" />
@@ -223,14 +308,23 @@ app.get('/', async (req, res) => {
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="${esc(ogTitle)}" />
   <meta name="twitter:description" content="${esc(ogDesc)}" />
-  <meta name="twitter:image"       content="${esc(ogImage)}" />`;
+  <meta name="twitter:image"       content="${esc(ogImage)}" />
+  ${schemaWebsite}${schemaExtra}`;
 
-    // Actualizar canonical dinámicamente (evita "página alternativa con canónica adecuada" en GSC)
+    // Reemplazar title, meta description y canonical dinámicamente
+    html = html.replace(
+      /id="pageTitle">([^<]*)<\/title>/,
+      `id="pageTitle">${esc(pageTitle)}</title>`
+    );
+    html = html.replace(
+      /id="metaDesc" name="description" content="([^"]*)"/,
+      `id="metaDesc" name="description" content="${esc(metaDesc)}"`
+    );
     html = html.replace(
       'id="canonicalUrl" rel="canonical" href="https://alexariasc.com/"',
       `id="canonicalUrl" rel="canonical" href="${esc(ogUrl)}"`
     );
-    html = html.replace('</head>', ogTags + '\n</head>');
+    html = html.replace('</head>', injectedTags + '\n</head>');
     res.send(html);
   } catch (err) {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
