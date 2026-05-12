@@ -622,9 +622,14 @@ app.get('/post.html', async (req, res) => {
       .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
       .replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-    const ogTitle = post.metaTitle || post.title || 'Alex Arias · Blog Inmobiliario';
-    const ogDesc  = post.metaDescription || post.excerpt || '';
-    const ogImage = post.cover || `${baseUrl}/assets/logo/Logo.png`;
+    const ogTitle = post.seo?.metaTitle || post.metaTitle || post.title || 'Alex Arias · Blog Inmobiliario';
+    const ogDesc  = post.seo?.metaDescription || post.metaDescription || post.excerpt || '';
+    // Si la imagen es externa (Unsplash, etc.) los scrapers de WhatsApp/FB la bloquean.
+    // Usamos proxy local /api/og-image/:slug que reenvía la imagen desde el servidor.
+    const rawCover = post.cover || '';
+    const ogImage  = rawCover
+      ? (rawCover.startsWith('http') ? `${baseUrl}/api/og-image/${encodeURIComponent(slug)}` : `${baseUrl}/${rawCover}`)
+      : `${baseUrl}/assets/logo/Logo.png`;
     const ogUrl   = `${baseUrl}/post.html?slug=${encodeURIComponent(slug)}`;
 
     let html = fs.readFileSync(postPath, 'utf8');
@@ -1548,6 +1553,23 @@ function readTime(content) {
   const words = (content || '').replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.ceil(words / 200));
 }
+
+// ─── OG IMAGE PROXY (evita bloqueo de Unsplash/externas en WhatsApp/FB) ──
+app.get('/api/og-image/:slug', async (req, res) => {
+  try {
+    const post = await blogDB.findOneAsync({ slug: req.params.slug });
+    if (!post?.cover?.startsWith('http')) return res.status(404).end();
+    const upstream = await fetch(post.cover, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; alexariasc-bot/1.0)' }
+    });
+    if (!upstream.ok) return res.status(502).end();
+    const ct = upstream.headers.get('content-type') || 'image/jpeg';
+    res.set('Content-Type', ct);
+    res.set('Cache-Control', 'public, max-age=86400');
+    const buf = await upstream.arrayBuffer();
+    res.send(Buffer.from(buf));
+  } catch { res.status(500).end(); }
+});
 
 // ─── BLOG: LISTAR POSTS ──────────────────────────────────────
 app.get('/api/blog', async (req, res) => {
