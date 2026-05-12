@@ -8,27 +8,62 @@ Disallow: /uploads/temp/
 Disallow: /*.json$
 Disallow: /api/
 
-# Google
+# ── Crawlers de búsqueda ─────────────────────────────────────
 User-agent: Googlebot
 Allow: /
 
-# Bing
 User-agent: Bingbot
 Allow: /
 
-# Rastreadores específicos
 User-agent: Slurp
 Allow: /
 
 User-agent: DuckDuckBot
 Allow: /
 
-# Sitemap
+# ── Crawlers de IA — permitidos explícitamente ───────────────
+# ChatGPT / OpenAI
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+# Google Gemini
+User-agent: Google-Extended
+Allow: /
+
+# Claude / Anthropic
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# Perplexity AI
+User-agent: PerplexityBot
+Allow: /
+
+# Meta AI
+User-agent: FacebookBot
+Allow: /
+
+# Common Crawl (base de datos de muchos LLMs)
+User-agent: CCBot
+Allow: /
+
+# Sitemap y recursos de referencia para IAs
 Sitemap: https://alexariasc.com/sitemap.xml
+Sitemap: https://alexariasc.com/llms.txt
 
 # Crawl delay
 Crawl-delay: 1
-Request-rate: 30/60
 
-# Host
+# Host canónico
 Host: alexariasc.com

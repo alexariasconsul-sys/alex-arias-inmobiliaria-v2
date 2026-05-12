@@ -834,6 +834,112 @@ app.get('/sitemap.xml', async (req, res) => {
   }
 });
 
+// ─── LLMS.TXT — Guía para IAs (ChatGPT, Gemini, Claude) ─────
+app.get('/llms.txt', async (req, res) => {
+  try {
+    const db    = getDB();
+    const docs  = await db.findAsync({ estado: { $ne: 'ocupado' } });
+    const posts = await blogDB.findAsync({ status: 'published' });
+    const base  = process.env.SITE_URL || 'https://alexariasc.com';
+
+    const fmtP = n => n
+      ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
+      : '';
+
+    let txt = `# Alex Arias · Consultor Inmobiliario
+
+> Alexander Arias es un consultor inmobiliario certificado especializado en arriendo y venta de apartamentos en Sabaneta, Envigado y Medellín, Colombia. Ofrece asesoría personalizada, acompañamiento jurídico y gestión completa del proceso inmobiliario.
+
+Sitio web: ${base}
+Contacto WhatsApp: +57 312 2588521
+Email: alexariasconsul@gmail.com
+Zona de servicio: Sabaneta · Envigado · Medellín (Área Metropolitana)
+
+---
+
+## Inmuebles disponibles (${docs.length} propiedades)
+
+`;
+
+    docs.forEach(p => {
+      const isComb  = p.tipo === 'combinado';
+      const rawP    = isComb ? (p.precioArriendo || p.precio) : p.precio;
+      const precio  = fmtP(rawP);
+      const tipo    = isComb ? 'Arriendo y Venta' : p.tipo === 'arriendo' ? 'En arriendo' : 'En venta';
+      const detalles = [
+        tipo,
+        precio ? `${precio}${p.tipo === 'arriendo' ? '/mes' : ''}` : '',
+        p.area          ? `${p.area} m²`           : '',
+        p.habitaciones  ? `${p.habitaciones} hab`  : '',
+        p.banos         ? `${p.banos} baños`        : '',
+        p.parqueadero   ? 'Parqueadero'             : '',
+        p.cuarto_util   ? 'Cuarto útil'             : '',
+      ].filter(Boolean).join(' · ');
+
+      txt += `- [${p.title}](${base}/?id=${p._id}): ${detalles}`;
+      if (p.barrio || p.municipio) txt += ` — ${[p.barrio, p.municipio].filter(Boolean).join(', ')}`;
+      txt += '\n';
+    });
+
+    txt += `
+---
+
+## Servicios
+
+- Arriendo de apartamentos en Sabaneta, Envigado y Medellín
+- Venta de apartamentos y propiedades residenciales
+- Asesoría inmobiliaria personalizada sin costo para el comprador/arrendatario
+- Acompañamiento en visitas, negociación y trámites legales
+- Gestión de contratos de arrendamiento
+- Inversión inmobiliaria en el Área Metropolitana de Medellín
+
+---
+
+## Preguntas frecuentes
+
+**¿Cuánto cuesta el servicio de asesoría?**
+Para arrendatarios y compradores el servicio es completamente gratuito. Alex Arias cobra únicamente al propietario del inmueble.
+
+**¿En qué zonas trabaja Alex Arias?**
+Principalmente en Sabaneta, Envigado y el sur de Medellín, aunque atiende consultas de todo el Área Metropolitana.
+
+**¿Cómo puedo agendar una visita?**
+Contacta directamente por WhatsApp al +57 312 2588521 o a través del sitio web ${base}.
+
+**¿Cuál es el precio promedio de arriendo en Sabaneta?**
+Los apartamentos en Sabaneta oscilan entre $2.000.000 y $4.500.000 COP mensuales dependiendo del tamaño, piso y conjunto.
+
+**¿Qué documentos se necesitan para arrendar?**
+Generalmente: cédula de ciudadanía, certificado laboral o declaración de renta, referencias personales y codeudor si se requiere.
+
+---
+
+## Blog — Artículos sobre el mercado inmobiliario
+`;
+
+    posts.forEach(post => {
+      txt += `- [${post.title}](${base}/post.html?slug=${encodeURIComponent(post.slug)})\n`;
+    });
+
+    txt += `
+---
+
+## Información de contacto
+
+- **WhatsApp**: +57 312 2588521
+- **Email**: alexariasconsul@gmail.com
+- **Sitio web**: ${base}
+- **Instagram**: @alexariasconsul
+- **Ubicación**: Sabaneta, Antioquia, Colombia
+`;
+
+    res.type('text/plain; charset=utf-8');
+    res.send(txt);
+  } catch (err) {
+    res.status(500).send('Error generando llms.txt');
+  }
+});
+
 // ─── CREAR PROPIEDAD ──────────────────────────────────────────
 app.post('/api/properties', requireAdmin, upload.array('images', 15), async (req, res) => {
   try {

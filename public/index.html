@@ -111,22 +111,102 @@
   }
   </script>
 
-  <!-- Schema.org - LocalBusiness (Alternativa) -->
+  <!-- Schema.org - LocalBusiness mejorado -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     "name": "Alex Arias - Consultor Inmobiliario",
     "url": "https://alexariasc.com",
-    "telephone": "+57 312 2588521",
+    "telephone": "+573122588521",
     "email": "alexariasconsul@gmail.com",
-    "areaServed": {
-      "@type": "City",
-      "name": "Medellín"
-    },
-    "priceRange": "COP",
     "image": "https://alexariasc.com/assets/logo/Logo.png",
-    "description": "Consultor inmobiliario especializado en propiedades residenciales"
+    "logo": "https://alexariasc.com/assets/logo/Logo.png",
+    "description": "Consultor inmobiliario especializado en arriendo y venta de apartamentos en Sabaneta, Envigado y Medellín. Asesoría personalizada y gratuita para compradores y arrendatarios.",
+    "priceRange": "COP",
+    "currenciesAccepted": "COP",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Sabaneta",
+      "addressRegion": "Antioquia",
+      "addressCountry": "CO"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 6.1510,
+      "longitude": -75.6167
+    },
+    "areaServed": [
+      { "@type": "City", "name": "Sabaneta",  "sameAs": "https://www.wikidata.org/wiki/Q1851727" },
+      { "@type": "City", "name": "Envigado",  "sameAs": "https://www.wikidata.org/wiki/Q1339264" },
+      { "@type": "City", "name": "Medellín",  "sameAs": "https://www.wikidata.org/wiki/Q48250" }
+    ],
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Inmuebles disponibles",
+      "url": "https://alexariasc.com/"
+    },
+    "sameAs": [
+      "https://alexariasc.com"
+    ]
+  }
+  </script>
+
+  <!-- Schema.org - FAQPage (mejora visibilidad en Google y respuestas de IA) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "¿Cuánto cuesta el servicio de Alex Arias como consultor inmobiliario?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Para arrendatarios y compradores el servicio es completamente gratuito. Alex Arias cobra únicamente al propietario del inmueble como comisión por gestión."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿En qué zonas de Medellín trabaja Alex Arias?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Alex Arias trabaja principalmente en Sabaneta, Envigado y el sur de Medellín, aunque atiende consultas de todo el Área Metropolitana de Medellín, Colombia."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Cómo puedo ver los apartamentos disponibles para arrendar en Sabaneta?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Puedes ver todos los apartamentos disponibles en https://alexariasc.com o contactar directamente a Alex Arias por WhatsApp al +57 312 2588521 para agendar una visita sin costo."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Cuánto cuesta arrendar un apartamento en Sabaneta o Envigado?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Los apartamentos en Sabaneta y Envigado oscilan entre $2.000.000 y $4.500.000 COP mensuales según el tamaño, piso, conjunto y acabados. Alex Arias tiene disponibles apartamentos desde 50 m² hasta 90 m² con 2 y 3 habitaciones."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Qué documentos necesito para arrendar un apartamento en Colombia?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Para arrendar necesitas: cédula de ciudadanía vigente, carta laboral o certificado de ingresos, últimas colillas de pago o declaración de renta, referencias personales y comerciales. En algunos casos el propietario solicita codeudor."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Qué ventajas tiene comprar apartamento en Sabaneta frente a Medellín?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sabaneta ofrece mejor calidad de vida, menor congestión vehicular, zonas verdes, conjuntos cerrados con más seguridad y precios por m² generalmente más competitivos que el norte de Medellín, con excelente conectividad al metro."
+        }
+      }
+    ]
   }
   </script>
 
@@ -1552,6 +1632,6 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
 
   <!-- App.js: Minificado para producción -->
-  <script src="app.min.js?v=13"></script>
+  <script src="app.min.js?v=14"></script>
 </body>
 </html>
