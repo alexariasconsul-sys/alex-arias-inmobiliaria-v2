@@ -591,9 +591,16 @@ app.get('/', async (req, res) => {
 // JS y CSS: sin caché para que el browser siempre pida la versión más reciente
 // ── CACHÉING OPTIMIZADO PARA VELOCIDAD ──────────────────────
 // HTML: Sin caché (cambios frecuentes)
+// Rutas SSR — 1 hora de caché (HTML dinámico con meta tags, schemas, etc.)
+const SSR_PATHS = ['/', '/sabaneta', '/envigado', '/medellin',
+  '/arriendo', '/venta',
+  '/sabaneta/arriendo', '/sabaneta/venta',
+  '/envigado/arriendo', '/envigado/venta',
+  '/medellin/arriendo', '/medellin/venta'];
 app.use((req, res, next) => {
-  if (req.path.endsWith('.html') || req.path === '/') {
-    res.set('Cache-Control', 'public, max-age=3600'); // 1 hora
+  const p = req.path;
+  if (p.endsWith('.html') || SSR_PATHS.includes(p)) {
+    res.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
   }
   next();
 });

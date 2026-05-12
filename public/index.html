@@ -71,7 +71,7 @@
     @media(max-width:767px){.app-shell{padding-bottom:calc(50px + env(safe-area-inset-bottom,0px))}}
   </style>
 
-  <link rel="stylesheet" href="styles.min.css?v=11" />
+  <link rel="stylesheet" href="styles.min.css?v=12" />
 
   <!-- Leaflet CSS: Lazy load (media=print, onload para cambiar a all) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" media="print" onload="this.media='all'" />
@@ -833,6 +833,53 @@
         </div>
       </button>
     </div>
+
+    <!-- ═══ SEO FOOTER — enlaces internos para indexación ════════ -->
+    <footer class="seo-footer" aria-label="Navegación del sitio">
+      <div class="seo-footer-inner">
+
+        <div class="seo-footer-col">
+          <strong class="seo-footer-heading">Apartamentos en Arriendo</strong>
+          <nav>
+            <a href="/arriendo">Todos los arriendos</a>
+            <a href="/sabaneta/arriendo">Arriendo en Sabaneta</a>
+            <a href="/envigado/arriendo">Arriendo en Envigado</a>
+            <a href="/medellin/arriendo">Arriendo en Medellín</a>
+          </nav>
+        </div>
+
+        <div class="seo-footer-col">
+          <strong class="seo-footer-heading">Apartamentos en Venta</strong>
+          <nav>
+            <a href="/venta">Todos en venta</a>
+            <a href="/sabaneta/venta">Venta en Sabaneta</a>
+            <a href="/envigado/venta">Venta en Envigado</a>
+            <a href="/medellin/venta">Venta en Medellín</a>
+          </nav>
+        </div>
+
+        <div class="seo-footer-col">
+          <strong class="seo-footer-heading">Por municipio</strong>
+          <nav>
+            <a href="/sabaneta">Sabaneta</a>
+            <a href="/envigado">Envigado</a>
+            <a href="/medellin">Medellín</a>
+            <a href="/blog">Blog Inmobiliario</a>
+          </nav>
+        </div>
+
+        <div class="seo-footer-col">
+          <strong class="seo-footer-heading">Alex Arias · Consultor</strong>
+          <address>
+            <a href="https://wa.me/573122588521" rel="noopener">WhatsApp: +57 312 258 8521</a>
+            <a href="mailto:alexariasconsul@gmail.com">alexariasconsul@gmail.com</a>
+            <span>Sabaneta, Antioquia, Colombia</span>
+          </address>
+        </div>
+
+      </div>
+      <p class="seo-footer-copy">© 2026 Alexander Arias · Consultor Inmobiliario · Sabaneta, Envigado y Medellín</p>
+    </footer>
 
     <!-- ═══ PHANTOM FOOTER (Buffer para tarjetas) ═════════════════ -->
     <div class="phantom-footer"></div>
@@ -1671,6 +1718,6 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
 
   <!-- App.js: Minificado para producción -->
-  <script src="app.min.js?v=19"></script>
+  <script src="app.min.js?v=20"></script>
 </body>
 </html>

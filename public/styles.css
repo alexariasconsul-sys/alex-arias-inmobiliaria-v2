@@ -2670,6 +2670,56 @@ a { text-decoration: none; color: inherit; }
   visibility: visible;
 }
 
+/* ─── SEO FOOTER ─────────────────────────────────────────────── */
+.seo-footer {
+  background: #f8f8f8;
+  border-top: 1px solid #ebebeb;
+  padding: 40px clamp(20px, 5vw, 60px) 24px;
+  margin-top: 0;
+}
+.seo-footer-inner {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 28px 40px;
+  max-width: 900px;
+  margin: 0 auto 28px;
+}
+.seo-footer-heading {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #555;
+  margin-bottom: 10px;
+}
+.seo-footer nav, .seo-footer address {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-style: normal;
+}
+.seo-footer a, .seo-footer span {
+  font-size: 13px;
+  color: #444;
+  text-decoration: none;
+  transition: color .15s;
+  line-height: 1.4;
+}
+.seo-footer a:hover { color: #111; text-decoration: underline; }
+.seo-footer-copy {
+  text-align: center;
+  font-size: 11px;
+  color: #aaa;
+  margin: 0;
+  border-top: 1px solid #e8e8e8;
+  padding-top: 18px;
+}
+@media (max-width: 767px) {
+  .seo-footer { padding: 32px 20px 20px; }
+  .seo-footer-inner { grid-template-columns: 1fr 1fr; gap: 24px 20px; }
+}
+
 /* ─── PHANTOM FOOTER (Buffer barrier para tarjetas - Desktop only) ─ */
 .phantom-footer {
   position: fixed;
