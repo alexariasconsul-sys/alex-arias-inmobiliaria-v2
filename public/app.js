@@ -239,8 +239,8 @@ function syncUIFromState() {
   // Municipio/Barrio selects
   const mSel = document.getElementById('filterMunicipio');
   const bSel = document.getElementById('filterBarrio');
-  if (mSel) mSel.value = state.municipio;
-  if (bSel) bSel.value = state.barrio;
+  if (mSel) { mSel.value = state.municipio; updateCustDropLabel('filterMunicipio'); }
+  if (bSel) { bSel.value = state.barrio;    updateCustDropLabel('filterBarrio'); }
   // Search input
   const sIn = document.getElementById('searchInput');
   const clr = document.getElementById('clearSearch');
@@ -309,12 +309,14 @@ function renderActiveFilterTags() {
       state.municipio = ''; state.barrio = '';
       const s = document.getElementById('filterMunicipio'); if(s) s.value='';
       const b = document.getElementById('filterBarrio'); if(b) b.value='';
+      updateCustDropLabel('filterMunicipio'); updateCustDropLabel('filterBarrio');
     }});
   }
   if (state.barrio) {
     tags.push({ label: state.barrio, clear: () => {
       state.barrio = '';
       const b = document.getElementById('filterBarrio'); if(b) b.value='';
+      updateCustDropLabel('filterBarrio');
     }});
   }
   if (state.search) {
@@ -630,6 +632,83 @@ function populateSelect(id, options, placeholder) {
     o.value = opt; o.textContent = opt;
     if (opt === current) o.selected = true;
     sel.appendChild(o);
+  });
+  // Sincronizar custom dropdown si existe
+  syncCustDrop(id);
+}
+
+// ── CUSTOM DROPDOWNS ──────────────────────────────────────────
+function syncCustDrop(selectId) {
+  const sel  = document.getElementById(selectId);
+  const drop = document.querySelector(`.cust-drop[data-for="${selectId}"]`);
+  if (!sel || !drop) return;
+  const panel = drop.querySelector('.cust-drop-panel');
+  const lbl   = drop.querySelector('.cust-drop-lbl');
+  const ph    = drop.dataset.placeholder || '';
+  if (!panel || !lbl) return;
+
+  // Reconstruir lista de opciones
+  panel.innerHTML = '';
+  Array.from(sel.options).forEach((opt, i) => {
+    const item = document.createElement('div');
+    item.className = 'cust-drop-item' + (i === 0 ? ' is-placeholder' : '');
+    item.dataset.val = opt.value;
+    item.textContent = opt.textContent;
+    if (opt.value && opt.value === sel.value) item.classList.add('is-sel');
+    item.addEventListener('click', () => {
+      sel.value = opt.value;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      updateCustDropLabel(selectId);
+      drop.classList.remove('is-open');
+    });
+    panel.appendChild(item);
+  });
+
+  updateCustDropLabel(selectId);
+}
+
+function updateCustDropLabel(selectId) {
+  const sel  = document.getElementById(selectId);
+  const drop = document.querySelector(`.cust-drop[data-for="${selectId}"]`);
+  if (!sel || !drop) return;
+  const lbl = drop.querySelector('.cust-drop-lbl');
+  const ph  = drop.dataset.placeholder || '';
+  if (!lbl) return;
+  const cur = sel.options[sel.selectedIndex];
+  lbl.textContent = (cur && cur.value) ? cur.textContent : ph;
+  // Actualizar clase is-sel en items
+  drop.querySelectorAll('.cust-drop-item').forEach(item => {
+    item.classList.toggle('is-sel', item.dataset.val === sel.value);
+  });
+}
+
+function initCustDrops() {
+  document.querySelectorAll('.cust-drop[data-for]').forEach(drop => {
+    const selId = drop.dataset.for;
+    const sel   = document.getElementById(selId);
+    const btn   = drop.querySelector('.cust-drop-btn');
+    if (!sel || !btn) return;
+
+    // Abrir / cerrar al hacer clic en el botón
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const isOpen = drop.classList.contains('is-open');
+      // Cerrar todos los otros drops
+      document.querySelectorAll('.cust-drop.is-open').forEach(d => d.classList.remove('is-open'));
+      if (!isOpen) {
+        syncCustDrop(selId); // actualizar antes de abrir
+        drop.classList.add('is-open');
+      }
+    });
+
+    // Cerrar al hacer clic fuera
+    document.addEventListener('click', () => drop.classList.remove('is-open'));
+
+    // Escuchar cambios programáticos en el native select (e.g. applyState)
+    sel.addEventListener('change', () => updateCustDropLabel(selId));
+
+    // Sync inicial
+    syncCustDrop(selId);
   });
 }
 
@@ -4795,6 +4874,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   sessionStorage.removeItem('adm_pwd_v2');
 
   readURLParams();
+  initCustDrops();   // custom dropdowns para mega-bar (municipio/barrio)
   setupFilters();
   syncUIFromState();
   refreshAdminUI(); // mostrar/ocultar botones admin según sesión

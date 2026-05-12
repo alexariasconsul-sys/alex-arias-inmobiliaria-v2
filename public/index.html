@@ -56,7 +56,7 @@
     @media(max-width:767px){.app-shell{padding-bottom:calc(50px + env(safe-area-inset-bottom,0px))}}
   </style>
 
-  <link rel="stylesheet" href="styles.min.css?v=8" />
+  <link rel="stylesheet" href="styles.min.css?v=9" />
 
   <!-- Leaflet CSS: Lazy load (media=print, onload para cambiar a all) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" media="print" onload="this.media='all'" />
@@ -261,7 +261,16 @@
             <!-- Municipio -->
             <div class="mega-seg loc-seg">
               <svg class="mega-loc-icon" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor"/></svg>
-              <select id="filterMunicipio" class="mega-select"><option value="">Municipio</option></select>
+              <!-- Native select (oculto, fuente de verdad para JS) -->
+              <select id="filterMunicipio" class="mega-select mega-select-hidden" tabindex="-1" aria-hidden="true"><option value="">Municipio</option></select>
+              <!-- Custom dropdown visual -->
+              <div class="cust-drop" id="cd_filterMunicipio" data-for="filterMunicipio" data-placeholder="Municipio">
+                <button class="cust-drop-btn" type="button" aria-haspopup="listbox">
+                  <span class="cust-drop-lbl">Municipio</span>
+                  <svg class="cust-drop-chev" viewBox="0 0 24 24" fill="none" width="9" height="9"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="cust-drop-panel" role="listbox"></div>
+              </div>
             </div>
 
             <div class="mega-sep"></div>
@@ -269,7 +278,16 @@
             <!-- Barrio -->
             <div class="mega-seg loc-seg">
               <svg class="mega-loc-icon" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" stroke-width="1.8"/></svg>
-              <select id="filterBarrio" class="mega-select"><option value="">Barrio</option></select>
+              <!-- Native select (oculto, fuente de verdad para JS) -->
+              <select id="filterBarrio" class="mega-select mega-select-hidden" tabindex="-1" aria-hidden="true"><option value="">Barrio</option></select>
+              <!-- Custom dropdown visual -->
+              <div class="cust-drop" id="cd_filterBarrio" data-for="filterBarrio" data-placeholder="Barrio">
+                <button class="cust-drop-btn" type="button" aria-haspopup="listbox">
+                  <span class="cust-drop-lbl">Barrio</span>
+                  <svg class="cust-drop-chev" viewBox="0 0 24 24" fill="none" width="9" height="9"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="cust-drop-panel" role="listbox"></div>
+              </div>
             </div>
 
             <div class="mega-sep"></div>
@@ -288,8 +306,11 @@
 
             <!-- Filtro avanzado -->
             <button class="filter-advanced-btn" id="openFilters" aria-label="Filtros avanzados">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="3" y1="7" x2="7" y2="7"/><line x1="13" y1="7" x2="21" y2="7"/>
+                <circle cx="10" cy="7" r="3"/>
+                <line x1="3" y1="17" x2="15" y2="17"/><line x1="21" y1="17" x2="21" y2="17"/>
+                <circle cx="18" cy="17" r="3"/>
               </svg>
               <span class="filter-badge" id="filterBadge" style="display:none">1</span>
             </button>
@@ -308,8 +329,11 @@
               <span class="mobile-trigger-hint" id="mobileSearchHint">Todo · Todos los municipios</span>
             </div>
             <div class="mobile-trigger-filter-btn">
-              <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
-                <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="14" height="14">
+                <line x1="3" y1="7" x2="7" y2="7"/><line x1="13" y1="7" x2="21" y2="7"/>
+                <circle cx="10" cy="7" r="3"/>
+                <line x1="3" y1="17" x2="15" y2="17"/><line x1="21" y1="17" x2="21" y2="17"/>
+                <circle cx="18" cy="17" r="3"/>
               </svg>
             </div>
           </button>
@@ -1632,6 +1656,6 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
 
   <!-- App.js: Minificado para producción -->
-  <script src="app.min.js?v=15"></script>
+  <script src="app.min.js?v=16"></script>
 </body>
 </html>

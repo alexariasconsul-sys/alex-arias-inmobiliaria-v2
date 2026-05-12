@@ -284,6 +284,103 @@ a { text-decoration: none; color: inherit; }
 .search-clear svg { width: 13px; height: 13px; }
 .search-clear:hover { color: #111; background: var(--line); }
 
+/* ── CUSTOM DROPDOWN (reemplaza native <select> en mega-bar) ─── */
+.mega-select-hidden {
+  position: absolute !important;
+  width: 1px !important; height: 1px !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.cust-drop { position: relative; }
+
+.cust-drop-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  padding: 2px 0;
+  white-space: nowrap;
+  transition: opacity .15s;
+}
+.cust-drop-btn:hover { opacity: .75; }
+
+.cust-drop-chev {
+  transition: transform .2s ease;
+  color: #777;
+  flex-shrink: 0;
+}
+.cust-drop.is-open .cust-drop-chev { transform: rotate(180deg); color: #fff; }
+
+/* Panel flotante */
+.cust-drop-panel {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  background: #0d0d0d;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 14px;
+  padding: 5px;
+  min-width: 170px;
+  max-height: 270px;
+  overflow-y: auto;
+  z-index: 500;
+  box-shadow: 0 12px 40px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
+}
+.cust-drop-panel::-webkit-scrollbar { width: 4px; }
+.cust-drop-panel::-webkit-scrollbar-track { background: transparent; }
+.cust-drop-panel::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+.cust-drop.is-open .cust-drop-panel {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Opciones del panel */
+.cust-drop-item {
+  padding: 8px 12px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #bbb;
+  cursor: pointer;
+  transition: background .13s, color .13s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cust-drop-item:hover { background: rgba(255,255,255,.07); color: #fff; }
+.cust-drop-item.is-placeholder { color: #555; font-weight: 400; font-style: italic; }
+.cust-drop-item.is-placeholder + .cust-drop-item {
+  margin-top: 3px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  padding-top: 10px;
+}
+.cust-drop-item.is-sel { color: #fff; font-weight: 600; }
+.cust-drop-item.is-sel::before {
+  content: '';
+  display: inline-block;
+  width: 6px; height: 6px;
+  background: #fff;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 /* Botón filtro avanzado */
 .filter-advanced-btn {
   position: relative;
