@@ -314,8 +314,40 @@
       <div class="adm-integ-content active" id="aitab-marketing">
         <div class="adm-row" style="align-items:flex-start">
 
-          <!-- Col izquierda: Pixel + Código personalizado -->
+          <!-- Col izquierda: GTM + Pixel + Código personalizado -->
           <div style="flex:1;display:flex;flex-direction:column;gap:20px;min-width:0">
+
+            <!-- Google Tag Manager -->
+            <div class="adm-card">
+              <div class="adm-service-header" style="margin-bottom:8px">
+                <div class="adm-service-logo" style="background:linear-gradient(135deg,#4285f4,#34a853);color:#fff;font-size:11px;font-weight:800;text-align:center;line-height:1.2">GTM</div>
+                <div>
+                  <strong style="color:#e5e7eb">Google Tag Manager</strong>
+                  <span class="adm-service-subdesc">Gestiona todos tus tags desde un solo lugar sin tocar código</span>
+                </div>
+                <div class="adm-pixel-status" id="admGtmStatus"></div>
+              </div>
+              <div class="adm-form-group">
+                <label>Container ID</label>
+                <div class="adm-integ-row">
+                  <input type="text" class="adm-input" id="admGtmId" placeholder="Ej: GTM-XXXXXXX" style="flex:1;font-family:monospace;text-transform:uppercase" maxlength="20" />
+                  <button class="adm-btn-outline" id="admVerifyGtm" title="Abrir GTM">Abrir GTM</button>
+                </div>
+                <p class="adm-integ-desc" style="margin-top:6px;font-size:11px">
+                  Encuéntralo en <a href="https://tagmanager.google.com" target="_blank" rel="noopener" class="adm-integ-link">tagmanager.google.com</a> → tu contenedor → arriba a la derecha (formato GTM-XXXXXXX)
+                </p>
+              </div>
+              <div class="adm-pixel-events">
+                <p style="font-size:12px;font-weight:600;color:#8b99b0;margin:0 0 8px">GTM carga automáticamente:</p>
+                <div class="adm-pixel-event-list">
+                  <span class="adm-pixel-event">Google Analytics 4</span>
+                  <span class="adm-pixel-event">Google Ads</span>
+                  <span class="adm-pixel-event">Hotjar / Clarity</span>
+                  <span class="adm-pixel-event">Cualquier tag personalizado</span>
+                </div>
+              </div>
+              <div class="adm-integ-status" id="admGtmSaveStatus"></div>
+            </div>
 
             <!-- Facebook Pixel -->
             <div class="adm-card">
@@ -1682,8 +1714,10 @@ async function loadIntegraciones() {
 function populateIntegSettings(s) {
   const g = id => document.getElementById(id);
   // Marketing
+  if (g('admGtmId'))            g('admGtmId').value              = s.gtmId || '';
   if (g('admFbPixelId'))        g('admFbPixelId').value          = s.facebookPixelId || '';
   if (g('admCustomCode'))       g('admCustomCode').value         = s.customHeadCode || '';
+  updateGtmStatusBadge(s.gtmId);
   updatePixelStatusBadge(s.facebookPixelId);
   // Feed URLs
   const base = window.location.origin;
@@ -1700,6 +1734,16 @@ function populateIntegSettings(s) {
   if (g('admChatEnabled'))      { g('admChatEnabled').checked    = !!s.chatEnabled; updateAdmChatLabel(); }
   if (g('admChatGreeting'))     g('admChatGreeting').value       = s.chatGreeting || '';
   if (g('admChatSystemPrompt')) g('admChatSystemPrompt').value   = s.chatSystemPrompt || '';
+}
+
+function updateGtmStatusBadge(gtmId) {
+  const el = document.getElementById('admGtmStatus');
+  if (!el) return;
+  if (gtmId && gtmId.trim()) {
+    el.innerHTML = '<span class="adm-pixel-active">● Activo</span>';
+  } else {
+    el.innerHTML = '<span class="adm-pixel-inactive">○ Sin configurar</span>';
+  }
 }
 
 function updatePixelStatusBadge(pixelId) {
@@ -1723,6 +1767,17 @@ function copyFeedUrl(type) {
   });
 }
 
+document.getElementById('admVerifyGtm')?.addEventListener('click', () => {
+  const id = document.getElementById('admGtmId')?.value.trim().toUpperCase();
+  if (!id) return setIntegStatus('admGtmSaveStatus', 'Ingresa un Container ID primero', false);
+  if (!/^GTM-[A-Z0-9]{4,10}$/.test(id)) return setIntegStatus('admGtmSaveStatus', 'El ID debe tener el formato GTM-XXXXXXX', false);
+  window.open('https://tagmanager.google.com/', '_blank');
+});
+
+document.getElementById('admGtmId')?.addEventListener('input', function() {
+  this.value = this.value.toUpperCase();
+});
+
 document.getElementById('admVerifyPixel')?.addEventListener('click', () => {
   const id = document.getElementById('admFbPixelId')?.value.trim();
   if (!id) return setIntegStatus('admPixelSaveStatus', 'Ingresa un Pixel ID primero', false);
@@ -1731,13 +1786,21 @@ document.getElementById('admVerifyPixel')?.addEventListener('click', () => {
 });
 
 document.getElementById('admBtnSaveMarketing')?.addEventListener('click', async () => {
+  const gtmId = document.getElementById('admGtmId')?.value.trim().toUpperCase();
   const pixelId = document.getElementById('admFbPixelId')?.value.trim();
   const customCode = document.getElementById('admCustomCode')?.value || '';
+  if (gtmId && !/^GTM-[A-Z0-9]{4,10}$/.test(gtmId)) {
+    return setIntegStatus('admGtmSaveStatus', '⚠️ El ID debe tener el formato GTM-XXXXXXX', false);
+  }
   if (pixelId && !/^\d{10,20}$/.test(pixelId)) {
     return setIntegStatus('admPixelSaveStatus', '⚠️ El Pixel ID debe ser solo números (10-20 dígitos)', false);
   }
-  const ok = await saveIntegSettings({ facebookPixelId: pixelId, customHeadCode: customCode }, 'admPixelSaveStatus');
-  if (ok) updatePixelStatusBadge(pixelId);
+  const ok = await saveIntegSettings({ gtmId, facebookPixelId: pixelId, customHeadCode: customCode }, 'admGtmSaveStatus');
+  if (ok) {
+    updateGtmStatusBadge(gtmId);
+    updatePixelStatusBadge(pixelId);
+    setIntegStatus('admPixelSaveStatus', '✓ Guardado', true);
+  }
 });
 
 function updateAdmChatLabel() {

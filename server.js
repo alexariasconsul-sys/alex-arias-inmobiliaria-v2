@@ -1726,7 +1726,7 @@ function readSettings() {
   catch {
     return {
       webhookUrl: '', webhookEvents: ['new_lead'],
-      facebookPixelId: '', customHeadCode: '',
+      facebookPixelId: '', gtmId: '', customHeadCode: '',
       anthropicApiKey: '', chatEnabled: false,
       chatGreeting: 'Hola 👋 ¿En qué puedo ayudarte? Soy el asistente de Alex Arias.',
       chatSystemPrompt: '',
@@ -1802,7 +1802,7 @@ app.put('/api/admin/settings', requireAdmin, (req, res) => {
   try {
     const current = readSettings();
     const updated = { ...current };
-    ['webhookUrl', 'webhookEvents', 'chatEnabled', 'chatGreeting', 'chatSystemPrompt', 'facebookPixelId', 'customHeadCode', 'googleClientId'].forEach(f => {
+    ['webhookUrl', 'webhookEvents', 'chatEnabled', 'chatGreeting', 'chatSystemPrompt', 'facebookPixelId', 'gtmId', 'customHeadCode', 'googleClientId'].forEach(f => {
       if (req.body[f] !== undefined) updated[f] = req.body[f];
     });
     if (req.body.anthropicApiKey && !req.body.anthropicApiKey.includes('•')) {
@@ -2124,11 +2124,42 @@ app.post('/api/admin/test-event', requireAdmin, async (req, res) => {
 // Este endpoint genera el JS dinámicamente según la config guardada
 app.get('/tracking.js', (req, res) => {
   const s = readSettings();
-  const pixelId = (s.facebookPixelId || '').trim();
-  const customCode = (s.customHeadCode || '').trim();
+  const pixelId    = (s.facebookPixelId || '').trim();
+  const gtmId      = (s.gtmId           || '').trim();
+  const customCode = (s.customHeadCode  || '').trim();
 
-  let js = '/* Alex Arias · Meta Pixel */\n';
+  let js = '/* Alex Arias · Tracking */\n';
 
+  // ── Google Tag Manager ─────────────────────────────────────────
+  if (gtmId) {
+    const gid = gtmId.replace(/'/g, "\\'").replace(/`/g, '\\`');
+    js += `
+// ── Google Tag Manager (${gid}) ───────────────────────────────
+(function(w,d,s,l,i){
+  w[l]=w[l]||[];
+  w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+  var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),
+      dl=l!='dataLayer'?'&l='+l:'';
+  j.async=true;
+  j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+  f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','${gid}');
+// GTM noscript fallback
+(function(){
+  var ns=document.createElement('noscript');
+  var fr=document.createElement('iframe');
+  fr.src='https://www.googletagmanager.com/ns.html?id=${gid}';
+  fr.height=0; fr.width=0;
+  fr.style.cssText='display:none;visibility:hidden';
+  ns.appendChild(fr);
+  var b=document.body||document.documentElement;
+  b.insertBefore(ns, b.firstChild);
+})();
+`;
+  }
+
+  // ── Facebook / Meta Pixel ──────────────────────────────────────
   if (pixelId) {
     const pid = pixelId.replace(/'/g, "\\'").replace(/`/g, '\\`');
     js += `
@@ -2140,7 +2171,6 @@ t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
 document,'script','https://connect.facebook.net/en_US/fbevents.js');
 fbq('init', '${pid}');
 fbq('track', 'PageView');
-// Noscript fallback (para bots / navegadores sin JS)
 (function(){
   var ns=document.createElement('noscript');
   var img=document.createElement('img');
@@ -2158,7 +2188,7 @@ fbq('track', 'PageView');
   }
 
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-store'); // siempre fresco para reflejar cambios
+  res.setHeader('Cache-Control', 'no-store');
   res.send(js);
 });
 
