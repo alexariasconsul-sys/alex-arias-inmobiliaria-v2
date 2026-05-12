@@ -1375,8 +1375,8 @@
   border: 1px solid #cbd5e1;
 }
 .post-table thead tr {
-  background: var(--brand, #E71433);
-  color: #fff;
+  background: #e2e8f0;
+  color: #0f172a;
 }
 .post-table th {
   padding: 13px 16px;
@@ -1386,7 +1386,7 @@
   letter-spacing: .02em;
   text-transform: uppercase;
   white-space: nowrap;
-  border-right: 1px solid rgba(255,255,255,.2);
+  border-right: 1px solid #cbd5e1;
 }
 .post-table th:last-child { border-right: none; }
 .post-table td {
