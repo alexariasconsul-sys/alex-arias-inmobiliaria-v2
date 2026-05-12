@@ -319,11 +319,22 @@ if (document.getElementById('postArticle')) {
 
   async function loadRelated(category, currentSlug) {
     try {
-      const params = new URLSearchParams({ limit: 4 });
+      // 1) Buscar en la misma categoría
+      const params = new URLSearchParams({ limit: 10 });
       if (category) params.set('category', category);
       const res  = await fetch(`/api/blog?${params}`);
       const { posts } = await res.json();
-      const related = posts.filter(p => p.slug !== currentSlug).slice(0, 3);
+      let related = posts.filter(p => p.slug !== currentSlug).slice(0, 3);
+
+      // 2) Si no hay suficientes, completar con cualquier otro post
+      if (related.length < 3) {
+        const res2  = await fetch('/api/blog?limit=10');
+        const { posts: all } = await res2.json();
+        const slugsYa = new Set([currentSlug, ...related.map(p => p.slug)]);
+        const extras  = all.filter(p => !slugsYa.has(p.slug));
+        related = [...related, ...extras].slice(0, 3);
+      }
+
       const list = document.getElementById('relatedList');
       if (!related.length) { list.innerHTML = '<p class="post-related-empty">No hay artículos relacionados aún.</p>'; return; }
       related.forEach(p => {
