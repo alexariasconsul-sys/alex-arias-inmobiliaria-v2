@@ -1352,6 +1352,19 @@
 }
 
 /* ─── TABLA DE COSTOS ────────────────────────────────────── */
+.post-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 1.5rem 0 2rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+.post-table-wrap .post-table {
+  margin: 0;
+  border-radius: 0;
+  border: none;
+}
 .post-table {
   width: 100%;
   border-collapse: collapse;
