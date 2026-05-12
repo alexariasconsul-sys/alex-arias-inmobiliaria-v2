@@ -158,6 +158,23 @@ async function getAggregateRating() {
   } catch { return null; }
 }
 
+// ── HELPER: obtener reseñas individuales para schema Review ─────
+async function getTopReviews(limit = 5) {
+  try {
+    const reviews = await getReviewsDB().findAsync({ rating: { $gte: 4 }, comment: { $exists: true } });
+    return reviews
+      .sort((a, b) => (b.rating - a.rating) || (new Date(b.createdAt) - new Date(a.createdAt)))
+      .slice(0, limit)
+      .map(r => ({
+        '@type': 'Review',
+        author: { '@type': 'Person', name: r.name || 'Cliente' },
+        reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: 5, worstRating: 1 },
+        reviewBody: (r.comment || '').slice(0, 300),
+        datePublished: r.createdAt ? new Date(r.createdAt).toISOString().split('T')[0] : undefined
+      }));
+  } catch { return []; }
+}
+
 // ── HELPER: servir index.html con SSR completo ─────────────────
 async function serveIndex(req, res, overrides = {}) {
   try {
@@ -176,6 +193,7 @@ async function serveIndex(req, res, overrides = {}) {
       ogType    = 'website',
       extraSchema = '',
       cityFilter  = null,
+      tipoFilter  = null,
       pixelId     = ''
     } = overrides;
 
@@ -191,11 +209,14 @@ async function serveIndex(req, res, overrides = {}) {
   <meta property="og:url"          content="${esc(ogUrl)}" />
   <meta property="og:locale"       content="es_CO" />${pixelId ? `\n  <meta property="fb:app_id" content="${esc(pixelId)}" />` : ''}
   <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:site"        content="@alexariasconsul" />
+  <meta name="twitter:creator"     content="@alexariasconsul" />
   <meta name="twitter:title"       content="${esc(ogTitle)}" />
   <meta name="twitter:description" content="${esc(ogDesc)}" />
   <meta name="twitter:image"       content="${esc(ogImage)}" />
   ${extraSchema}
-  ${cityFilter ? `<script>window._cityFilter=${JSON.stringify(cityFilter)};</script>` : ''}`;
+  ${cityFilter ? `<script>window._cityFilter=${JSON.stringify(cityFilter)};</script>` : ''}
+  ${tipoFilter ? `<script>window._tipoFilter=${JSON.stringify(tipoFilter)};</script>` : ''}`;
 
     html = html.replace(/id="pageTitle">([^<]*)<\/title>/,   `id="pageTitle">${esc(pageTitle)}</title>`);
     html = html.replace(/id="metaDesc" name="description" content="([^"]*)"/, `id="metaDesc" name="description" content="${esc(metaDesc)}"`);
@@ -280,6 +301,126 @@ CITY_PAGES.forEach(({ route, municipio, slug, desc }) => {
   });
 });
 
+// ── PÁGINAS DE TIPO: /arriendo y /venta ─────────────────────
+const TIPO_PAGES = [
+  {
+    route: '/arriendo',
+    tipo: 'arriendo',
+    label: 'Arriendo',
+    title: 'Apartamentos en Arriendo · Sabaneta, Envigado y Medellín | Alex Arias',
+    desc:  'Encuentra apartamentos en arriendo en Sabaneta, Envigado y Medellín. Asesoría inmobiliaria gratuita con Alexander Arias, consultor certificado del Área Metropolitana.'
+  },
+  {
+    route: '/venta',
+    tipo: 'venta',
+    label: 'Venta',
+    title: 'Apartamentos en Venta · Sabaneta, Envigado y Medellín | Alex Arias',
+    desc:  'Compra tu apartamento en Sabaneta, Envigado o Medellín. Asesoría personalizada sin costo para el comprador. Alex Arias, tu consultor inmobiliario de confianza.'
+  }
+];
+
+TIPO_PAGES.forEach(({ route, tipo, label, title, desc }) => {
+  app.get(route, async (req, res) => {
+    try {
+      const baseUrl = process.env.SITE_URL || 'https://alexariasc.com';
+      const db      = getDB();
+      const props   = await db.findAsync({ tipo: { $in: [tipo, 'combinado'] } });
+      const count   = props.length;
+      const rating  = await getAggregateRating();
+      const ogUrl   = `${baseUrl}${route}`;
+
+      const pageTitle = `${count} Apartamentos en ${label} · Sabaneta, Envigado y Medellín | Alex Arias`;
+      const metaDesc  = `${count} apartamentos en ${label.toLowerCase()} disponibles en Sabaneta, Envigado y Medellín. ${desc}`;
+
+      const breadcrumb = {
+        '@context':'https://schema.org','@type':'BreadcrumbList',
+        itemListElement: [
+          { '@type':'ListItem', position:1, name:'Inicio',    item: baseUrl },
+          { '@type':'ListItem', position:2, name: label,      item: ogUrl }
+        ]
+      };
+      const agentSchema = {
+        '@context':'https://schema.org','@type':'RealEstateAgent',
+        name:'Alexander Arias', url: baseUrl, telephone:'+573122588521',
+        ...(rating ? { aggregateRating:{ '@type':'AggregateRating', ratingValue: rating.ratingValue, reviewCount: rating.reviewCount, bestRating:5, worstRating:1 } } : {})
+      };
+      const extraSchema = [breadcrumb, agentSchema]
+        .map(s => `<script type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n  ');
+
+      const settings = readSettings();
+      await serveIndex(req, res, {
+        pageTitle, metaDesc, ogTitle: pageTitle, ogDesc: metaDesc, ogUrl,
+        extraSchema, tipoFilter: tipo,
+        pixelId: (settings.facebookPixelId || '').trim()
+      });
+    } catch (err) {
+      res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    }
+  });
+});
+
+// ── PÁGINAS TIPO+CIUDAD: /sabaneta/arriendo, /envigado/venta, etc.
+const TIPO_CIUDAD_PAGES = [];
+[
+  { municipio:'Sabaneta', slug:'sabaneta', lat:'6.151389', lon:'-75.616389' },
+  { municipio:'Envigado', slug:'envigado', lat:'6.175556', lon:'-75.591667' },
+  { municipio:'Medellín', slug:'medellin', lat:'6.230833', lon:'-75.590553' }
+].forEach(city => {
+  [
+    { tipo:'arriendo', label:'Arriendo' },
+    { tipo:'venta',    label:'Venta' }
+  ].forEach(({ tipo, label }) => {
+    TIPO_CIUDAD_PAGES.push({
+      route: `/${city.slug}/${tipo}`,
+      municipio: city.municipio, slug: city.slug,
+      tipo, label, lat: city.lat, lon: city.lon
+    });
+  });
+});
+
+TIPO_CIUDAD_PAGES.forEach(({ route, municipio, slug, tipo, label, lat, lon }) => {
+  app.get(route, async (req, res) => {
+    try {
+      const baseUrl = process.env.SITE_URL || 'https://alexariasc.com';
+      const db      = getDB();
+      const props   = await db.findAsync({ municipio, tipo: { $in: [tipo, 'combinado'] } });
+      const count   = props.length;
+      const rating  = await getAggregateRating();
+      const ogUrl   = `${baseUrl}${route}`;
+
+      const pageTitle = `Apartamentos en ${label} en ${municipio} · ${count} disponibles | Alex Arias`;
+      const metaDesc  = `${count} apartamentos en ${label.toLowerCase()} en ${municipio}, Antioquia. Asesoría inmobiliaria gratuita con Alexander Arias — encuentra tu hogar ideal en ${municipio} hoy.`;
+
+      const breadcrumb = {
+        '@context':'https://schema.org','@type':'BreadcrumbList',
+        itemListElement: [
+          { '@type':'ListItem', position:1, name:'Inicio',            item: baseUrl },
+          { '@type':'ListItem', position:2, name: municipio,          item: `${baseUrl}/${slug}` },
+          { '@type':'ListItem', position:3, name: `En ${label}`,      item: ogUrl }
+        ]
+      };
+      const agentSchema = {
+        '@context':'https://schema.org','@type':'RealEstateAgent',
+        name:'Alexander Arias', url: baseUrl, telephone:'+573122588521',
+        areaServed: { '@type':'City', name: municipio },
+        geo: { '@type':'GeoCoordinates', latitude: lat, longitude: lon },
+        ...(rating ? { aggregateRating:{ '@type':'AggregateRating', ratingValue: rating.ratingValue, reviewCount: rating.reviewCount, bestRating:5, worstRating:1 } } : {})
+      };
+      const extraSchema = [breadcrumb, agentSchema]
+        .map(s => `<script type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n  ');
+
+      const settings = readSettings();
+      await serveIndex(req, res, {
+        pageTitle, metaDesc, ogTitle: pageTitle, ogDesc: metaDesc, ogUrl,
+        extraSchema, cityFilter: municipio, tipoFilter: tipo,
+        pixelId: (settings.facebookPixelId || '').trim()
+      });
+    } catch (err) {
+      res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    }
+  });
+});
+
 // ── RUTA / CON OG TAGS DINÁMICOS + SEO COMPLETO ─────────────
 app.get('/', async (req, res) => {
   try {
@@ -290,7 +431,7 @@ app.get('/', async (req, res) => {
 
     const settings = readSettings();
     const pixelId  = (settings.facebookPixelId || '').trim();
-    const rating   = await getAggregateRating();
+    const [rating, topReviews] = await Promise.all([getAggregateRating(), getTopReviews(5)]);
     const indexPath = path.join(__dirname, 'public', 'index.html');
     let html = fs.readFileSync(indexPath, 'utf8');
 
@@ -306,14 +447,53 @@ app.get('/', async (req, res) => {
     // ── Schema WebSite + SearchAction ───────────────────────────
     const websiteSchema = { '@context':'https://schema.org','@type':'WebSite',name:'Alex Arias · Consultor Inmobiliario',url:baseUrl,potentialAction:{'@type':'SearchAction',target:`${baseUrl}/?q={search_term_string}`,'query-input':'required name=search_term_string'}};
 
-    // ── Schema RealEstateAgent con AggregateRating ───────────────
+    // ── Schema RealEstateAgent + AggregateRating + Reviews individuales
     const agentSchema = {
       '@context':'https://schema.org','@type':'RealEstateAgent',
+      '@id': `${baseUrl}/#agent`,
       name:'Alexander Arias',url:baseUrl,telephone:'+573122588521',
-      ...(rating ? { aggregateRating:{'@type':'AggregateRating',ratingValue:rating.ratingValue,reviewCount:rating.reviewCount,bestRating:5,worstRating:1} } : {})
+      image: `${baseUrl}/assets/logo/Logo.png`,
+      sameAs: [
+        'https://www.instagram.com/alexariasconsul',
+        'https://wa.me/573122588521'
+      ],
+      areaServed: ['Sabaneta','Envigado','Medellín'].map(n => ({ '@type':'City', name: n })),
+      ...(rating ? { aggregateRating:{'@type':'AggregateRating',ratingValue:rating.ratingValue,reviewCount:rating.reviewCount,bestRating:5,worstRating:1} } : {}),
+      ...(topReviews.length ? { review: topReviews } : {})
     };
 
-    extraSchemas = `<script type="application/ld+json">${JSON.stringify(websiteSchema)}</script>\n  <script type="application/ld+json">${JSON.stringify(agentSchema)}</script>`;
+    // ── Schema ItemList — listado de propiedades activas ─────────
+    const db = getDB();
+    const activeProps = await db.findAsync({ estado: { $ne: 'ocupado' } });
+    const itemListSchema = {
+      '@context':'https://schema.org','@type':'ItemList',
+      name:'Propiedades disponibles · Alex Arias Consultor Inmobiliario',
+      description:'Apartamentos en arriendo y venta en Sabaneta, Envigado y Medellín',
+      numberOfItems: activeProps.length,
+      itemListElement: activeProps.slice(0,12).map((p, i) => ({
+        '@type':'ListItem', position: i+1,
+        url: `${baseUrl}/?id=${p._id}`,
+        name: p.title || 'Propiedad'
+      }))
+    };
+
+    // ── Schema Service — servicios ofrecidos ─────────────────────
+    const serviceSchema = {
+      '@context':'https://schema.org','@type':'Service',
+      name:'Asesoría Inmobiliaria en Sabaneta, Envigado y Medellín',
+      description:'Servicio gratuito de asesoría para arrendar o comprar apartamentos en el Área Metropolitana de Medellín. Acompañamiento en visitas, negociación y trámites.',
+      provider: { '@type':'RealEstateAgent', '@id': `${baseUrl}/#agent` },
+      areaServed: ['Sabaneta','Envigado','Medellín'].map(n => ({ '@type':'City', name: n })),
+      serviceType: 'Consultoría Inmobiliaria',
+      offers: [
+        { '@type':'Offer', name:'Asesoría en Arriendo', price:'0', priceCurrency:'COP', description:'Sin costo para el arrendatario' },
+        { '@type':'Offer', name:'Asesoría en Compra',   price:'0', priceCurrency:'COP', description:'Sin costo para el comprador' }
+      ]
+    };
+
+    extraSchemas = [websiteSchema, agentSchema, itemListSchema, serviceSchema]
+      .map(s => `<script type="application/ld+json">${JSON.stringify(s,(k,v)=>v===undefined?undefined:v)}</script>`)
+      .join('\n  ');
 
     // ── ?reviews=open ────────────────────────────────────────────
     if (req.query.reviews === 'open') {
@@ -931,8 +1111,11 @@ app.get('/sitemap.xml', async (req, res) => {
       return today;
     };
 
+    const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n';
+    xml += '        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n';
 
     // Home
     xml += `  <url>\n    <loc>https://alexariasc.com/</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
@@ -940,9 +1123,33 @@ app.get('/sitemap.xml', async (req, res) => {
     // Blog listing
     xml += `  <url>\n    <loc>https://alexariasc.com/blog</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
 
-    // Propiedades — URL con ?id= (crawleable por Google, con SSR de OG tags)
+    // Páginas de ciudad
+    ['sabaneta','envigado','medellin'].forEach(slug => {
+      xml += `  <url>\n    <loc>https://alexariasc.com/${slug}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.85</priority>\n  </url>\n`;
+    });
+
+    // Páginas de tipo
+    ['arriendo','venta'].forEach(tipo => {
+      xml += `  <url>\n    <loc>https://alexariasc.com/${tipo}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.85</priority>\n  </url>\n`;
+    });
+
+    // Páginas tipo+ciudad
+    [['sabaneta','arriendo'],['sabaneta','venta'],['envigado','arriendo'],['envigado','venta'],['medellin','arriendo'],['medellin','venta']].forEach(([slug,tipo]) => {
+      xml += `  <url>\n    <loc>https://alexariasc.com/${slug}/${tipo}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.9</priority>\n  </url>\n`;
+    });
+
+    // Propiedades — con image sitemap
     docs.forEach(doc => {
-      xml += `  <url>\n    <loc>https://alexariasc.com/?id=${doc._id}</loc>\n    <lastmod>${getDate(doc)}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+      xml += `  <url>\n    <loc>https://alexariasc.com/?id=${doc._id}</loc>\n    <lastmod>${getDate(doc)}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n`;
+      if (Array.isArray(doc.images) && doc.images.length) {
+        const titleEsc = esc(`${doc.title||'Propiedad'}${doc.municipio ? ` en ${doc.municipio}` : ''}`);
+        const captEsc  = esc(`${doc.tipo === 'arriendo' ? 'En arriendo' : doc.tipo === 'venta' ? 'En venta' : 'Inmueble'} — ${doc.title||''} · Alex Arias`);
+        doc.images.slice(0,5).forEach(img => {
+          if (!img.filename) return;
+          xml += `    <image:image>\n      <image:loc>https://alexariasc.com/${img.filename}</image:loc>\n      <image:title>${titleEsc}</image:title>\n      <image:caption>${captEsc}</image:caption>\n    </image:image>\n`;
+        });
+      }
+      xml += `  </url>\n`;
     });
 
     // Artículos del blog publicados

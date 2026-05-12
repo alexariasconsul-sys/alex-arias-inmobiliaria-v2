@@ -10,6 +10,17 @@
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
   <link id="canonicalUrl" rel="canonical" href="https://alexariasc.com/" />
 
+  <!-- hreflang — targeting Colombia / español -->
+  <link rel="alternate" hreflang="es-CO" href="https://alexariasc.com/" />
+  <link rel="alternate" hreflang="es"    href="https://alexariasc.com/" />
+  <link rel="alternate" hreflang="x-default" href="https://alexariasc.com/" />
+
+  <!-- Geo meta tags — Local SEO -->
+  <meta name="geo.region"    content="CO-ANT" />
+  <meta name="geo.placename" content="Sabaneta, Antioquia, Colombia" />
+  <meta name="geo.position"  content="6.151389;-75.616389" />
+  <meta name="ICBM"          content="6.151389, -75.616389" />
+
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://alexariasc.com/" />
@@ -22,6 +33,8 @@
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:site" content="@alexariasconsul" />
+  <meta property="twitter:creator" content="@alexariasconsul" />
   <meta property="twitter:url" content="https://alexariasc.com/" />
   <meta property="twitter:title" content="Alex Arias · Consultor Inmobiliario" />
   <meta property="twitter:description" content="Portafolio inmobiliario de Alexander Arias - Apartamentos en Medellín." />
@@ -33,6 +46,8 @@
   <meta name="theme-color" content="#000000" />
 
   <link rel="icon" type="image/png" href="/assets/logo/favicon.png" />
+  <!-- Preload recursos críticos (LCP) -->
+  <link rel="preload" href="/assets/logo/Logo.png" as="image" />
   <!-- DNS Prefetch y Preconnect para terceros -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -1656,6 +1671,6 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
 
   <!-- App.js: Minificado para producción -->
-  <script src="app.min.js?v=18"></script>
+  <script src="app.min.js?v=19"></script>
 </body>
 </html>
