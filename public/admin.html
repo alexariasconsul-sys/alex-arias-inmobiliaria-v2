@@ -1003,6 +1003,23 @@ const ADMIN_KEY = 'adm_pwd_v2';
 let pwd = sessionStorage.getItem(ADMIN_KEY) || '';
 let confirmCallback = null;
 
+// Genera los headers de autenticación correctos según el método de login.
+// - Contraseña clásica → envía x-admin-password
+// - Google OAuth       → no envía header; la cookie de sesión lo resuelve
+function authHeaders(extra) {
+  const h = (pwd && pwd !== '__google__') ? { 'x-admin-password': pwd } : {};
+  return { ...h, ...(extra || {}) };
+}
+
+// Detecta sesión expirada en Google y redirige a re-autenticación
+function handle401() {
+  if (pwd === '__google__') {
+    alert('Tu sesión de Google expiró. Vuelve a iniciar sesión.');
+    sessionStorage.removeItem(ADMIN_KEY);
+    window.location.href = '/auth/google';
+  }
+}
+
 // Clock
 setInterval(() => {
   const el = document.getElementById('admTime');
@@ -1095,7 +1112,7 @@ document.getElementById('confirmOk').addEventListener('click', () => { document.
 // ── STATS ────────────────────────────────────────────────────
 async function loadStats() {
   try {
-    const r = await fetch('/api/stats', { headers: { 'x-admin-password': pwd } });
+    const r = await fetch('/api/stats', { headers: authHeaders() });
     const d = await r.json();
     document.getElementById('kpiProps').textContent  = d.totals.properties;
     document.getElementById('kpiPosts').textContent  = d.totals.publishedPosts;
@@ -1147,7 +1164,7 @@ function renderPropsTable(props) {
   }));
   tbody.querySelectorAll('.adm-tbl-btn--del').forEach(btn => btn.addEventListener('click', () => {
     showConfirm('¿Eliminar propiedad?', `"${btn.dataset.title}" será eliminada permanentemente.`, async () => {
-      await fetch(`/api/properties/${btn.dataset.id}`, { method:'DELETE', headers:{'x-admin-password':pwd} });
+      await fetch(`/api/properties/${btn.dataset.id}`, { method:'DELETE', headers:authHeaders() });
       loadProperties(); loadStats();
     });
   }));
@@ -1292,12 +1309,12 @@ document.getElementById('propPanelSave').addEventListener('click', async () => {
     const id = document.getElementById('propEditId').value;
     const url = id ? `/api/properties/${id}` : '/api/properties';
     const method = id ? 'PUT' : 'POST';
-    const r = await fetch(url, { method, headers: { 'x-admin-password': pwd }, body: fd });
+    const r = await fetch(url, { method, headers: authHeaders(), body: fd, credentials: 'include' });
     if (!r.ok) throw new Error((await r.json()).error);
     // Eliminar imágenes marcadas (usando el endpoint dedicado)
     if (id && propDeleteImages.length) {
       await Promise.all(propDeleteImages.map(imgId =>
-        fetch(`/api/properties/${id}/images/${imgId}`, { method: 'DELETE', headers: { 'x-admin-password': pwd } })
+        fetch(`/api/properties/${id}/images/${imgId}`, { method: 'DELETE', headers: authHeaders() })
       ));
     }
     closePropPanel(); loadProperties(); loadStats();
@@ -1429,7 +1446,7 @@ async function loadBlogPosts() {
   document.getElementById('blogTableLoading').style.display = 'flex';
   document.getElementById('blogTableEmpty').style.display = 'none';
   try {
-    const r = await fetch('/api/blog?status=all&limit=200', { headers: { 'x-admin-password': pwd } });
+    const r = await fetch('/api/blog?status=all&limit=200', { headers: authHeaders() });
     const { posts } = await r.json();
     allBlogPosts = posts;
     renderBlogTable(posts);
@@ -1458,7 +1475,7 @@ function renderBlogTable(posts) {
   }));
   tbody.querySelectorAll('.adm-tbl-btn--del').forEach(btn => btn.addEventListener('click', () => {
     showConfirm('¿Eliminar artículo?', `"${btn.dataset.title}" será eliminado permanentemente.`, async () => {
-      await fetch(`/api/blog/${btn.dataset.slug}`, { method:'DELETE', headers:{'x-admin-password':pwd} });
+      await fetch(`/api/blog/${btn.dataset.slug}`, { method:'DELETE', headers:authHeaders() });
       loadBlogPosts(); loadStats();
     });
   }));
@@ -1590,7 +1607,8 @@ async function saveBlogPost(statusOverride) {
     const slug = document.getElementById('blogEditSlug').value;
     const url = slug ? `/api/blog/${slug}` : '/api/blog';
     const method = slug ? 'PUT' : 'POST';
-    const r = await fetch(url, { method, headers: { 'x-admin-password': pwd }, body: fd });
+    const r = await fetch(url, { method, headers: authHeaders(), body: fd, credentials: 'include' });
+    if (r.status === 401) { handle401(); return; }
     if (!r.ok) throw new Error((await r.json()).error);
     closeBlogPanel(); loadBlogPosts(); loadStats();
   } catch (err) { alert('Error: ' + err.message); }
@@ -1650,7 +1668,7 @@ document.getElementById('admProfileForm').addEventListener('submit', async e => 
   const avatarFile = document.getElementById('apAvatar').files[0];
   if (avatarFile) fd.append('avatar', avatarFile);
   try {
-    const r = await fetch('/api/profile', { method:'PUT', headers:{'x-admin-password':pwd}, body:fd });
+    const r = await fetch('/api/profile', { method:'PUT', headers:authHeaders(), body:fd });
     if (r.ok) {
       const msg = document.getElementById('apSaveMsg');
       msg.style.display = 'inline';
@@ -1701,8 +1719,8 @@ document.querySelectorAll('.adm-integ-tab').forEach(tab => {
 async function loadIntegraciones() {
   try {
     const [sRes, kRes] = await Promise.all([
-      fetch('/api/admin/settings',  { headers: { 'x-admin-password': pwd } }),
-      fetch('/api/admin/api-keys',  { headers: { 'x-admin-password': pwd } })
+      fetch('/api/admin/settings',  { headers: authHeaders() }),
+      fetch('/api/admin/api-keys',  { headers: authHeaders() })
     ]);
     const s = await sRes.json();
     const keys = await kRes.json();
@@ -1816,7 +1834,7 @@ document.getElementById('saveGoogleClientId')?.addEventListener('click', async (
   try {
     await fetch('/api/admin/settings', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'x-admin-password': pwd },
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ googleClientId: val })
     });
     st.textContent = '✓ Guardado'; st.style.color = '#1e7e34';
@@ -1841,7 +1859,7 @@ function renderAdmApiKeys(keys) {
   list.querySelectorAll('.adm-key-del-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       if (!confirm('¿Eliminar esta API key?')) return;
-      await fetch('/api/admin/api-keys/' + btn.dataset.id, { method:'DELETE', headers:{'x-admin-password':pwd} });
+      await fetch('/api/admin/api-keys/' + btn.dataset.id, { method:'DELETE', headers:authHeaders() });
       loadIntegraciones();
     });
   });
@@ -1853,7 +1871,7 @@ document.getElementById('admBtnCreateKey')?.addEventListener('click', async () =
   try {
     const res = await fetch('/api/admin/api-keys', {
       method: 'POST',
-      headers: { 'Content-Type':'application/json', 'x-admin-password': pwd },
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ name })
     });
     const data = await res.json();
@@ -1883,7 +1901,7 @@ async function saveIntegSettings(body, statusId) {
   try {
     const res = await fetch('/api/admin/settings', {
       method: 'PUT',
-      headers: { 'Content-Type':'application/json', 'x-admin-password': pwd },
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(body)
     });
     if (!res.ok) throw new Error();
@@ -1901,7 +1919,7 @@ document.getElementById('admBtnSaveWebhook')?.addEventListener('click', async ()
 document.getElementById('admBtnTestWebhook')?.addEventListener('click', async () => {
   setIntegStatus('admWebhookStatus', 'Enviando prueba…', true);
   try {
-    const res = await fetch('/api/admin/webhook-test', { method:'POST', headers:{'x-admin-password':pwd} });
+    const res = await fetch('/api/admin/webhook-test', { method:'POST', headers:authHeaders() });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error');
     setIntegStatus('admWebhookStatus', '✓ Webhook de prueba enviado', true);
@@ -1982,8 +2000,9 @@ let statsCharts = {};
 async function apiFetch(url, options = {}) {
   const r = await fetch(url, {
     ...options,
-    headers: { 'x-admin-password': pwd, ...(options.headers || {}) }
+    headers: authHeaders(options.headers)
   });
+  if (r.status === 401) { handle401(); throw new Error('No autorizado'); }
   if (!r.ok) throw new Error(`Error ${r.status}`);
   return r.json();
 }
@@ -2461,7 +2480,7 @@ async function loadPixelEvents() {
   const total = document.getElementById('pixelEventsTotal');
   if (!tbody) return;
   try {
-    const r = await fetch('/api/admin/pixel-events?limit=50', { headers: { 'x-admin-password': pwd } });
+    const r = await fetch('/api/admin/pixel-events?limit=50', { headers: authHeaders() });
     const d = await r.json();
     if (!d.ok || !d.events?.length) {
       tbody.innerHTML = '<tr><td colspan="7" style="padding:20px;text-align:center;color:#64748b">Sin eventos registrados. Los eventos aparecerán aquí cuando alguien visite el sitio con Pixel configurado.</td></tr>';
@@ -2510,7 +2529,7 @@ document.getElementById('btnPixelHealth')?.addEventListener('click', loadPixelHe
 document.getElementById('btnRefreshEvents')?.addEventListener('click', loadPixelEvents);
 document.getElementById('btnClearEvents')?.addEventListener('click', () => {
   showConfirm('¿Limpiar todos los logs?', 'Se eliminarán todos los registros de eventos Pixel/CAPI.', async () => {
-    await fetch('/api/admin/pixel-events', { method: 'DELETE', headers: { 'x-admin-password': pwd } });
+    await fetch('/api/admin/pixel-events', { method: 'DELETE', headers: authHeaders() });
     loadPixelEvents();
   });
 });
@@ -2521,7 +2540,7 @@ document.getElementById('btnTestEvent')?.addEventListener('click', async () => {
   try {
     const r = await fetch('/api/admin/test-event', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-admin-password': pwd },
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ eventName: evt })
     });
     const d = await r.json();
