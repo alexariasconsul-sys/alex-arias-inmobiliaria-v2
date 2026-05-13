@@ -354,11 +354,4 @@ if (document.getElementById('postArticle')) {
     } catch (_) {}
   }
 
-  // ─── Botón flotante "← Blog" en mobile ───────────────────
-  const floatBack = document.getElementById('postFloatBack');
-  if (floatBack) {
-    window.addEventListener('scroll', () => {
-      floatBack.classList.toggle('is-visible', window.scrollY > 320);
-    }, { passive: true });
-  }
 }
