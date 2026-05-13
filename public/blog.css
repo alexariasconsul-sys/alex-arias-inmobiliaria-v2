@@ -1280,21 +1280,32 @@
 
 /* ─── RESPONSIVE: Blog Nav (Mobile) ──────────────────────── */
 @media (max-width: 640px) {
+  .blog-header-inner {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 10px clamp(16px, 3vw, 32px) 0;
+    gap: 0;
+  }
+  .blog-brand {
+    padding-bottom: 10px;
+  }
   .blog-nav {
-    flex-direction: row;
-    gap: 2px;
+    width: 100%;
+    justify-content: space-around;
+    border-top: 1px solid #f1f5f9;
+    padding: 2px 0 4px;
+    gap: 0;
   }
   .blog-nav-link {
-    font-size: 11.5px;
-    padding: 6px 8px;
+    font-size: 11px;
+    padding: 7px 6px;
+    border-radius: 8px;
+    flex: 1;
+    text-align: center;
+    justify-content: center;
   }
-}
-@media (max-width: 400px) {
-  /* En pantallas muy pequeñas, ocultar "Mapa" y "Calificaciones"
-     en el blog listing (donde Blog ya está activo y el usuario sabe dónde está) */
-  .blog-body:not(.post-body) .blog-nav-link:nth-child(2),
-  .blog-body:not(.post-body) .blog-nav-link:nth-child(3) {
-    display: none;
+  .blog-nav-link--back {
+    gap: 3px;
   }
 }
 
