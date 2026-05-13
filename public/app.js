@@ -230,6 +230,8 @@ function readURLParams() {
   if (p.get('id')) state.autoOpenId = p.get('id');
   // Auto-abrir panel de reseñas
   if (p.get('reviews') === 'open') state.autoOpenReviews = true;
+  // Auto-abrir vista mapa (viene desde el blog)
+  if (p.get('view') === 'map') state.autoOpenMap = true;
 }
 
 function syncUIFromState() {
@@ -4988,6 +4990,12 @@ function setupReviewsPanel() {
   if (state.autoOpenReviews) {
     state.autoOpenReviews = false;
     setTimeout(openPanel, 700);
+  }
+
+  // Auto-abrir mapa si viene de ?view=map
+  if (state.autoOpenMap) {
+    state.autoOpenMap = false;
+    setTimeout(() => switchView('map'), 400);
   }
 
   // ── Burbuja sutil "¿Nos calificas?" ──────────────────────────

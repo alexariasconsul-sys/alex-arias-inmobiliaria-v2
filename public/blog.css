@@ -1282,11 +1282,19 @@
 @media (max-width: 640px) {
   .blog-nav {
     flex-direction: row;
-    gap: 4px;
+    gap: 2px;
   }
   .blog-nav-link {
-    font-size: 12px;
-    padding: 6px 10px;
+    font-size: 11.5px;
+    padding: 6px 8px;
+  }
+}
+@media (max-width: 400px) {
+  /* En pantallas muy pequeñas, ocultar "Mapa" y "Calificaciones"
+     en el blog listing (donde Blog ya está activo y el usuario sabe dónde está) */
+  .blog-body:not(.post-body) .blog-nav-link:nth-child(2),
+  .blog-body:not(.post-body) .blog-nav-link:nth-child(3) {
+    display: none;
   }
 }
 
