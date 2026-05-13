@@ -88,6 +88,65 @@
 .blog-nav-admin { border: 1.5px solid #e5e7eb; }
 .blog-nav-admin:hover { border-color: var(--brand); }
 
+/* ── Botón ← Blog (solo en post.html) */
+.blog-nav-link--back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1.5px solid #e5e7eb;
+  color: #374151 !important;
+}
+.blog-nav-link--back:hover {
+  border-color: var(--brand);
+  color: var(--brand) !important;
+  background: var(--brand-light, #fff5f6) !important;
+}
+
+/* ── Botón Contacto (verde WhatsApp) */
+.blog-nav-cta {
+  background: #25d366;
+  color: #fff !important;
+  font-weight: 600;
+}
+.blog-nav-cta:hover {
+  background: #1ebe5d !important;
+  color: #fff !important;
+}
+
+/* ── Botón flotante mobile (post.html) */
+.post-float-back {
+  display: none;              /* solo visible en mobile */
+  position: fixed;
+  bottom: 22px;
+  left: 16px;
+  z-index: 300;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  border-radius: 50px;
+  padding: 10px 18px 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  align-items: center;
+  gap: 7px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.28);
+  /* empieza oculto abajo */
+  opacity: 0;
+  transform: translateY(60px);
+  transition: opacity .3s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
+  pointer-events: none;
+}
+.post-float-back.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+@media (max-width: 768px) {
+  .post-float-back { display: flex; }
+}
+
 /* ─── HERO ───────────────────────────────────────────────── */
 .blog-hero {
   background: #ffffff;
@@ -1463,6 +1522,81 @@
   line-height: 1.7;
 }
 .post-faq-a p { margin: 0; }
+
+/* ─── CALLOUT BOXES (tip / warn) ────────────────────────── */
+.post-callout {
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 1.5rem 0;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  border-left: 4px solid;
+}
+.post-callout--tip {
+  background: #f0fdf4;
+  border-color: #22c55e;
+  color: #166534;
+}
+.post-callout--warn {
+  background: #fffbeb;
+  border-color: #f59e0b;
+  color: #78350f;
+}
+.post-callout strong { font-weight: 700; }
+
+/* ─── CONCLUSION PARAGRAPH ───────────────────────────────── */
+.post-conclusion {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 18px 22px;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: #334155;
+  margin: 2rem 0 1rem;
+}
+
+/* ─── FAQ: <details class="post-faq"> (nativo) ───────────── */
+details.post-faq {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 10px 0;
+  transition: box-shadow .2s;
+}
+details.post-faq[open] {
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
+  border-color: var(--brand, #E71433);
+}
+details.post-faq > summary {
+  cursor: pointer;
+  padding: 15px 20px;
+  font-size: 0.95rem;
+  color: #1e293b;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+}
+details.post-faq > summary::-webkit-details-marker { display: none; }
+details.post-faq > summary::after {
+  content: '＋';
+  font-size: 1.15rem;
+  color: var(--brand, #E71433);
+  flex-shrink: 0;
+  margin-left: 12px;
+  transition: content .2s;
+}
+details.post-faq[open] > summary::after { content: '－'; }
+details.post-faq > p {
+  padding: 0 20px 16px;
+  font-size: 0.875rem;
+  color: #475569;
+  line-height: 1.7;
+  margin: 0;
+}
 
 /* ─── CTA BOX FINAL ──────────────────────────────────────── */
 .post-cta-box {
