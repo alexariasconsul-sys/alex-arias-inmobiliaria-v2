@@ -3346,7 +3346,14 @@ function updateMapMarkers() {
 
   // Crear nuevo cluster group
   state.markerClusterGroup = L.markerClusterGroup({
-    maxClusterRadius: 50,
+    // Radio dinámico: se reduce al acercarse y desaparece en zoom 17+
+    maxClusterRadius: (zoom) => {
+      if (zoom >= 17) return 1;   // zoom muy cercano: sin agrupación efectiva
+      if (zoom >= 16) return 20;  // nivel calle: radio pequeño
+      if (zoom >= 14) return 35;  // nivel barrio: radio moderado
+      return 50;                  // alejado: comportamiento normal
+    },
+    disableClusteringAtZoom: 17, // zoom 17+ → marcadores individuales siempre
     showCoverageOnHover: false,   // no mostrar el polígono azul al hover
     iconCreateFunction: (cluster) => {
       const count = cluster.getChildCount();
