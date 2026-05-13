@@ -3346,14 +3346,13 @@ function updateMapMarkers() {
 
   // Crear nuevo cluster group
   state.markerClusterGroup = L.markerClusterGroup({
-    // Radio dinámico: se reduce al acercarse y desaparece en zoom 17+
     maxClusterRadius: (zoom) => {
-      if (zoom >= 17) return 1;   // zoom muy cercano: sin agrupación efectiva
-      if (zoom >= 16) return 20;  // nivel calle: radio pequeño
-      if (zoom >= 14) return 35;  // nivel barrio: radio moderado
+      if (zoom >= 15) return 1;   // nivel calle: sin agrupación efectiva
+      if (zoom >= 13) return 25;  // nivel barrio: radio pequeño
       return 50;                  // alejado: comportamiento normal
     },
-    disableClusteringAtZoom: 17, // zoom 17+ → marcadores individuales siempre
+    disableClusteringAtZoom: 15, // zoom nivel calle → marcadores individuales
+    spiderfyOnMaxZoom: true,     // si hay superposición exacta, abre en abanico
     showCoverageOnHover: false,   // no mostrar el polígono azul al hover
     iconCreateFunction: (cluster) => {
       const count = cluster.getChildCount();
@@ -3366,6 +3365,14 @@ function updateMapMarkers() {
         className: 'cluster-icon',
         iconSize: [40, 40]
       });
+    }
+  });
+
+  // Clusters pequeños (≤5): abrir en abanico directo sin hacer zoom
+  state.markerClusterGroup.on('clusterclick', (e) => {
+    if (e.layer.getChildCount() <= 5) {
+      e.layer.spiderfy();
+      L.DomEvent.stopPropagation(e);
     }
   });
 
