@@ -3347,12 +3347,13 @@ function updateMapMarkers() {
   // Crear nuevo cluster group
   state.markerClusterGroup = L.markerClusterGroup({
     maxClusterRadius: (zoom) => {
-      if (zoom >= 15) return 1;   // nivel calle: sin agrupación efectiva
-      if (zoom >= 13) return 25;  // nivel barrio: radio pequeño
-      return 50;                  // alejado: comportamiento normal
+      if (zoom >= 16) return 5;   // nivel calle: solo agrupa coordenadas idénticas (mismo edificio)
+      if (zoom >= 14) return 25;  // nivel barrio: radio pequeño
+      if (zoom >= 12) return 40;  // nivel zona: radio moderado
+      return 60;                  // ciudad: radio normal
     },
-    disableClusteringAtZoom: 15, // zoom nivel calle → marcadores individuales
-    spiderfyOnMaxZoom: true,     // si hay superposición exacta, abre en abanico
+    disableClusteringAtZoom: 19, // nunca se alcanza en práctica — spiderfy maneja mismo edificio
+    spiderfyOnMaxZoom: true,     // abre en abanico cuando no puede separar más
     showCoverageOnHover: false,   // no mostrar el polígono azul al hover
     iconCreateFunction: (cluster) => {
       const count = cluster.getChildCount();
