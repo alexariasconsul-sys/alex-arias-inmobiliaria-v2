@@ -2070,12 +2070,22 @@ function buildSearchChips(f) {
   }
   if (f.municipio) chips.push(`<span class="srch-chip srch-chip--place">📍 ${escHtml(f.municipio)}</span>`);
   if (f.barrio)    chips.push(`<span class="srch-chip srch-chip--place">🏘️ ${escHtml(f.barrio)}</span>`);
-  if (f.sector)    chips.push(`<span class="srch-chip srch-chip--place">📌 ${escHtml(f.sector)}</span>`);
   if (f.search)    chips.push(`<span class="srch-chip srch-chip--text">🔍 &ldquo;${escHtml(f.search)}&rdquo;</span>`);
-  if (f.precioMin) chips.push(`<span class="srch-chip srch-chip--price">Desde $${Number(f.precioMin).toLocaleString('es-CO')}</span>`);
-  if (f.precioMax) chips.push(`<span class="srch-chip srch-chip--price">Hasta $${Number(f.precioMax).toLocaleString('es-CO')}</span>`);
-  if (f.habitaciones) chips.push(`<span class="srch-chip srch-chip--feat">🛏️ ${f.habitaciones} hab.</span>`);
-  if (f.banos)     chips.push(`<span class="srch-chip srch-chip--feat">🚿 ${f.banos} baños</span>`);
+  // Precio (acepta nombres nuevos minPrecio/maxPrecio y legado precioMin/precioMax)
+  const pMin = f.minPrecio || f.precioMin;
+  const pMax = f.maxPrecio || f.precioMax;
+  if (pMin) chips.push(`<span class="srch-chip srch-chip--price">Desde $${Number(pMin).toLocaleString('es-CO')}</span>`);
+  if (pMax) chips.push(`<span class="srch-chip srch-chip--price">Hasta $${Number(pMax).toLocaleString('es-CO')}</span>`);
+  // Habitaciones y baños (acepta nombres nuevos minHab/minBanos y legado habitaciones/banos)
+  const hab = f.minHab || f.habitaciones;
+  const ban = f.minBanos || f.banos;
+  if (hab) chips.push(`<span class="srch-chip srch-chip--feat">🛏️ +${hab} hab.</span>`);
+  if (ban) chips.push(`<span class="srch-chip srch-chip--feat">🚿 +${ban} baños</span>`);
+  // Parqueadero y amenidades adicionales
+  if (f.parqueadero) chips.push(`<span class="srch-chip srch-chip--feat">🚗 Parqueadero</span>`);
+  if (f.amenidades?.length) chips.push(`<span class="srch-chip srch-chip--feat">✨ ${f.amenidades.slice(0,2).join(', ')}${f.amenidades.length > 2 ? ` +${f.amenidades.length - 2}` : ''}</span>`);
+  // Estado
+  if (f.estado && f.estado !== '') chips.push(`<span class="srch-chip srch-chip--neutral">${f.estado === 'libre' ? '🟢 Disponible' : '🔴 Ocupado'}</span>`);
   if (!chips.length) chips.push('<span class="srch-chip srch-chip--neutral">Exploración general</span>');
   return chips.join('');
 }

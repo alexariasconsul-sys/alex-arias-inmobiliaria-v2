@@ -1553,6 +1553,8 @@ async function logSearch(resultsCount) {
           maxPrecio: state.maxPrecio,
           minHab: state.minHab,
           minBanos: state.minBanos,
+          parqueadero: state.filterParqueadero || false,
+          amenidades: state.filterAmenidades?.length ? [...state.filterAmenidades] : undefined,
           estado: state.filterEstado,
           orderBy: state.orderBy
         },
