@@ -2219,7 +2219,11 @@ fbq('track', 'PageView');
 // Genera una entrada por propiedad; para "combinado" genera DOS entradas
 // (una for_rent con precio arriendo + una for_sale con precio venta)
 // para que aparezca en ambos tipos de catálogo de Meta.
-app.get('/api/feed/facebook', async (req, res) => {
+app.get('/api/feed/facebook', (req, res) => {
+  res.redirect(301, '/api/feed/facebook.csv');
+});
+
+app.get('/api/feed/facebook.json', async (req, res) => {
   try {
     const db      = getDB();
     const profile = readProfile();
