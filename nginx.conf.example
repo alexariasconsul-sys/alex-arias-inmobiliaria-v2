@@ -1,38 +1,52 @@
-# /etc/nginx/sites-available/alex-arias
-# Reemplaza TU_DOMINIO.COM con tu dominio
-# Comando para crear: sudo nano /etc/nginx/sites-available/alex-arias
-# Luego: sudo ln -s /etc/nginx/sites-available/alex-arias /etc/nginx/sites-enabled/
-# Verifica: sudo nginx -t
-# Reinicia: sudo systemctl restart nginx
+# /etc/nginx/sites-available/alexariasc.com
+# Para aplicar:
+#   cp /var/www/alex-arias-inmobiliaria/nginx.conf.example /etc/nginx/sites-available/alexariasc.com
+#   nginx -t && systemctl reload nginx
 
+# ── 1. HTTP → siempre redirige a https://alexariasc.com (sin www)
 server {
     listen 80;
-    server_name TU_DOMINIO.COM www.TU_DOMINIO.COM;
+    server_name alexariasc.com www.alexariasc.com;
+    return 301 https://alexariasc.com$request_uri;
+}
 
-    # Límite de tamaño de subida (fotos)
+# ── 2. HTTPS www → redirige a https://alexariasc.com (sin www)
+server {
+    listen 443 ssl;
+    server_name www.alexariasc.com;
+
+    ssl_certificate     /etc/letsencrypt/live/alexariasc.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/alexariasc.com/privkey.pem;
+    include             /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
+
+    return 301 https://alexariasc.com$request_uri;
+}
+
+# ── 3. HTTPS alexariasc.com → servidor principal
+server {
+    listen 443 ssl;
+    server_name alexariasc.com;
+
     client_max_body_size 100M;
 
     location / {
-        # Proxy hacia Node.js en puerto 3000
         proxy_pass http://localhost:3000;
-        
-        # Headers para WebSocket (Socket.io)
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Upgrade    $http_upgrade;
         proxy_set_header Connection "upgrade";
-        
-        # Headers de identificación
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        
-        # Timeouts
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
-    }
-}
+        proxy_set_header Host               $host;
+        proxy_set_header X-Real-IP          $remote_addr;
+        proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto  $scheme;
 
-# HTTPS se configura automáticamente con Let's Encrypt:
-# sudo certbot --nginx -d TU_DOMINIO.COM -d www.TU_DOMINIO.COM
+        proxy_connect_timeout 60s;
+        proxy_send_timeout    60s;
+        proxy_read_timeout    60s;
+    }
+
+    ssl_certificate     /etc/letsencrypt/live/alexariasc.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/alexariasc.com/privkey.pem;
+    include             /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
+}
