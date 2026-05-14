@@ -2385,6 +2385,86 @@ ${itemParts.join('\n')}
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ─── FEED CSV — formato oficial Meta Business para Home Listings ──
+// URL para Facebook: https://alexariasc.com/api/feed/facebook.csv
+app.get('/api/feed/facebook.csv', async (req, res) => {
+  try {
+    const db      = getDB();
+    const profile = readProfile();
+    const docs    = await db.findAsync({});
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+    // Envuelve en comillas dobles y escapa comillas internas
+    const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+
+    // Columnas exactas según documentación oficial de Meta Home Listings
+    const HEADERS = [
+      'home_listing_id', 'name', 'availability', 'description',
+      'image_link', 'additional_image_link',
+      'listing_type', 'price', 'currency', 'url',
+      'address', 'city', 'region', 'country', 'postal_code',
+      'latitude', 'longitude',
+      'num_baths', 'num_rooms', 'area_size', 'area_size_unit',
+      'property_type'
+    ];
+
+    const rows = [HEADERS.join(',')];
+
+    for (const p of docs) {
+      const variants = p.tipo === 'combinado' ? ['rent', 'sale'] : [p.tipo === 'venta' ? 'sale' : 'rent'];
+
+      for (const variant of variants) {
+        const isComb   = p.tipo === 'combinado';
+        const useRent  = variant === 'rent';
+        const rawPrice = useRent
+          ? (p.precioArriendo || p.precio || 0)
+          : (p.precioVenta    || p.precio || 0);
+
+        const listingId   = isComb ? `${p._id}_${useRent ? 'arr' : 'vta'}` : p._id;
+        const availability = p.estado === 'ocupado' ? 'off_market' : (useRent ? 'for_rent' : 'for_sale');
+        const listingType  = useRent ? 'for_rent_by_agent' : 'for_sale_by_agent';
+
+        const imgs     = (p.images || []).filter(i => i.filename)
+                           .map(i => `${baseUrl}/${encodeURI(i.filename)}`);
+        const mainImg  = imgs[0] || '';
+        const extraImg = imgs.slice(1, 4).join('|'); // Meta acepta hasta 3 adicionales separadas por |
+
+        const desc = (p.descripcion || `${useRent ? 'En arriendo' : 'En venta'}, ${p.habitaciones || ''} habitaciones, ${p.area || ''}m² en ${p.municipio || 'Antioquia'}`).slice(0, 500);
+
+        const address = [p.direccion, p.barrio].filter(Boolean).join(', ') || p.municipio || 'Sabaneta';
+
+        rows.push([
+          q(listingId),
+          q(p.title || 'Inmueble'),
+          q(availability),
+          q(desc),
+          q(mainImg),
+          q(extraImg),
+          q(listingType),
+          Math.round(rawPrice || 0),
+          'COP',
+          q(`${baseUrl}/?prop=${p._id}`),
+          q(address),
+          q(p.municipio || 'Sabaneta'),
+          q('Antioquia'),
+          'CO',
+          '',                         // postal_code — vacío es válido
+          p.lat  || '',
+          p.lng  || '',
+          p.banos        || '',
+          p.habitaciones || '',
+          p.area         || '',
+          p.area ? 'square_meters' : '',
+          'apartment'                 // property_type
+        ].join(','));
+      }
+    }
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.send(rows.join('\r\n'));
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // ─── VERIFICADOR TOKEN GOOGLE ─────────────────────────────────
 function verifyGoogleToken(idToken) {
   const https = require('https');
