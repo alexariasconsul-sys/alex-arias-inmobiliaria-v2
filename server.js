@@ -1025,6 +1025,7 @@ app.get('/api/stats/conversion', requireAdmin, async (req, res) => {
 });
 
 // ─── RUTAS DE PÁGINAS ────────────────────────────────────────
+app.get('/privacidad', (req, res) => res.sendFile(path.join(__dirname, 'public', 'privacidad.html')));
 app.get('/blog', (req, res) => res.sendFile(path.join(__dirname, 'public', 'blog.html')));
 app.get('/blog/:slug', (req, res) => res.redirect(`/post.html?slug=${req.params.slug}`));
 app.get('/admin-blog', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin-blog.html')));
