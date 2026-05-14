@@ -2398,10 +2398,12 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
     const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
 
     // Columnas exactas según documentación oficial de Meta Home Listings
+    // price = "XXXXXX COP" (número + moneda en mismo campo)
+    // image = URL directa (campo obligatorio con ese nombre exacto)
     const HEADERS = [
       'home_listing_id', 'name', 'availability', 'description',
-      'image[0][url]', 'image[1][url]', 'image[2][url]', 'image[3][url]', 'image[4][url]',
-      'listing_type', 'price', 'currency', 'url',
+      'image', 'additional_image_link',
+      'listing_type', 'price', 'url',
       'address', 'city', 'region', 'country', 'postal_code',
       'latitude', 'longitude',
       'num_baths', 'num_rooms', 'area_size', 'area_size_unit',
@@ -2426,27 +2428,28 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
 
         const imgs = (p.images || []).filter(i => i.filename)
                        .map(i => `${baseUrl}/${encodeURI(i.filename)}`);
-        // Pad a 5 slots para que siempre haya 5 columnas image[n][url]
-        const imgCols = Array.from({ length: 5 }, (_, i) => q(imgs[i] || ''));
+        const mainImg  = imgs[0] || '';
+        const extraImg = imgs.slice(1, 4).join(','); // hasta 3 adicionales separadas por coma
 
-        const desc = (p.descripcion || `${useRent ? 'En arriendo' : 'En venta'}, ${p.habitaciones || ''} habitaciones, ${p.area || ''}m² en ${p.municipio || 'Antioquia'}`).slice(0, 500);
+        const desc    = (p.descripcion || `${useRent ? 'En arriendo' : 'En venta'}, ${p.habitaciones || ''} habitaciones, ${p.area || ''}m² en ${p.municipio || 'Antioquia'}`).slice(0, 500);
         const address = [p.direccion, p.barrio].filter(Boolean).join(', ') || p.municipio || 'Sabaneta';
+        const price   = `${Math.round(rawPrice || 0)} COP`; // formato obligatorio de Meta
 
         rows.push([
           q(listingId),
           q(p.title || 'Inmueble'),
           q(availability),
           q(desc),
-          ...imgCols,                 // image[0][url] … image[4][url]
+          q(mainImg),                 // campo "image" (obligatorio)
+          q(extraImg),                // additional_image_link (opcional)
           q(listingType),
-          Math.round(rawPrice || 0),
-          'COP',
+          q(price),                   // "3500000 COP"
           q(`${baseUrl}/?prop=${p._id}`),
           q(address),
           q(p.municipio || 'Sabaneta'),
           q('Antioquia'),
           'CO',
-          '',                         // postal_code
+          '',
           p.lat  || '',
           p.lng  || '',
           p.banos        || '',
