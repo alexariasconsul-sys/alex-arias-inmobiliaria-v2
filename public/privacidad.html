@@ -27,52 +27,89 @@
       display: flex;
       align-items: center;
       gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-
-    .priv-header img {
-      height: 36px;
-    }
-
-    .priv-header-title {
-      color: #fff;
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    .priv-header a {
-      margin-left: auto;
-      color: #94a3b8;
-      text-decoration: none;
-      font-size: 13px;
-    }
-
+    .priv-header img { height: 36px; }
+    .priv-header-title { color: #fff; font-size: 16px; font-weight: 600; }
+    .priv-header a { margin-left: auto; color: #94a3b8; text-decoration: none; font-size: 13px; }
     .priv-header a:hover { color: #fff; }
 
     /* ── Hero ── */
     .priv-hero {
       background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-      padding: 60px 24px 50px;
+      padding: 50px 24px 40px;
       text-align: center;
       color: #fff;
     }
+    .priv-hero h1 { font-size: clamp(20px, 4vw, 30px); font-weight: 700; margin-bottom: 8px; }
+    .priv-hero p { color: #94a3b8; font-size: 13px; }
 
-    .priv-hero h1 {
-      font-size: clamp(22px, 4vw, 32px);
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    .priv-hero p {
-      color: #94a3b8;
-      font-size: 14px;
-    }
-
-    /* ── Content ── */
-    .priv-content {
-      max-width: 760px;
+    /* ── Layout con sidebar ── */
+    .priv-layout {
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 48px 24px 80px;
+      padding: 40px 24px 80px;
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 32px;
+      align-items: start;
     }
+
+    /* ── Sidebar sticky ── */
+    .priv-sidebar {
+      position: sticky;
+      top: 72px;
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+      overflow: hidden;
+    }
+
+    .priv-sidebar-title {
+      padding: 14px 16px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #94a3b8;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .priv-nav { padding: 8px 0; }
+
+    .priv-nav a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      font-size: 12.5px;
+      color: #64748b;
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: all .15s;
+      line-height: 1.4;
+    }
+
+    .priv-nav a:hover {
+      color: #1d4ed8;
+      background: #eff6ff;
+      border-left-color: #bfdbfe;
+    }
+
+    .priv-nav a.active {
+      color: #1d4ed8;
+      background: #eff6ff;
+      border-left-color: #3b82f6;
+      font-weight: 600;
+    }
+
+    .priv-nav-icon { font-size: 14px; flex-shrink: 0; }
+
+    /* ── Contenido ── */
+    .priv-content { min-width: 0; }
 
     .priv-section {
       background: #fff;
@@ -81,6 +118,7 @@
       margin-bottom: 20px;
       border: 1px solid #e2e8f0;
       box-shadow: 0 1px 3px rgba(0,0,0,.05);
+      scroll-margin-top: 80px;
     }
 
     .priv-section h2 {
@@ -93,9 +131,7 @@
       gap: 8px;
     }
 
-    .priv-section h2 .icon {
-      font-size: 20px;
-    }
+    .priv-section h2 .icon { font-size: 20px; }
 
     .priv-section p {
       font-size: 14px;
@@ -145,17 +181,8 @@
       margin: 14px 0;
     }
 
-    .priv-pixel-box code {
-      color: #7dd3fc;
-      font-family: monospace;
-      font-size: 13px;
-    }
-
-    .priv-pixel-box p {
-      color: #94a3b8 !important;
-      font-size: 12px !important;
-      margin-top: 4px;
-    }
+    .priv-pixel-box code { color: #7dd3fc; font-family: monospace; font-size: 13px; }
+    .priv-pixel-box p { color: #94a3b8 !important; font-size: 12px !important; margin-top: 4px; }
 
     .priv-highlight {
       background: #fefce8;
@@ -165,11 +192,7 @@
       margin: 12px 0;
     }
 
-    .priv-highlight p {
-      color: #713f12 !important;
-      font-size: 13px !important;
-      margin: 0 !important;
-    }
+    .priv-highlight p { color: #713f12 !important; font-size: 13px !important; margin: 0 !important; }
 
     .priv-contact {
       background: linear-gradient(135deg, #eff6ff, #f0fdf4);
@@ -179,12 +202,18 @@
       margin-top: 8px;
     }
 
-    .priv-contact a {
-      color: #1d4ed8;
-      text-decoration: none;
-    }
-
+    .priv-contact a { color: #1d4ed8; text-decoration: none; }
     .priv-contact a:hover { text-decoration: underline; }
+
+    .priv-section h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #0f172a;
+      margin: 20px 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
     /* ── Footer ── */
     .priv-footer {
@@ -195,14 +224,37 @@
       font-size: 12px;
     }
 
-    .priv-footer a {
-      color: #60a5fa;
-      text-decoration: none;
-    }
+    .priv-footer a { color: #60a5fa; text-decoration: none; }
 
-    @media (max-width: 600px) {
+    /* ── Mobile ── */
+    @media (max-width: 768px) {
+      .priv-layout {
+        grid-template-columns: 1fr;
+        padding: 20px 16px 60px;
+        gap: 0;
+      }
+
+      .priv-sidebar {
+        position: static;
+        margin-bottom: 20px;
+      }
+
+      .priv-nav { display: flex; flex-wrap: wrap; padding: 8px; gap: 4px; }
+
+      .priv-nav a {
+        border-left: none;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+        padding: 5px 10px;
+        font-size: 11px;
+      }
+
+      .priv-nav a.active { border-color: #3b82f6; }
+      .priv-nav a:hover { border-color: #bfdbfe; }
+      .priv-nav-icon { display: none; }
+
       .priv-section { padding: 20px 18px; }
-      .priv-hero { padding: 40px 16px 36px; }
+      .priv-hero { padding: 36px 16px 28px; }
     }
   </style>
 </head>
@@ -221,201 +273,216 @@
   <p>Última actualización: Mayo 2026 · Aplica para alexariasc.com</p>
 </div>
 
-<!-- Content -->
-<main class="priv-content">
+<!-- Layout -->
+<div class="priv-layout">
 
-  <!-- Intro -->
-  <div class="priv-section">
-    <span class="priv-badge">🇨🇴 Ley 1581 de 2012 — Colombia</span>
-    <h2><span class="icon">📋</span> Información General</h2>
-    <p>
-      <strong>Alexander Arias</strong>, identificado como consultor inmobiliario independiente con sede en Sabaneta, Antioquia, Colombia, es el responsable del tratamiento de los datos personales recolectados a través del sitio web <strong>alexariasc.com</strong>.
-    </p>
-    <p>
-      Esta política describe cómo recopilamos, usamos y protegemos tu información cuando visitas nuestro sitio web, en cumplimiento con la Ley Estatutaria 1581 de 2012 y el Decreto 1377 de 2013 de la República de Colombia.
-    </p>
-  </div>
+  <!-- Sidebar -->
+  <aside class="priv-sidebar">
+    <div class="priv-sidebar-title">Contenido</div>
+    <nav class="priv-nav" id="privNav">
+      <a href="#general" class="active"><span class="priv-nav-icon">📋</span> Información General</a>
+      <a href="#autorizacion"><span class="priv-nav-icon">✅</span> Autorización</a>
+      <a href="#datos"><span class="priv-nav-icon">📊</span> Datos que Recopilamos</a>
+      <a href="#pixel"><span class="priv-nav-icon">📡</span> Facebook Pixel</a>
+      <a href="#finalidad"><span class="priv-nav-icon">🎯</span> Finalidad del Tratamiento</a>
+      <a href="#conservacion"><span class="priv-nav-icon">🗓️</span> Conservación</a>
+      <a href="#derechos"><span class="priv-nav-icon">⚖️</span> Tus Derechos</a>
+      <a href="#cookies"><span class="priv-nav-icon">🍪</span> Cookies</a>
+      <a href="#seguridad"><span class="priv-nav-icon">🔒</span> Seguridad</a>
+      <a href="#cambios"><span class="priv-nav-icon">📝</span> Cambios</a>
+    </nav>
+  </aside>
 
-  <!-- Autorización -->
-  <div class="priv-section">
-    <h2><span class="icon">✅</span> Autorización para el Tratamiento de Datos</h2>
-    <p>
-      De conformidad con la Ley 1581 de 2012 y el Decreto 1377 de 2013, al utilizar este sitio web, proporcionar tu correo electrónico o contactarnos, otorgas tu <strong>autorización expresa e informada</strong> para que Alexander Arias trate tus datos personales conforme a esta política.
-    </p>
-    <div class="priv-highlight">
-      <p>📌 Al registrar tu correo electrónico en nuestro formulario de suscripción, confirmas que has leído esta política y autorizas expresamente el envío de comunicaciones comerciales, novedades inmobiliarias y ofertas de propiedades a tu correo electrónico.</p>
-    </div>
-    <p>
-      Puedes revocar esta autorización en cualquier momento escribiéndonos a <strong>alexariasconsul@gmail.com</strong> o usando el enlace de cancelación incluido en cada correo que te enviemos.
-    </p>
-  </div>
+  <!-- Contenido -->
+  <main class="priv-content">
 
-  <!-- Datos que recopilamos -->
-  <div class="priv-section">
-    <h2><span class="icon">📊</span> Datos que Recopilamos</h2>
-    <p>Recopilamos la siguiente información cuando usas nuestro sitio:</p>
-    <ul>
-      <li>Páginas visitadas y propiedades consultadas</li>
-      <li>Acciones realizadas (búsquedas, contactos, interacciones)</li>
-      <li>Datos técnicos: dirección IP, tipo de navegador, dispositivo</li>
-      <li>Nombre y correo electrónico (si inicias sesión con Google o te suscribes al boletín)</li>
-      <li>Número de teléfono (solo si nos contactas por WhatsApp)</li>
-    </ul>
-
-    <h2 style="margin-top:18px"><span class="icon">📧</span> Recolección de Correo Electrónico</h2>
-    <p>
-      Cuando dejas tu correo electrónico en nuestro formulario de suscripción, recopilamos y almacenamos esta información con las siguientes finalidades:
-    </p>
-    <ul>
-      <li>Enviarte novedades de propiedades disponibles (arriendo y venta)</li>
-      <li>Informarte sobre nuevas publicaciones del portafolio inmobiliario</li>
-      <li>Enviarte ofertas especiales y oportunidades de inversión</li>
-      <li>Comunicarte tips y contenido del blog inmobiliario</li>
-      <li>Hacer seguimiento a tu búsqueda de propiedad ideal</li>
-    </ul>
-    <p>
-      <strong>Frecuencia de envío:</strong> Nos comprometemos a no saturar tu bandeja de entrada. Solo recibirás correos cuando haya información relevante y de valor para ti.
-    </p>
-    <p>
-      <strong>Cancelación:</strong> Cada correo incluirá un enlace para cancelar la suscripción en cualquier momento, sin necesidad de explicaciones.
-    </p>
-  </div>
-
-  <!-- Facebook Pixel -->
-  <div class="priv-section">
-    <h2><span class="icon">📡</span> Facebook Pixel y Seguimiento</h2>
-    <p>
-      Este sitio utiliza el <strong>Facebook Pixel</strong>, una herramienta de Meta Platforms Inc., para medir la efectividad de nuestros anuncios publicitarios y entender cómo los usuarios interactúan con el sitio.
-    </p>
-
-    <div class="priv-pixel-box">
-      <code>Pixel ID: 1997851838283373</code>
-      <p>Propiedad de Alexander Arias · alexariasc.com</p>
+    <div class="priv-section" id="general">
+      <span class="priv-badge">🇨🇴 Ley 1581 de 2012 — Colombia</span>
+      <h2><span class="icon">📋</span> Información General</h2>
+      <p>
+        <strong>Alexander Arias</strong>, identificado como consultor inmobiliario independiente con sede en Sabaneta, Antioquia, Colombia, es el responsable del tratamiento de los datos personales recolectados a través del sitio web <strong>alexariasc.com</strong>.
+      </p>
+      <p>
+        Esta política describe cómo recopilamos, usamos y protegemos tu información cuando visitas nuestro sitio web, en cumplimiento con la Ley Estatutaria 1581 de 2012 y el Decreto 1377 de 2013 de la República de Colombia.
+      </p>
     </div>
 
-    <p>El Facebook Pixel registra automáticamente los siguientes eventos:</p>
-    <ul>
-      <li><strong>PageView</strong> — Cada vez que visitas una página del sitio</li>
-      <li><strong>ViewContent</strong> — Cuando abres la ficha de una propiedad</li>
-      <li><strong>Search</strong> — Cuando usas los filtros de búsqueda</li>
-      <li><strong>Contact / Lead</strong> — Cuando presionas el botón de WhatsApp para contactarnos</li>
-    </ul>
-
-    <div class="priv-highlight">
-      <p>⚠️ Esta información es procesada por Meta Platforms Inc. (Facebook) de acuerdo con sus propias políticas de privacidad. Puedes consultar la política de privacidad de Meta en: <strong>facebook.com/privacy</strong></p>
+    <div class="priv-section" id="autorizacion">
+      <h2><span class="icon">✅</span> Autorización para el Tratamiento de Datos</h2>
+      <p>
+        De conformidad con la Ley 1581 de 2012 y el Decreto 1377 de 2013, al utilizar este sitio web, proporcionar tu correo electrónico o contactarnos, otorgas tu <strong>autorización expresa e informada</strong> para que Alexander Arias trate tus datos personales conforme a esta política.
+      </p>
+      <div class="priv-highlight">
+        <p>📌 Al registrar tu correo electrónico en nuestro formulario de suscripción, confirmas que has leído esta política y autorizas expresamente el envío de comunicaciones comerciales, novedades inmobiliarias y ofertas de propiedades a tu correo electrónico.</p>
+      </div>
+      <p>
+        Puedes revocar esta autorización en cualquier momento escribiéndonos a <strong>alexariasconsul@gmail.com</strong> o usando el enlace de cancelación incluido en cada correo que te enviemos.
+      </p>
     </div>
 
-    <p>
-      También utilizamos la <strong>API de Conversiones de Meta (CAPI)</strong>, que envía información de eventos directamente desde nuestro servidor a Meta, complementando el Pixel del navegador para mejorar la precisión del seguimiento.
-    </p>
-  </div>
+    <div class="priv-section" id="datos">
+      <h2><span class="icon">📊</span> Datos que Recopilamos</h2>
+      <p>Recopilamos la siguiente información cuando usas nuestro sitio:</p>
+      <ul>
+        <li>Páginas visitadas y propiedades consultadas</li>
+        <li>Acciones realizadas (búsquedas, contactos, interacciones)</li>
+        <li>Datos técnicos: dirección IP, tipo de navegador, dispositivo</li>
+        <li>Nombre y correo electrónico (si inicias sesión con Google o te suscribes al boletín)</li>
+        <li>Número de teléfono (solo si nos contactas por WhatsApp)</li>
+      </ul>
 
-  <!-- Finalidad del tratamiento -->
-  <div class="priv-section">
-    <h2><span class="icon">🎯</span> Finalidad del Tratamiento de Datos</h2>
-    <p>Tus datos personales son utilizados exclusivamente para:</p>
-    <ul>
-      <li>Mostrarte anuncios personalizados de propiedades en Facebook e Instagram</li>
-      <li>Medir el rendimiento de nuestras campañas publicitarias</li>
-      <li>Enviarte correos con novedades y propiedades según tus intereses</li>
-      <li>Mejorar la experiencia del sitio web</li>
-      <li>Responder consultas sobre propiedades</li>
-      <li>Generar estadísticas de uso del sitio (anónimas y agregadas)</li>
-      <li>Cumplir obligaciones legales o requerimientos de autoridades competentes</li>
-    </ul>
-    <p>
-      <strong>No vendemos ni compartimos</strong> tus datos personales con terceros con fines comerciales propios. Solo compartimos información con terceros necesarios para operar el servicio:
-    </p>
-    <ul>
-      <li><strong>Meta Platforms (Facebook/Instagram)</strong> — Para el Pixel y campañas publicitarias</li>
-      <li><strong>Google LLC</strong> — Para autenticación OAuth y servicios de correo</li>
-      <li><strong>Proveedor de hosting</strong> — Para alojar el sitio web de forma segura</li>
-    </ul>
-  </div>
-
-  <!-- Conservación de datos -->
-  <div class="priv-section">
-    <h2><span class="icon">🗓️</span> Conservación de los Datos</h2>
-    <p>Conservamos tus datos personales durante el tiempo necesario para cumplir las finalidades descritas:</p>
-    <ul>
-      <li><strong>Correo electrónico de suscripción:</strong> Hasta que canceles la suscripción</li>
-      <li><strong>Datos de contacto (WhatsApp/email):</strong> Hasta 2 años después del último contacto</li>
-      <li><strong>Datos de navegación (Pixel):</strong> Según las políticas de retención de Meta (máx. 180 días)</li>
-      <li><strong>Sesiones de usuario:</strong> Hasta 30 días de inactividad</li>
-    </ul>
-    <p>
-      Después del período de conservación, tus datos serán eliminados de forma segura o anonimizados.
-    </p>
-  </div>
-
-  <!-- Derechos del usuario -->
-  <div class="priv-section">
-    <h2><span class="icon">⚖️</span> Tus Derechos (Ley 1581 de 2012)</h2>
-    <p>Como titular de los datos, tienes derecho a:</p>
-    <ul>
-      <li><strong>Conocer</strong> los datos que tenemos sobre ti</li>
-      <li><strong>Actualizar</strong> tus datos cuando sean inexactos</li>
-      <li><strong>Rectificar</strong> información incorrecta</li>
-      <li><strong>Suprimir</strong> tus datos de nuestras bases de datos</li>
-      <li><strong>Revocar</strong> la autorización otorgada para el tratamiento de tus datos</li>
-      <li><strong>Presentar quejas</strong> ante la Superintendencia de Industria y Comercio (SIC)</li>
-    </ul>
-
-    <div class="priv-contact">
-      <p style="font-weight:600;color:#0f172a;margin-bottom:8px;">Para ejercer estos derechos, contáctanos:</p>
-      <p>📧 <a href="mailto:alexariasconsul@gmail.com">alexariasconsul@gmail.com</a></p>
-      <p>📱 <a href="https://wa.me/573122588521">WhatsApp: +57 312 258 8521</a></p>
-      <p style="margin-top:8px;font-size:12px;color:#64748b;">Responderemos en un plazo máximo de 15 días hábiles.</p>
+      <h3><span>📧</span> Recolección de Correo Electrónico</h3>
+      <p>
+        Cuando dejas tu correo electrónico en nuestro formulario de suscripción, recopilamos y almacenamos esta información con las siguientes finalidades:
+      </p>
+      <ul>
+        <li>Enviarte novedades de propiedades disponibles (arriendo y venta)</li>
+        <li>Informarte sobre nuevas publicaciones del portafolio inmobiliario</li>
+        <li>Enviarte ofertas especiales y oportunidades de inversión</li>
+        <li>Comunicarte tips y contenido del blog inmobiliario</li>
+        <li>Hacer seguimiento a tu búsqueda de propiedad ideal</li>
+      </ul>
+      <p><strong>Frecuencia de envío:</strong> Nos comprometemos a no saturar tu bandeja de entrada. Solo recibirás correos cuando haya información relevante y de valor para ti.</p>
+      <p><strong>Cancelación:</strong> Cada correo incluirá un enlace para cancelar la suscripción en cualquier momento, sin necesidad de explicaciones.</p>
     </div>
-  </div>
 
-  <!-- Cookies -->
-  <div class="priv-section">
-    <h2><span class="icon">🍪</span> Uso de Cookies</h2>
-    <p>
-      Nuestro sitio utiliza cookies propias y de terceros para su funcionamiento. Las cookies son pequeños archivos que se almacenan en tu navegador.
-    </p>
-    <ul>
-      <li><strong>Cookies de sesión</strong> — Para mantenerte autenticado (si inicias sesión)</li>
-      <li><strong>Cookies de Facebook Pixel</strong> — Para rastreo publicitario (Meta Platforms)</li>
-      <li><strong>Cookies de análisis</strong> — Para entender el uso del sitio</li>
-    </ul>
-    <p>
-      Puedes deshabilitar las cookies desde la configuración de tu navegador, aunque esto puede afectar el funcionamiento del sitio.
-    </p>
-  </div>
+    <div class="priv-section" id="pixel">
+      <h2><span class="icon">📡</span> Facebook Pixel y Seguimiento</h2>
+      <p>
+        Este sitio utiliza el <strong>Facebook Pixel</strong>, una herramienta de Meta Platforms Inc., para medir la efectividad de nuestros anuncios publicitarios y entender cómo los usuarios interactúan con el sitio.
+      </p>
+      <div class="priv-pixel-box">
+        <code>Pixel ID: 1997851838283373</code>
+        <p>Propiedad de Alexander Arias · alexariasc.com</p>
+      </div>
+      <p>El Facebook Pixel registra automáticamente los siguientes eventos:</p>
+      <ul>
+        <li><strong>PageView</strong> — Cada vez que visitas una página del sitio</li>
+        <li><strong>ViewContent</strong> — Cuando abres la ficha de una propiedad</li>
+        <li><strong>Search</strong> — Cuando usas los filtros de búsqueda</li>
+        <li><strong>Contact / Lead</strong> — Cuando presionas el botón de WhatsApp para contactarnos</li>
+      </ul>
+      <div class="priv-highlight">
+        <p>⚠️ Esta información es procesada por Meta Platforms Inc. (Facebook) de acuerdo con sus propias políticas de privacidad. Puedes consultar la política de privacidad de Meta en: <strong>facebook.com/privacy</strong></p>
+      </div>
+      <p>
+        También utilizamos la <strong>API de Conversiones de Meta (CAPI)</strong>, que envía información de eventos directamente desde nuestro servidor a Meta, complementando el Pixel del navegador para mejorar la precisión del seguimiento.
+      </p>
+    </div>
 
-  <!-- Seguridad -->
-  <div class="priv-section">
-    <h2><span class="icon">🔒</span> Seguridad de los Datos</h2>
-    <p>
-      Implementamos medidas técnicas y organizativas para proteger tu información, incluyendo:
-    </p>
-    <ul>
-      <li>Comunicación cifrada mediante HTTPS/SSL (Let's Encrypt)</li>
-      <li>Almacenamiento seguro en servidores con acceso restringido</li>
-      <li>Autenticación segura mediante Google OAuth 2.0</li>
-    </ul>
-  </div>
+    <div class="priv-section" id="finalidad">
+      <h2><span class="icon">🎯</span> Finalidad del Tratamiento de Datos</h2>
+      <p>Tus datos personales son utilizados exclusivamente para:</p>
+      <ul>
+        <li>Mostrarte anuncios personalizados de propiedades en Facebook e Instagram</li>
+        <li>Medir el rendimiento de nuestras campañas publicitarias</li>
+        <li>Enviarte correos con novedades y propiedades según tus intereses</li>
+        <li>Mejorar la experiencia del sitio web</li>
+        <li>Responder consultas sobre propiedades</li>
+        <li>Generar estadísticas de uso del sitio (anónimas y agregadas)</li>
+        <li>Cumplir obligaciones legales o requerimientos de autoridades competentes</li>
+      </ul>
+      <p><strong>No vendemos ni compartimos</strong> tus datos personales con terceros con fines comerciales propios. Solo compartimos información con terceros necesarios para operar el servicio:</p>
+      <ul>
+        <li><strong>Meta Platforms (Facebook/Instagram)</strong> — Para el Pixel y campañas publicitarias</li>
+        <li><strong>Google LLC</strong> — Para autenticación OAuth y servicios de correo</li>
+        <li><strong>Proveedor de hosting</strong> — Para alojar el sitio web de forma segura</li>
+      </ul>
+    </div>
 
-  <!-- Cambios -->
-  <div class="priv-section">
-    <h2><span class="icon">📝</span> Cambios en esta Política</h2>
-    <p>
-      Podemos actualizar esta política periódicamente. Los cambios se publicarán en esta página con la fecha de la última actualización. Te recomendamos revisarla ocasionalmente.
-    </p>
-    <p>
-      El uso continuado del sitio después de cualquier cambio constituye tu aceptación de la política actualizada.
-    </p>
-  </div>
+    <div class="priv-section" id="conservacion">
+      <h2><span class="icon">🗓️</span> Conservación de los Datos</h2>
+      <p>Conservamos tus datos personales durante el tiempo necesario para cumplir las finalidades descritas:</p>
+      <ul>
+        <li><strong>Correo electrónico de suscripción:</strong> Hasta que canceles la suscripción</li>
+        <li><strong>Datos de contacto (WhatsApp/email):</strong> Hasta 2 años después del último contacto</li>
+        <li><strong>Datos de navegación (Pixel):</strong> Según las políticas de retención de Meta (máx. 180 días)</li>
+        <li><strong>Sesiones de usuario:</strong> Hasta 30 días de inactividad</li>
+      </ul>
+      <p>Después del período de conservación, tus datos serán eliminados de forma segura o anonimizados.</p>
+    </div>
 
-</main>
+    <div class="priv-section" id="derechos">
+      <h2><span class="icon">⚖️</span> Tus Derechos (Ley 1581 de 2012)</h2>
+      <p>Como titular de los datos, tienes derecho a:</p>
+      <ul>
+        <li><strong>Conocer</strong> los datos que tenemos sobre ti</li>
+        <li><strong>Actualizar</strong> tus datos cuando sean inexactos</li>
+        <li><strong>Rectificar</strong> información incorrecta</li>
+        <li><strong>Suprimir</strong> tus datos de nuestras bases de datos</li>
+        <li><strong>Revocar</strong> la autorización otorgada para el tratamiento de tus datos</li>
+        <li><strong>Presentar quejas</strong> ante la Superintendencia de Industria y Comercio (SIC)</li>
+      </ul>
+      <div class="priv-contact">
+        <p style="font-weight:600;color:#0f172a;margin-bottom:8px;">Para ejercer estos derechos, contáctanos:</p>
+        <p>📧 <a href="mailto:alexariasconsul@gmail.com">alexariasconsul@gmail.com</a></p>
+        <p>📱 <a href="https://wa.me/573122588521">WhatsApp: +57 312 258 8521</a></p>
+        <p style="margin-top:8px;font-size:12px;color:#64748b;">Responderemos en un plazo máximo de 15 días hábiles.</p>
+      </div>
+    </div>
+
+    <div class="priv-section" id="cookies">
+      <h2><span class="icon">🍪</span> Uso de Cookies</h2>
+      <p>Nuestro sitio utiliza cookies propias y de terceros para su funcionamiento. Las cookies son pequeños archivos que se almacenan en tu navegador.</p>
+      <ul>
+        <li><strong>Cookies de sesión</strong> — Para mantenerte autenticado (si inicias sesión)</li>
+        <li><strong>Cookies de Facebook Pixel</strong> — Para rastreo publicitario (Meta Platforms)</li>
+        <li><strong>Cookies de análisis</strong> — Para entender el uso del sitio</li>
+      </ul>
+      <p>Puedes deshabilitar las cookies desde la configuración de tu navegador, aunque esto puede afectar el funcionamiento del sitio.</p>
+    </div>
+
+    <div class="priv-section" id="seguridad">
+      <h2><span class="icon">🔒</span> Seguridad de los Datos</h2>
+      <p>Implementamos medidas técnicas y organizativas para proteger tu información, incluyendo:</p>
+      <ul>
+        <li>Comunicación cifrada mediante HTTPS/SSL (Let's Encrypt)</li>
+        <li>Almacenamiento seguro en servidores con acceso restringido</li>
+        <li>Autenticación segura mediante Google OAuth 2.0</li>
+      </ul>
+    </div>
+
+    <div class="priv-section" id="cambios">
+      <h2><span class="icon">📝</span> Cambios en esta Política</h2>
+      <p>Podemos actualizar esta política periódicamente. Los cambios se publicarán en esta página con la fecha de la última actualización. Te recomendamos revisarla ocasionalmente.</p>
+      <p>El uso continuado del sitio después de cualquier cambio constituye tu aceptación de la política actualizada.</p>
+    </div>
+
+  </main>
+</div>
 
 <!-- Footer -->
 <footer class="priv-footer">
   <p>© 2026 Alexander Arias · Consultor Inmobiliario · Sabaneta, Antioquia, Colombia</p>
   <p style="margin-top:6px"><a href="/">Volver al sitio</a> · <a href="mailto:alexariasconsul@gmail.com">Contacto</a></p>
 </footer>
+
+<script>
+  // Resaltar sección activa en el menú al hacer scroll
+  const sections = document.querySelectorAll('.priv-section[id]');
+  const navLinks = document.querySelectorAll('.priv-nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => link.classList.remove('active'));
+        const active = document.querySelector(`.priv-nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(section => observer.observe(section));
+
+  // Scroll suave al hacer clic en el menú
+  navLinks.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
 
 </body>
 </html>
