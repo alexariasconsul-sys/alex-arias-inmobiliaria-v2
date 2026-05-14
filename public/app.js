@@ -2370,7 +2370,7 @@ function setupFilters() {
     document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.hab-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
     document.querySelectorAll('.ban-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
-    document.querySelectorAll('.filter-state-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+    document.querySelectorAll('#filtersModal .filter-state-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
     document.querySelectorAll('.amenity-check input').forEach(cb => cb.checked = false);
     document.getElementById('fFilterParqueadero').checked = false;
     document.getElementById('fOrderBy').value = '';
@@ -2442,8 +2442,8 @@ function setupFilters() {
     const banActive = document.querySelector('.ban-btn.active');
     state.minBanos = banActive ? Number(banActive.dataset.ban) : 0;
     state.filterParqueadero = document.getElementById('fFilterParqueadero').checked;
-    state.filterAmenidades = [...document.querySelectorAll('.amenity-check input:checked')].map(cb => cb.value);
-    const stateActive = document.querySelector('.filter-state-btn.active');
+    state.filterAmenidades = [...document.querySelectorAll('#filtersModal .amenity-check input:checked')].map(cb => cb.value);
+    const stateActive = document.querySelector('#filtersModal .filter-state-btn.active[data-state]');
     state.filterEstado = stateActive ? stateActive.dataset.state : '';
     state.orderBy = document.getElementById('fOrderBy')?.value || '';
 
@@ -2670,7 +2670,7 @@ function setupFilters() {
     document.getElementById('filterBarrio').value = state.barrio;
     document.getElementById('searchInput').value = state.search;
 
-    const count = [state.minPrecio||state.maxPrecio, state.minHab, state.minBanos, state.filterParqueadero, state.filterEstado, state.orderBy].filter(Boolean).length;
+    const count = [state.minPrecio||state.maxPrecio, state.minHab, state.minBanos, state.filterParqueadero, state.filterAmenidades.length, state.filterEstado, state.orderBy].filter(Boolean).length;
     const badge = document.getElementById('filterBadge');
     badge.style.display = count ? 'flex' : 'none';
     badge.textContent = count;
