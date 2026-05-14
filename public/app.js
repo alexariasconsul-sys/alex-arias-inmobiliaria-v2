@@ -1001,6 +1001,12 @@ function cardHTML(p) {
     const parts = a.split(rx).map(s => s.trim()).filter(Boolean);
     return parts.length > 1 ? parts : [a];
   });
+  // Agregar características booleanas al inicio, evitando duplicados
+  const extraFeats = [];
+  if (p.parqueadero && !amenidades.some(a => /parqueadero/i.test(a))) extraFeats.push('Parqueadero');
+  if (p.cuarto_util && !amenidades.some(a => /cuarto\s*[uú]til/i.test(a))) extraFeats.push('Cuarto útil');
+  if (p.estudio     && !amenidades.some(a => /^estudio$/i.test(a))) extraFeats.push('Estudio');
+  amenidades = [...extraFeats, ...amenidades];
   const isLiked = state.likedIds.has(String(p.id));
   const isCombinado = p.tipo === 'combinado';
   const price = isCombinado ? formatPrice(p.precioArriendo || p.precio) : formatPrice(p.precio);
