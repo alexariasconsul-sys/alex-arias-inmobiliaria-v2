@@ -2431,9 +2431,11 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         const mainImg  = imgs[0] || '';
         const extraImg = imgs.slice(1, 4).join(','); // hasta 3 adicionales separadas por coma
 
-        const desc    = (p.descripcion || `${useRent ? 'En arriendo' : 'En venta'}, ${p.habitaciones || ''} habitaciones, ${p.area || ''}m² en ${p.municipio || 'Antioquia'}`).slice(0, 500);
-        const address = [p.direccion, p.barrio].filter(Boolean).join(', ') || p.municipio || 'Sabaneta';
-        const price   = `${Math.round(rawPrice || 0)} COP`; // formato obligatorio de Meta
+        // Eliminar saltos de línea que rompen el parser CSV de Meta
+        const rawDesc = (p.descripcion || `${useRent ? 'En arriendo' : 'En venta'}, ${p.habitaciones || ''} habitaciones, ${p.area || ''}m² en ${p.municipio || 'Antioquia'}`);
+        const desc    = rawDesc.replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, 500);
+        const address = ([p.direccion, p.barrio].filter(Boolean).join(', ') || p.municipio || 'Sabaneta').replace(/[\r\n]+/g, ' ').trim();
+        const price   = `${Number(rawPrice || 0).toFixed(2)} COP`; // Meta requiere 2 decimales
 
         rows.push([
           q(listingId),
