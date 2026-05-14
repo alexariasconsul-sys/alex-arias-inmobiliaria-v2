@@ -2400,7 +2400,7 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
     // Columnas exactas según documentación oficial de Meta Home Listings
     const HEADERS = [
       'home_listing_id', 'name', 'availability', 'description',
-      'image_link', 'additional_image_link',
+      'image[0][url]', 'image[1][url]', 'image[2][url]', 'image[3][url]', 'image[4][url]',
       'listing_type', 'price', 'currency', 'url',
       'address', 'city', 'region', 'country', 'postal_code',
       'latitude', 'longitude',
@@ -2424,13 +2424,12 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         const availability = p.estado === 'ocupado' ? 'off_market' : (useRent ? 'for_rent' : 'for_sale');
         const listingType  = useRent ? 'for_rent_by_agent' : 'for_sale_by_agent';
 
-        const imgs     = (p.images || []).filter(i => i.filename)
-                           .map(i => `${baseUrl}/${encodeURI(i.filename)}`);
-        const mainImg  = imgs[0] || '';
-        const extraImg = imgs.slice(1, 4).join('|'); // Meta acepta hasta 3 adicionales separadas por |
+        const imgs = (p.images || []).filter(i => i.filename)
+                       .map(i => `${baseUrl}/${encodeURI(i.filename)}`);
+        // Pad a 5 slots para que siempre haya 5 columnas image[n][url]
+        const imgCols = Array.from({ length: 5 }, (_, i) => q(imgs[i] || ''));
 
         const desc = (p.descripcion || `${useRent ? 'En arriendo' : 'En venta'}, ${p.habitaciones || ''} habitaciones, ${p.area || ''}m² en ${p.municipio || 'Antioquia'}`).slice(0, 500);
-
         const address = [p.direccion, p.barrio].filter(Boolean).join(', ') || p.municipio || 'Sabaneta';
 
         rows.push([
@@ -2438,8 +2437,7 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
           q(p.title || 'Inmueble'),
           q(availability),
           q(desc),
-          q(mainImg),
-          q(extraImg),
+          ...imgCols,                 // image[0][url] … image[4][url]
           q(listingType),
           Math.round(rawPrice || 0),
           'COP',
@@ -2448,14 +2446,14 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
           q(p.municipio || 'Sabaneta'),
           q('Antioquia'),
           'CO',
-          '',                         // postal_code — vacío es válido
+          '',                         // postal_code
           p.lat  || '',
           p.lng  || '',
           p.banos        || '',
           p.habitaciones || '',
           p.area         || '',
           p.area ? 'square_meters' : '',
-          'apartment'                 // property_type
+          'apartment'
         ].join(','));
       }
     }
