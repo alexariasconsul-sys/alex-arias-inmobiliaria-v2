@@ -2591,12 +2591,16 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         const cityName   = municipio;
         const postalCode = postalCodes[municipio.toLowerCase()] || postalCodes['medellín'] || '';
         const rawDireccion = (p.direccion || '').trim();
-        // Incluir municipio + pais en address para mejor geocodificacion en Meta LATAM.
-        // Meta necesita contexto geografico completo para resolver calles colombianas.
         const streetPart = rawDireccion
           ? rawDireccion.replace(/\s*#\s*/g, ' No. ').replace(/\s+/g, ' ').trim()
           : (p.barrio || municipio);
-        const address = `${streetPart}, ${municipio}, Antioquia, Colombia`;
+        // ?addr=full  → calle completa + municipio + Antioquia + Colombia (default)
+        // ?addr=city  → solo municipio (prueba: ¿Meta geocodifica el municipio?)
+        // ?addr=gps   → coordenadas GPS (prueba: bypasea geocodificador completamente)
+        const addrMode = req.query.addr || 'full';
+        const address = addrMode === 'gps'  ? `${p.lat || 0},${p.lng || 0}`
+                      : addrMode === 'city' ? municipio
+                      : `${streetPart}, ${municipio}, Antioquia, Colombia`;
         const price   = `${Number(rawPrice || 0).toFixed(2)} COP`; // Meta requiere 2 decimales
 
         rows.push([
