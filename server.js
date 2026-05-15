@@ -748,7 +748,12 @@ app.get('/api/feed/img/:filename', async (req, res) => {
     res.setHeader('Content-Type', 'image/jpeg');
     res.setHeader('Cache-Control', 'public, max-age=86400');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    const buf = await sharp(filepath).jpeg({ quality: 85 }).toBuffer();
+    res.setHeader('Content-Disposition', 'inline; filename="image.jpg"');
+    // Garantizar mínimo 800×800 para Meta (sin recortar, solo ampliar si es pequeña)
+    const buf = await sharp(filepath)
+      .resize({ width: 800, height: 800, fit: 'inside', withoutEnlargement: false })
+      .jpeg({ quality: 85 })
+      .toBuffer();
     res.send(buf);
   } catch (err) { res.status(500).end(); }
 });
@@ -2474,9 +2479,13 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         // Eliminar saltos de línea que rompen el parser CSV de Meta
         const rawDesc = (p.descripcion || `${useRent ? 'En arriendo' : 'En venta'}, ${p.habitaciones || ''} habitaciones, ${p.area || ''}m² en ${p.municipio || 'Antioquia'}`);
         const desc    = rawDesc.replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, 500);
-        // Dirección: preferir calle real, luego barrio/proyecto, luego municipio
+        // Dirección: preferir calle real pero sin "#" (notación colombiana
+        // que Meta no puede geocodificar). Reemplazar por espacio simple.
         const rawAddr = (p.direccion || p.barrio || p.municipio || 'Sabaneta')
-          .replace(/[\r\n]+/g, ' ').trim();
+          .replace(/[\r\n]+/g, ' ')
+          .replace(/\s*#\s*/g, ' ')   // "Cra 48 # 30-12" → "Cra 48 30-12"
+          .replace(/\s{2,}/g, ' ')
+          .trim();
         const address = rawAddr;
         const price   = `${Number(rawPrice || 0).toFixed(2)} COP`; // Meta requiere 2 decimales
 
