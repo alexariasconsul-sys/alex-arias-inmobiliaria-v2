@@ -2426,6 +2426,73 @@ ${itemParts.join('\n')}
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ─── FEED CSV — catálogo genérico de Productos para Meta ─────────
+// Solo: id, title, description, availability, condition, price, link, image_link
+// URL: https://alexariasc.com/api/feed/productos.csv
+app.get('/api/feed/productos.csv', async (req, res) => {
+  try {
+    const db      = getDB();
+    const docs    = await db.findAsync({});
+    const baseUrl = process.env.SITE_URL || 'https://alexariasc.com';
+    const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+
+    const HEADERS = ['id','title','description','availability','condition','price','link','image_link','additional_image_link'];
+    const rows = [HEADERS.join(',')];
+
+    for (const p of docs) {
+      const variants = p.tipo === 'combinado' ? ['rent','sale'] : [p.tipo === 'venta' ? 'sale' : 'rent'];
+      for (const variant of variants) {
+        const useRent  = variant === 'rent';
+        const isComb   = p.tipo === 'combinado';
+        const rawPrice = useRent ? (p.precioArriendo || p.precio || 0) : (p.precioVenta || p.precio || 0);
+        const listingId = isComb ? `${p._id}_${useRent ? 'arr' : 'vta'}` : p._id;
+
+        const imgs = (p.images || []).filter(i => i.filename);
+        if (!imgs.length) continue;
+
+        const mainImg = imgs[0].filename.startsWith('assets/')
+          ? `${baseUrl}/api/feed/img/${encodeURIComponent(imgs[0].filename.replace(/\.jpeg$/i, '.jpg').split('/').pop())}`
+          : `${baseUrl}/uploads/${encodeURIComponent(imgs[0].filename.split('/').pop())}`;
+
+        const extraImgs = imgs.slice(1, 4).map(i => {
+          const fname = i.filename.split('/').pop();
+          return i.filename.startsWith('assets/')
+            ? `${baseUrl}/api/feed/img/${encodeURIComponent(fname.replace(/\.jpeg$/i, '.jpg'))}`
+            : `${baseUrl}/uploads/${encodeURIComponent(fname)}`;
+        }).join(',');
+
+        const tipoLabel  = useRent ? 'Arriendo' : 'Venta';
+        const precioFmt  = new Intl.NumberFormat('es-CO').format(rawPrice);
+        const hab        = p.habitaciones ? `${p.habitaciones} hab` : '';
+        const area       = p.area ? `${p.area}m²` : '';
+        const muni       = p.municipio || '';
+        const titleStr   = [p.title, hab, area, muni].filter(Boolean).join(' - ');
+
+        const desc = (p.descripcion || `${tipoLabel} en ${muni}`).replace(/[\r\n]+/g, ' ').trim().slice(0, 500);
+        const avail = p.estado === 'ocupado' ? 'out of stock' : 'in stock';
+
+        rows.push([
+          q(listingId),
+          q(titleStr),
+          q(desc),
+          q(avail),
+          '"new"',
+          q(`${Number(rawPrice).toFixed(2)} COP`),
+          q(`${baseUrl}/?prop=${p._id}`),
+          q(mainImg),
+          q(extraImgs)
+        ].join(','));
+      }
+    }
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="meta_productos.csv"');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.send(rows.join('\r\n'));
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // ─── FEED CSV — formato oficial Meta Business para Home Listings ──
 // URL para Facebook: https://alexariasc.com/api/feed/facebook.csv
 app.get('/api/feed/facebook.csv', async (req, res) => {
