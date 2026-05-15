@@ -79,7 +79,8 @@ async function saveOptimizedImage(buffer) {
 // ── SEGURIDAD ────────────────────────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: false, // Desactivado para no romper scripts inline del frontend
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: false // Permitir que Meta/Google descarguen imágenes
 }));
 
 // Rate limiting global (100 peticiones por 15 min por IP)
@@ -2435,10 +2436,15 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         const mainImg  = imgs[0] || '';
         const extraImg = imgs.slice(1, 4).join(','); // hasta 3 adicionales separadas por coma
 
+        // Saltar propiedades sin imagen — Meta requiere URL válida en campo "image"
+        if (!mainImg) continue;
+
         // Eliminar saltos de línea que rompen el parser CSV de Meta
         const rawDesc = (p.descripcion || `${useRent ? 'En arriendo' : 'En venta'}, ${p.habitaciones || ''} habitaciones, ${p.area || ''}m² en ${p.municipio || 'Antioquia'}`);
         const desc    = rawDesc.replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, 500);
-        const address = ([p.direccion, p.barrio].filter(Boolean).join(', ') || p.municipio || 'Sabaneta').replace(/[\r\n]+/g, ' ').trim();
+        // Dirección simplificada a barrio + municipio para que Meta pueda geocodificar
+        const addrParts = [p.barrio, p.municipio, 'Antioquia', 'Colombia'].filter(Boolean);
+        const address = [...new Set(addrParts)].join(', ');
         const price   = `${Number(rawPrice || 0).toFixed(2)} COP`; // Meta requiere 2 decimales
 
         rows.push([
