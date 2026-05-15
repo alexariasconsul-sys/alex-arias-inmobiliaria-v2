@@ -737,10 +737,13 @@ app.use('/uploads', (req, res, next) => {
 }, express.static(uploadsDir, { maxAge: '365d', immutable: true }));
 
 // Endpoint para convertir WebP → JPEG al vuelo (necesario para Meta Catalog)
+// URLs terminan en .jpg para que Meta acepte el formato (valida la extensión)
 app.get('/api/feed/img/:filename', async (req, res) => {
   try {
-    const filename = path.basename(req.params.filename); // evitar path traversal
-    const filepath = path.join(uploadsDir, filename);
+    let filename = path.basename(req.params.filename); // evitar path traversal
+    // Soportar URLs .jpg que mapean a archivos .webp reales
+    const actualFilename = filename.replace(/\.jpg$/i, '.webp');
+    const filepath = path.join(uploadsDir, actualFilename);
     if (!fs.existsSync(filepath)) return res.status(404).end();
     res.setHeader('Content-Type', 'image/jpeg');
     res.setHeader('Cache-Control', 'public, max-age=86400');
@@ -2455,11 +2458,12 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         // Saltar propiedades sin imagen — Meta requiere URL válida en campo "image"
         if (!mainImg) continue;
 
-        // WebP → JPEG para Meta (solo acepta JPG/GIF/PNG en catálogos)
+        // WebP → JPEG para Meta. URL termina en .jpg para que Meta
+        // acepte el formato (valida la extensión además del Content-Type)
         const toMetaImg = url => {
           if (!url) return '';
           if (url.endsWith('.webp')) {
-            const fname = url.split('/').pop();
+            const fname = url.split('/').pop().replace('.webp', '.jpg');
             return `${baseUrl}/api/feed/img/${fname}`;
           }
           return url;
@@ -2470,8 +2474,10 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         // Eliminar saltos de línea que rompen el parser CSV de Meta
         const rawDesc = (p.descripcion || `${useRent ? 'En arriendo' : 'En venta'}, ${p.habitaciones || ''} habitaciones, ${p.area || ''}m² en ${p.municipio || 'Antioquia'}`);
         const desc    = rawDesc.replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, 500);
-        // Solo municipio — p.barrio contiene nombre del proyecto, no barrio geográfico
-        const address = [p.municipio, 'Antioquia', 'Colombia'].filter(Boolean).join(', ');
+        // Dirección: preferir calle real, luego barrio/proyecto, luego municipio
+        const rawAddr = (p.direccion || p.barrio || p.municipio || 'Sabaneta')
+          .replace(/[\r\n]+/g, ' ').trim();
+        const address = rawAddr;
         const price   = `${Number(rawPrice || 0).toFixed(2)} COP`; // Meta requiere 2 decimales
 
         rows.push([
