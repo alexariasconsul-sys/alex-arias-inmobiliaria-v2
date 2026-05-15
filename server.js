@@ -2528,10 +2528,9 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         };
         const cityName   = (p.municipio || 'Sabaneta').trim();
         const postalCode = postalCodes[cityName.toLowerCase()] || '';
-        // Meta no geocodifica municipios pequeños colombianos bien.
-        // "Medellín, Antioquia, Colombia" es reconocido por cualquier geocodificador;
-        // las coordenadas lat/lng ubican la propiedad exacta en el mapa.
-        const address = 'Medellín, Antioquia, Colombia';
+        // address = solo el municipio — city/region/country ya están en columnas separadas.
+        // Poner ciudad+país dentro de address causa conflicto al geocodificar en Meta.
+        const address = cityName;
         const price   = `${Number(rawPrice || 0).toFixed(2)} COP`; // Meta requiere 2 decimales
 
         rows.push([
