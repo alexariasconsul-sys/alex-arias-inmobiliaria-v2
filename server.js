@@ -105,7 +105,11 @@ const authLimiter = rateLimit({
 
 app.use('/api/verify-password', authLimiter);
 app.use('/auth/google', authLimiter);
-app.use('/api/', globalLimiter);
+// Eximir endpoints de feed del rate limiter — Meta crawlea ~56 imágenes en ráfaga
+app.use('/api/', (req, res, next) => {
+  if (req.path.startsWith('/feed/') || req.path === '/feed') return next();
+  return globalLimiter(req, res, next);
+});
 
 // Middleware
 // Compresión Brotli si está disponible, sino Gzip
@@ -2445,9 +2449,12 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
     // servidos por Nginx directamente, sin pasar por Node.js.
     for (const p of docs) {
       for (const img of (p.images || [])) {
-        if (!img.filename || !img.filename.endsWith('.webp')) continue;
-        const webpPath = path.join(uploadsDir, img.filename);
-        const jpgName  = img.filename.replace(/\.webp$/i, '.jpg');
+        if (!img.filename) continue;
+        // img.filename puede ser "uploads/file.webp" — usar basename para evitar ruta doble
+        const baseName = path.basename(img.filename);
+        if (!baseName.endsWith('.webp')) continue;
+        const webpPath = path.join(uploadsDir, baseName);
+        const jpgName  = baseName.replace(/\.webp$/i, '.jpg');
         const jpgPath  = path.join(uploadsDir, jpgName);
         if (fs.existsSync(webpPath) && !fs.existsSync(jpgPath)) {
           try {
