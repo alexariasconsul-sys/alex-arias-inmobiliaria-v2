@@ -2565,15 +2565,16 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
           'copacabana': '051030',
           'girardota': '051010',
         };
-        // city = siempre "Medellín" (área metropolitana); Sabaneta/Envigado son municipios
-        // pequeños que el geocodificador de Meta puede no reconocer.
         const municipio  = (p.municipio || 'Sabaneta').trim();
-        const cityName   = 'Medellín';
+        // Sin tilde para evitar problemas de encoding en geocodificador de Meta
+        const cityName   = 'Medellin';
         const postalCode = postalCodes[municipio.toLowerCase()] || postalCodes['medellín'] || '';
-        // address = barrio o nombre del conjunto; más fácil de geocodificar que una calle colombiana.
-        const rawDireccion = (p.barrio || p.sector || p.direccion || '').trim();
-        const streetOnly = rawDireccion.split('#')[0].trim().replace(/,\s*$/, '').trim();
-        const address = streetOnly || municipio;
+        // Formato internacional colombiano: "Calle X No. Y-Z, Municipio"
+        // "#" reemplazado por "No." — estándar reconocido por geocodificadores internacionales.
+        const rawDireccion = (p.direccion || '').trim();
+        const address = rawDireccion
+          ? rawDireccion.replace(/\s*#\s*/g, ' No. ').replace(/\s+/g, ' ').trim() + ', ' + municipio
+          : (p.barrio || municipio);
         const price   = `${Number(rawPrice || 0).toFixed(2)} COP`; // Meta requiere 2 decimales
 
         rows.push([
