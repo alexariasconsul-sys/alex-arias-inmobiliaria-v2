@@ -8,6 +8,13 @@ Disallow: /uploads/temp/
 Disallow: /*.json$
 Disallow: /api/
 
+# ── Meta / Facebook — acceso total para catálogos e imágenes ──
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Facebookcatalog
+Allow: /
+
 # ── Crawlers de búsqueda ─────────────────────────────────────
 User-agent: Googlebot
 Allow: /
