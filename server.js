@@ -2440,6 +2440,27 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
 
     const rows = [HEADERS.join(',')];
 
+    // Pre-convertir TODAS las imágenes WebP a JPEG en disco antes de generar el CSV.
+    // Así cuando Meta crawlee las URLs de imagen ya serán archivos estáticos
+    // servidos por Nginx directamente, sin pasar por Node.js.
+    for (const p of docs) {
+      for (const img of (p.images || [])) {
+        if (!img.filename || !img.filename.endsWith('.webp')) continue;
+        const webpPath = path.join(uploadsDir, img.filename);
+        const jpgName  = img.filename.replace(/\.webp$/i, '.jpg');
+        const jpgPath  = path.join(uploadsDir, jpgName);
+        if (fs.existsSync(webpPath) && !fs.existsSync(jpgPath)) {
+          try {
+            const buf = await sharp(webpPath)
+              .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
+              .jpeg({ quality: 90 })
+              .toBuffer();
+            fs.writeFileSync(jpgPath, buf);
+          } catch (_) {}
+        }
+      }
+    }
+
     for (const p of docs) {
       const variants = p.tipo === 'combinado' ? ['rent', 'sale'] : [p.tipo === 'venta' ? 'sale' : 'rent'];
 
@@ -2462,14 +2483,17 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         // Saltar propiedades sin imagen — Meta requiere URL válida en campo "image"
         if (!mainImg) continue;
 
-        // WebP → JPEG para Meta. URL termina en .jpg para que Meta
-        // acepte el formato (valida la extensión además del Content-Type).
-        // v=2 fuerza re-crawl en caso de que Meta tenga cacheado un 404 previo.
+        // Convertir URL de WebP a JPEG para Meta.
+        // Si ya existe el JPEG en disco (pre-convertido arriba), sirve directamente
+        // desde /uploads/ via Nginx (sin pasar por Node). Si no, usa el endpoint
+        // dinámico como fallback.
         const toMetaImg = url => {
           if (!url) return '';
           if (url.endsWith('.webp')) {
-            const fname = url.split('/').pop().replace('.webp', '.jpg');
-            return `${baseUrl}/api/feed/img/${fname}?v=2`;
+            const fname   = url.split('/').pop().replace(/\.webp$/i, '.jpg');
+            const cached  = path.join(uploadsDir, fname);
+            if (fs.existsSync(cached)) return `${baseUrl}/uploads/${encodeURI(fname)}`;
+            return `${baseUrl}/api/feed/img/${encodeURI(fname)}`;
           }
           return url;
         };
@@ -2496,9 +2520,10 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         };
         const cityName   = (p.municipio || 'Sabaneta').trim();
         const postalCode = postalCodes[cityName.toLowerCase()] || '';
-        // Meta no geocodifica calles colombianas. Incluir país y departamento
-        // en el campo address le da al geocodificador contexto suficiente.
-        const address = `${cityName}, Antioquia, Colombia`;
+        // Meta no geocodifica municipios pequeños colombianos bien.
+        // "Medellín, Antioquia, Colombia" es reconocido por cualquier geocodificador;
+        // las coordenadas lat/lng ubican la propiedad exacta en el mapa.
+        const address = 'Medellín, Antioquia, Colombia';
         const price   = `${Number(rawPrice || 0).toFixed(2)} COP`; // Meta requiere 2 decimales
 
         rows.push([
