@@ -89,6 +89,7 @@ const globalLimiter = rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false }, // Nginx envía X-Forwarded-For, suprimir falso positivo
   message: { error: 'Demasiadas peticiones, intenta en 15 minutos.' }
 });
 
@@ -98,6 +99,7 @@ const authLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: { error: 'Demasiados intentos de acceso, intenta en 15 minutos.' }
 });
 
