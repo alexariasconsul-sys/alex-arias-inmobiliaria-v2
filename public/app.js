@@ -1028,7 +1028,7 @@ function cardHTML(p) {
   const imgFilterStyle = (() => {
     const f = p.imageFilter;
     if (!f || f === 'natural') return '';
-    const map = { vivid:'saturate(1.5) contrast(1.1)', warm:'saturate(1.2) sepia(0.25) brightness(1.05)', cool:'saturate(1.1) hue-rotate(15deg) brightness(1.03)', bright:'brightness(1.15) contrast(1.05)', drama:'contrast(1.25) saturate(1.3) brightness(0.95)' };
+    const map = { vivid:'saturate(1.5) contrast(1.1)', warm:'saturate(1.2) sepia(0.25) brightness(1.05)', cool:'saturate(1.1) hue-rotate(15deg) brightness(1.03)', bright:'brightness(1.15) contrast(1.05)', drama:'contrast(1.25) saturate(1.3) brightness(0.95)', aclarar:'brightness(1.35) contrast(1.15) saturate(1.1)' };
     return map[f] ? ` style="filter:${map[f]}"` : '';
   })();
 
