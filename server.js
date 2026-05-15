@@ -724,9 +724,17 @@ app.get('/post.html', async (req, res) => {
 
 // Static files con caché de 7 días
 app.use(express.static(path.join(__dirname, 'public'), {
-  maxAge: '7d',
+  maxAge: 0,           // JS/CSS/HTML nunca se cachean — evita versiones viejas en producción
   etag: true,
-  lastModified: true
+  lastModified: true,
+  setHeaders(res, filePath) {
+    // Imágenes en /public pueden cachearse más tiempo
+    if (/\.(png|jpe?g|webp|gif|ico|svg)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=604800'); // 7 días
+    } else {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  }
 }));
 
 // Assets (logo, fuentes) con caché de 30 días
