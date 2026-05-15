@@ -730,7 +730,10 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 
 // Assets (logo, fuentes) con caché de 30 días
-app.use('/assets', express.static(path.join(__dirname, 'assets'), {
+app.use('/assets', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(path.join(__dirname, 'assets'), {
   maxAge: '30d',
   immutable: true
 }));
@@ -742,14 +745,18 @@ app.use('/uploads', (req, res, next) => {
 }, express.static(uploadsDir, { maxAge: '365d', immutable: true }));
 
 // Endpoint para convertir/redimensionar imágenes → JPEG ≤1200px para Meta Catalog.
-// Prueba WebP primero; si no existe, usa el JPEG original como fuente.
+// Busca en: uploads/ (WebP→JPG), uploads/ (JPG directo), assets/ (JPG/JPEG).
 app.get('/api/feed/img/:filename', async (req, res) => {
   try {
-    const filename = path.basename(req.params.filename);
-    const webpPath = path.join(uploadsDir, filename.replace(/\.jpg$/i, '.webp'));
-    const jpgPath  = path.join(uploadsDir, filename);
-    const filepath = fs.existsSync(webpPath) ? webpPath
-                   : fs.existsSync(jpgPath)  ? jpgPath
+    const filename    = path.basename(req.params.filename);
+    const webpPath    = path.join(uploadsDir, filename.replace(/\.jpg$/i, '.webp'));
+    const jpgPath     = path.join(uploadsDir, filename);
+    const assetPath   = path.join(__dirname, 'assets', filename.replace(/\.jpg$/i, '.jpeg'));
+    const assetJpgPath = path.join(__dirname, 'assets', filename);
+    const filepath = fs.existsSync(webpPath)     ? webpPath
+                   : fs.existsSync(jpgPath)      ? jpgPath
+                   : fs.existsSync(assetPath)    ? assetPath
+                   : fs.existsSync(assetJpgPath) ? assetJpgPath
                    : null;
     if (!filepath) return res.status(404).end();
     res.setHeader('Content-Type', 'image/jpeg');
@@ -2426,7 +2433,7 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
     const db      = getDB();
     const profile = readProfile();
     const docs    = await db.findAsync({});
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const baseUrl = process.env.SITE_URL || 'https://alexariasc.com';
 
     // Envuelve en comillas dobles y escapa comillas internas
     const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
@@ -2508,24 +2515,32 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         // Saltar propiedades sin imagen — Meta requiere URL válida en campo "image"
         if (!mainImg) continue;
 
-        // Convertir/optimizar URLs de imagen para Meta: siempre JPEG ≤1200px ≤800KB.
-        // - WebP → endpoint dinámico (pre-conversion ya creó el .jpg optimizado en disco)
-        // - JPG grande (>800KB) → endpoint dinámico para redimensionar on-the-fly
-        // - JPG pequeño y otros → URL directa
+        // Convertir/optimizar URLs de imagen para Meta: siempre JPEG ≤1200px.
+        // - WebP (uploads/) → usa .jpg cacheado en disco o endpoint dinámico
+        // - JPG grande (uploads/) → endpoint dinámico
+        // - JPG pequeño (uploads/) → URL directa
+        // - assets/ → siempre pasa por endpoint (resize + CORP header garantizado)
         const toMetaImg = url => {
           if (!url) return '';
-          const fname = url.split('/').pop();
-          if (fname.endsWith('.webp')) {
+          const raw   = url.split('/').pop();
+          const fname = decodeURIComponent(raw);
+          if (/\.webp$/i.test(fname)) {
             const jpgFname = fname.replace(/\.webp$/i, '.jpg');
             const cached   = path.join(uploadsDir, jpgFname);
             const stat     = fs.existsSync(cached) ? fs.statSync(cached) : null;
-            if (stat && stat.size <= 800000) return `${baseUrl}/uploads/${encodeURI(jpgFname)}`;
-            return `${baseUrl}/api/feed/img/${encodeURI(jpgFname)}`;
+            if (stat && stat.size <= 800000) return `${baseUrl}/uploads/${encodeURIComponent(jpgFname)}`;
+            return `${baseUrl}/api/feed/img/${encodeURIComponent(jpgFname)}`;
           }
           if (url.includes('/uploads/') && /\.(jpg|jpeg)$/i.test(fname)) {
             const filePath = path.join(uploadsDir, fname);
             const stat     = fs.existsSync(filePath) ? fs.statSync(filePath) : null;
-            if (stat && stat.size > 800000) return `${baseUrl}/api/feed/img/${encodeURI(fname)}`;
+            if (stat && stat.size > 800000) return `${baseUrl}/api/feed/img/${encodeURIComponent(fname)}`;
+            if (stat) return `${baseUrl}/uploads/${encodeURIComponent(fname)}`;
+          }
+          // assets/ y otras fuentes → endpoint garantiza JPEG correcto + headers
+          if (/\.(jpg|jpeg)$/i.test(fname)) {
+            const jpgFname = fname.replace(/\.jpeg$/i, '.jpg');
+            return `${baseUrl}/api/feed/img/${encodeURIComponent(jpgFname)}`;
           }
           return url;
         };
