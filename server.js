@@ -2427,7 +2427,6 @@ ${itemParts.join('\n')}
 });
 
 // ─── FEED CSV — catálogo genérico de Productos para Meta ─────────
-// Solo: id, title, description, availability, condition, price, link, image_link
 // URL: https://alexariasc.com/api/feed/productos.csv
 app.get('/api/feed/productos.csv', async (req, res) => {
   try {
@@ -2436,15 +2435,19 @@ app.get('/api/feed/productos.csv', async (req, res) => {
     const baseUrl = process.env.SITE_URL || 'https://alexariasc.com';
     const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
 
-    const HEADERS = ['id','title','description','availability','condition','price','link','image_link','additional_image_link'];
+    const HEADERS = [
+      'id','title','description','availability','condition',
+      'price','link','image_link','additional_image_link',
+      'brand','identifier_exists'
+    ];
     const rows = [HEADERS.join(',')];
 
     for (const p of docs) {
       const variants = p.tipo === 'combinado' ? ['rent','sale'] : [p.tipo === 'venta' ? 'sale' : 'rent'];
       for (const variant of variants) {
-        const useRent  = variant === 'rent';
-        const isComb   = p.tipo === 'combinado';
-        const rawPrice = useRent ? (p.precioArriendo || p.precio || 0) : (p.precioVenta || p.precio || 0);
+        const useRent   = variant === 'rent';
+        const isComb    = p.tipo === 'combinado';
+        const rawPrice  = useRent ? (p.precioArriendo || p.precio || 0) : (p.precioVenta || p.precio || 0);
         const listingId = isComb ? `${p._id}_${useRent ? 'arr' : 'vta'}` : p._id;
 
         const imgs = (p.images || []).filter(i => i.filename);
@@ -2461,14 +2464,19 @@ app.get('/api/feed/productos.csv', async (req, res) => {
             : `${baseUrl}/uploads/${encodeURIComponent(fname)}`;
         }).join(',');
 
-        const tipoLabel  = useRent ? 'Arriendo' : 'Venta';
-        const precioFmt  = new Intl.NumberFormat('es-CO').format(rawPrice);
-        const hab        = p.habitaciones ? `${p.habitaciones} hab` : '';
-        const area       = p.area ? `${p.area}m²` : '';
-        const muni       = p.municipio || '';
-        const titleStr   = [p.title, hab, area, muni].filter(Boolean).join(' - ');
+        const tipoLabel = useRent ? 'Arriendo' : 'Venta';
+        const hab       = p.habitaciones ? `${p.habitaciones}hab` : '';
+        const area      = p.area ? `${p.area}m²` : '';
+        const muni      = p.municipio || '';
 
-        const desc = (p.descripcion || `${tipoLabel} en ${muni}`).replace(/[\r\n]+/g, ' ').trim().slice(0, 500);
+        // Título máx 65 chars: intentar completo, si no, usar versión corta
+        const titleFull  = [p.title, hab, area, muni].filter(Boolean).join(' - ');
+        const titleShort = [p.barrio || muni, hab, area].filter(Boolean).join(' - ');
+        const titleStr   = titleFull.length <= 65 ? titleFull
+                         : titleShort.length <= 65 ? titleShort
+                         : titleShort.slice(0, 62) + '...';
+
+        const desc  = (p.descripcion || `${tipoLabel} en ${muni}`).replace(/[\r\n]+/g, ' ').trim().slice(0, 500);
         const avail = p.estado === 'ocupado' ? 'out of stock' : 'in stock';
 
         rows.push([
@@ -2480,7 +2488,9 @@ app.get('/api/feed/productos.csv', async (req, res) => {
           q(`${Number(rawPrice).toFixed(2)} COP`),
           q(`${baseUrl}/?prop=${p._id}`),
           q(mainImg),
-          q(extraImgs)
+          q(extraImgs),
+          '"Alex Arias"',   // brand
+          '"no"'            // identifier_exists — sin GTIN ni MPN
         ].join(','));
       }
     }
