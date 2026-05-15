@@ -2479,14 +2479,26 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         // Eliminar saltos de línea que rompen el parser CSV de Meta
         const rawDesc = (p.descripcion || `${useRent ? 'En arriendo' : 'En venta'}, ${p.habitaciones || ''} habitaciones, ${p.area || ''}m² en ${p.municipio || 'Antioquia'}`);
         const desc    = rawDesc.replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, 500);
-        // Dirección: preferir calle real pero sin "#" (notación colombiana
-        // que Meta no puede geocodificar). Reemplazar por espacio simple.
-        const rawAddr = (p.direccion || p.barrio || p.municipio || 'Sabaneta')
-          .replace(/[\r\n]+/g, ' ')
-          .replace(/\s*#\s*/g, ' ')   // "Cra 48 # 30-12" → "Cra 48 30-12"
-          .replace(/\s{2,}/g, ' ')
-          .trim();
-        const address = rawAddr;
+        // Código postal colombiano por municipio
+        const postalCodes = {
+          'sabaneta':  '055450',
+          'envigado':  '055421',
+          'medellín':  '050001',
+          'medellin':  '050001',
+          'bello':     '051050',
+          'itagüí':    '055411',
+          'itagui':    '055411',
+          'la estrella': '055830',
+          'caldas':    '055600',
+          'rionegro':  '054040',
+          'copacabana': '051030',
+          'girardota': '051010',
+        };
+        const cityName   = (p.municipio || 'Sabaneta').trim();
+        const postalCode = postalCodes[cityName.toLowerCase()] || '';
+        // Meta no geocodifica calles colombianas — usamos solo el municipio
+        // como address (siempre geocodificable) + código postal para precisión
+        const address = cityName;
         const price   = `${Number(rawPrice || 0).toFixed(2)} COP`; // Meta requiere 2 decimales
 
         rows.push([
@@ -2500,10 +2512,10 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
           q(price),                   // "3500000 COP"
           q(`${baseUrl}/?prop=${p._id}`),
           q(address),
-          q((p.municipio || 'Sabaneta').trim()),
+          q(cityName),
           q('Antioquia'),
           'CO',
-          '',
+          q(postalCode),
           p.lat  || '',
           p.lng  || '',
           p.banos        || '',
