@@ -2566,14 +2566,13 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
           'girardota': '051010',
         };
         const municipio  = (p.municipio || 'Sabaneta').trim();
-        // Sin tilde para evitar problemas de encoding en geocodificador de Meta
-        const cityName   = 'Medellin';
+        // Usar municipio real como city — Meta necesita city separado del address
+        const cityName   = municipio;
         const postalCode = postalCodes[municipio.toLowerCase()] || postalCodes['medellín'] || '';
-        // Formato internacional colombiano: "Calle X No. Y-Z, Municipio"
-        // "#" reemplazado por "No." — estándar reconocido por geocodificadores internacionales.
+        // address = solo calle (sin municipio al final) — el geocodificador usa city+region+country
         const rawDireccion = (p.direccion || '').trim();
         const address = rawDireccion
-          ? rawDireccion.replace(/\s*#\s*/g, ' No. ').replace(/\s+/g, ' ').trim() + ', ' + municipio
+          ? rawDireccion.replace(/\s*#\s*/g, ' No. ').replace(/\s+/g, ' ').trim()
           : (p.barrio || municipio);
         const price   = `${Number(rawPrice || 0).toFixed(2)} COP`; // Meta requiere 2 decimales
 
