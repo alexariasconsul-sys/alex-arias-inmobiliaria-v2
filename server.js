@@ -741,22 +741,23 @@ app.use('/uploads', (req, res, next) => {
   next();
 }, express.static(uploadsDir, { maxAge: '365d', immutable: true }));
 
-// Endpoint para convertir WebP → JPEG al vuelo (necesario para Meta Catalog)
-// URLs terminan en .jpg para que Meta acepte el formato (valida la extensión)
+// Endpoint para convertir/redimensionar imágenes → JPEG ≤1200px para Meta Catalog.
+// Prueba WebP primero; si no existe, usa el JPEG original como fuente.
 app.get('/api/feed/img/:filename', async (req, res) => {
   try {
-    let filename = path.basename(req.params.filename); // evitar path traversal
-    // Soportar URLs .jpg que mapean a archivos .webp reales
-    const actualFilename = filename.replace(/\.jpg$/i, '.webp');
-    const filepath = path.join(uploadsDir, actualFilename);
-    if (!fs.existsSync(filepath)) return res.status(404).end();
+    const filename = path.basename(req.params.filename);
+    const webpPath = path.join(uploadsDir, filename.replace(/\.jpg$/i, '.webp'));
+    const jpgPath  = path.join(uploadsDir, filename);
+    const filepath = fs.existsSync(webpPath) ? webpPath
+                   : fs.existsSync(jpgPath)  ? jpgPath
+                   : null;
+    if (!filepath) return res.status(404).end();
     res.setHeader('Content-Type', 'image/jpeg');
     res.setHeader('Cache-Control', 'public, max-age=86400');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    // Servir a 1200px (Meta recomienda mínimo 600px; sin agrandar si ya es grande)
     const buf = await sharp(filepath)
       .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 90 })
+      .jpeg({ quality: 85 })
       .toBuffer();
     res.send(buf);
   } catch (err) { res.status(500).end(); }
@@ -2445,26 +2446,42 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
 
     const rows = [HEADERS.join(',')];
 
-    // Pre-convertir TODAS las imágenes WebP a JPEG en disco antes de generar el CSV.
-    // Así cuando Meta crawlee las URLs de imagen ya serán archivos estáticos
-    // servidos por Nginx directamente, sin pasar por Node.js.
+    // Pre-convertir/optimizar TODAS las imágenes a JPEG ≤1200px antes de generar el CSV.
+    // Re-convierte también si el .jpg existente es >800KB (imagen subida sin redimensionar).
     for (const p of docs) {
       for (const img of (p.images || [])) {
         if (!img.filename) continue;
-        // img.filename puede ser "uploads/file.webp" — usar basename para evitar ruta doble
         const baseName = path.basename(img.filename);
-        if (!baseName.endsWith('.webp')) continue;
-        const webpPath = path.join(uploadsDir, baseName);
-        const jpgName  = baseName.replace(/\.webp$/i, '.jpg');
-        const jpgPath  = path.join(uploadsDir, jpgName);
-        if (fs.existsSync(webpPath) && !fs.existsSync(jpgPath)) {
-          try {
-            const buf = await sharp(webpPath)
-              .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
-              .jpeg({ quality: 90 })
-              .toBuffer();
-            fs.writeFileSync(jpgPath, buf);
-          } catch (_) {}
+        const ext = baseName.split('.').pop().toLowerCase();
+
+        if (ext === 'webp') {
+          const webpPath = path.join(uploadsDir, baseName);
+          const jpgName  = baseName.replace(/\.webp$/i, '.jpg');
+          const jpgPath  = path.join(uploadsDir, jpgName);
+          const jpgStat  = fs.existsSync(jpgPath) ? fs.statSync(jpgPath) : null;
+          // Re-convertir si no existe o si el .jpg es >800KB (sin redimensionar)
+          if (fs.existsSync(webpPath) && (!jpgStat || jpgStat.size > 800000)) {
+            try {
+              const buf = await sharp(webpPath)
+                .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
+                .jpeg({ quality: 85 })
+                .toBuffer();
+              fs.writeFileSync(jpgPath, buf);
+            } catch (_) {}
+          }
+        } else if (ext === 'jpg' || ext === 'jpeg') {
+          // JPEG directo — re-optimizar si >800KB
+          const srcPath = path.join(uploadsDir, baseName);
+          const srcStat = fs.existsSync(srcPath) ? fs.statSync(srcPath) : null;
+          if (srcStat && srcStat.size > 800000) {
+            try {
+              const buf = await sharp(srcPath)
+                .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
+                .jpeg({ quality: 85 })
+                .toBuffer();
+              fs.writeFileSync(srcPath, buf); // Sobreescribir con versión optimizada
+            } catch (_) {}
+          }
         }
       }
     }
@@ -2491,17 +2508,24 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         // Saltar propiedades sin imagen — Meta requiere URL válida en campo "image"
         if (!mainImg) continue;
 
-        // Convertir URL de WebP a JPEG para Meta.
-        // Si ya existe el JPEG en disco (pre-convertido arriba), sirve directamente
-        // desde /uploads/ via Nginx (sin pasar por Node). Si no, usa el endpoint
-        // dinámico como fallback.
+        // Convertir/optimizar URLs de imagen para Meta: siempre JPEG ≤1200px ≤800KB.
+        // - WebP → endpoint dinámico (pre-conversion ya creó el .jpg optimizado en disco)
+        // - JPG grande (>800KB) → endpoint dinámico para redimensionar on-the-fly
+        // - JPG pequeño y otros → URL directa
         const toMetaImg = url => {
           if (!url) return '';
-          if (url.endsWith('.webp')) {
-            const fname   = url.split('/').pop().replace(/\.webp$/i, '.jpg');
-            const cached  = path.join(uploadsDir, fname);
-            if (fs.existsSync(cached)) return `${baseUrl}/uploads/${encodeURI(fname)}`;
-            return `${baseUrl}/api/feed/img/${encodeURI(fname)}`;
+          const fname = url.split('/').pop();
+          if (fname.endsWith('.webp')) {
+            const jpgFname = fname.replace(/\.webp$/i, '.jpg');
+            const cached   = path.join(uploadsDir, jpgFname);
+            const stat     = fs.existsSync(cached) ? fs.statSync(cached) : null;
+            if (stat && stat.size <= 800000) return `${baseUrl}/uploads/${encodeURI(jpgFname)}`;
+            return `${baseUrl}/api/feed/img/${encodeURI(jpgFname)}`;
+          }
+          if (url.includes('/uploads/') && /\.(jpg|jpeg)$/i.test(fname)) {
+            const filePath = path.join(uploadsDir, fname);
+            const stat     = fs.existsSync(filePath) ? fs.statSync(filePath) : null;
+            if (stat && stat.size > 800000) return `${baseUrl}/api/feed/img/${encodeURI(fname)}`;
           }
           return url;
         };
