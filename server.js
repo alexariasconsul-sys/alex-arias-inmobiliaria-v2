@@ -2566,10 +2566,12 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
           'girardota': '051010',
         };
         const municipio  = (p.municipio || 'Sabaneta').trim();
-        // DIAGNÓSTICO: dirección fija conocida en Medellín centro para descartar geocodificación
-        const cityName   = 'Medellin';
+        const cityName   = municipio;
         const postalCode = postalCodes[municipio.toLowerCase()] || postalCodes['medellín'] || '';
-        const address    = 'Calle 10 No. 43-9';
+        const rawDireccion = (p.direccion || '').trim();
+        const address = rawDireccion
+          ? rawDireccion.replace(/\s*#\s*/g, ' No. ').replace(/\s+/g, ' ').trim()
+          : (p.barrio || municipio);
         const price   = `${Number(rawPrice || 0).toFixed(2)} COP`; // Meta requiere 2 decimales
 
         rows.push([
