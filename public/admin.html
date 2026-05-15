@@ -411,50 +411,45 @@
                 </div>
               </div>
 
-              <p class="adm-integ-desc">Tu portafolio genera automáticamente un feed de inmuebles compatible con el <strong style="color:#c8d0dc">Catálogo de Bienes Raíces</strong> de Facebook. Úsalo para crear anuncios de retargeting con Dynamic Ads.</p>
+              <p class="adm-integ-desc">Tu portafolio genera automáticamente un feed compatible con el <strong style="color:#c8d0dc">Catálogo de Productos</strong> de Meta. Úsalo para crear anuncios de retargeting con Advantage+ Catalog Ads.</p>
 
               <div class="adm-catalog-steps">
                 <div class="adm-catalog-step">
                   <span class="adm-step-num">1</span>
                   <div>
                     <strong>Copia la URL del feed</strong>
-                    <p>Esta URL contiene todos tus inmuebles en formato que Facebook entiende</p>
+                    <p>Esta URL contiene todos tus inmuebles en formato CSV que Meta entiende</p>
                   </div>
                 </div>
                 <div class="adm-catalog-step">
                   <span class="adm-step-num">2</span>
                   <div>
                     <strong>Ve a Meta Business Suite</strong>
-                    <p>Commerce Manager → Catálogos → Crear catálogo → Bienes raíces</p>
+                    <p>Commerce Manager → Catálogos → Crear catálogo → Productos online</p>
                   </div>
                 </div>
                 <div class="adm-catalog-step">
                   <span class="adm-step-num">3</span>
                   <div>
                     <strong>Agrega el origen de datos</strong>
-                    <p>Elige "URL del feed de datos" y pega la URL. Facebook se sincroniza automáticamente.</p>
+                    <p>Elige "Conectar con una lista de datos" y pega la URL. Meta se sincroniza cada hora.</p>
                   </div>
                 </div>
                 <div class="adm-catalog-step">
                   <span class="adm-step-num">4</span>
                   <div>
                     <strong>Crea tu campaña</strong>
-                    <p>Campaña → Objetivo: Ventas de catálogo → selecciona tu catálogo de inmuebles</p>
+                    <p>Campaña → Objetivo: Ventas de catálogo → selecciona Catálogo_Productos_online</p>
                   </div>
                 </div>
               </div>
 
               <div class="adm-feed-url-block" id="admFeedBlock">
-                <p style="font-size:12px;font-weight:600;color:#cbd5e1;margin:0 0 10px">URLs del feed (copia la que prefieras):</p>
+                <p style="font-size:12px;font-weight:600;color:#cbd5e1;margin:0 0 10px">URL del feed CSV para Meta:</p>
                 <div class="adm-feed-url-row">
-                  <span class="adm-feed-badge">JSON</span>
-                  <code class="adm-feed-url" id="admFeedUrlJson"></code>
-                  <button class="adm-copy-key-btn" onclick="copyFeedUrl('json')">Copiar</button>
-                </div>
-                <div class="adm-feed-url-row" style="margin-top:8px">
-                  <span class="adm-feed-badge adm-feed-badge-xml">XML</span>
-                  <code class="adm-feed-url" id="admFeedUrlXml"></code>
-                  <button class="adm-copy-key-btn" onclick="copyFeedUrl('xml')">Copiar</button>
+                  <span class="adm-feed-badge" style="background:#16a34a">CSV</span>
+                  <code class="adm-feed-url" id="admFeedUrlCsv"></code>
+                  <button class="adm-copy-key-btn" onclick="copyFeedUrl('csv')">Copiar</button>
                 </div>
               </div>
 
@@ -1739,8 +1734,7 @@ function populateIntegSettings(s) {
   updatePixelStatusBadge(s.facebookPixelId);
   // Feed URLs
   const base = window.location.origin;
-  if (g('admFeedUrlJson')) g('admFeedUrlJson').textContent = `${base}/api/feed/facebook`;
-  if (g('admFeedUrlXml'))  g('admFeedUrlXml').textContent  = `${base}/api/feed/facebook.xml`;
+  if (g('admFeedUrlCsv')) g('admFeedUrlCsv').textContent = `${base}/api/feed/productos.csv`;
   // Webhooks
   if (g('admWebhookUrl'))       g('admWebhookUrl').value         = s.webhookUrl || '';
   if (g('admWevNewProp'))       g('admWevNewProp').checked       = (s.webhookEvents||[]).includes('new_property');
@@ -1775,7 +1769,7 @@ function updatePixelStatusBadge(pixelId) {
 }
 
 function copyFeedUrl(type) {
-  const el = document.getElementById(type === 'json' ? 'admFeedUrlJson' : 'admFeedUrlXml');
+  const el = document.getElementById('admFeedUrlCsv');
   if (!el) return;
   navigator.clipboard.writeText(el.textContent).then(() => {
     const btn = el.nextElementSibling;
