@@ -729,10 +729,24 @@ app.use('/assets', express.static(path.join(__dirname, 'assets'), {
 }));
 
 // Uploads (propiedades) con caché de 365 días
-app.use('/uploads', express.static(uploadsDir, {
-  maxAge: '365d',
-  immutable: true
-}));
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(uploadsDir, { maxAge: '365d', immutable: true }));
+
+// Endpoint para convertir WebP → JPEG al vuelo (necesario para Meta Catalog)
+app.get('/api/feed/img/:filename', async (req, res) => {
+  try {
+    const filename = path.basename(req.params.filename); // evitar path traversal
+    const filepath = path.join(uploadsDir, filename);
+    if (!fs.existsSync(filepath)) return res.status(404).end();
+    res.setHeader('Content-Type', 'image/jpeg');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    const buf = await sharp(filepath).jpeg({ quality: 85 }).toBuffer();
+    res.send(buf);
+  } catch (err) { res.status(500).end(); }
+});
 
 // ── GOOGLE OAUTH ──────────────────────────────────────────────
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'alexariasconsul@gmail.com';
@@ -2439,12 +2453,23 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         // Saltar propiedades sin imagen — Meta requiere URL válida en campo "image"
         if (!mainImg) continue;
 
+        // WebP → JPEG para Meta (solo acepta JPG/GIF/PNG en catálogos)
+        const toMetaImg = url => {
+          if (!url) return '';
+          if (url.endsWith('.webp')) {
+            const fname = url.split('/').pop();
+            return `${baseUrl}/api/feed/img/${fname}`;
+          }
+          return url;
+        };
+        const metaMainImg  = toMetaImg(mainImg);
+        const metaExtraImg = imgs.slice(1, 4).map(toMetaImg).filter(Boolean).join(',');
+
         // Eliminar saltos de línea que rompen el parser CSV de Meta
         const rawDesc = (p.descripcion || `${useRent ? 'En arriendo' : 'En venta'}, ${p.habitaciones || ''} habitaciones, ${p.area || ''}m² en ${p.municipio || 'Antioquia'}`);
         const desc    = rawDesc.replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, 500);
-        // Dirección simplificada a barrio + municipio para que Meta pueda geocodificar
-        const addrParts = [p.barrio, p.municipio, 'Antioquia', 'Colombia'].filter(Boolean);
-        const address = [...new Set(addrParts)].join(', ');
+        // Solo municipio — p.barrio contiene nombre del proyecto, no barrio geográfico
+        const address = [p.municipio, 'Antioquia', 'Colombia'].filter(Boolean).join(', ');
         const price   = `${Number(rawPrice || 0).toFixed(2)} COP`; // Meta requiere 2 decimales
 
         rows.push([
@@ -2452,8 +2477,8 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
           q(p.title || 'Inmueble'),
           q(availability),
           q(desc),
-          q(mainImg),                 // campo "image" (obligatorio)
-          q(extraImg),                // additional_image_link (opcional)
+          q(metaMainImg),             // campo "image" (obligatorio, JPEG para Meta)
+          q(metaExtraImg),            // additional_image_link (opcional)
           q(listingType),
           q(price),                   // "3500000 COP"
           q(`${baseUrl}/?prop=${p._id}`),
