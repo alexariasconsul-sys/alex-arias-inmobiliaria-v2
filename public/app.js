@@ -4140,9 +4140,9 @@ function openEditModal(prop) {
   document.getElementById('fSector').value = prop.sector || '';
   document.getElementById('fDireccion').value = prop.direccion || '';
   document.getElementById('fPiso').value = prop.piso || '';
-  document.getElementById('fPrecio').value         = prop.precio         || '';
-  document.getElementById('fPrecioArriendo').value = prop.precioArriendo || '';
-  document.getElementById('fPrecioVenta').value    = prop.precioVenta    || '';
+  document.getElementById('fPrecio').value = prop.precio || '';
+  document.getElementById('fPrecioArriendo') && (document.getElementById('fPrecioArriendo').value = prop.precioArriendo || '');
+  document.getElementById('fPrecioVenta')    && (document.getElementById('fPrecioVenta').value    = prop.precioVenta    || '');
   document.getElementById('fArea').value = prop.area || '';
   document.getElementById('fHab').value = prop.habitaciones || '';
   document.getElementById('fBanos').value = prop.banos || '';
