@@ -2491,7 +2491,7 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
           q(price),                   // "3500000 COP"
           q(`${baseUrl}/?prop=${p._id}`),
           q(address),
-          q(p.municipio || 'Sabaneta'),
+          q((p.municipio || 'Sabaneta').trim()),
           q('Antioquia'),
           'CO',
           '',
