@@ -107,7 +107,8 @@ app.use('/api/verify-password', authLimiter);
 app.use('/auth/google', authLimiter);
 // Eximir endpoints de feed del rate limiter — Meta crawlea ~56 imágenes en ráfaga
 app.use('/api/', (req, res, next) => {
-  if (req.path.startsWith('/feed/') || req.path === '/feed') return next();
+  // req.url = parte DESPUÉS de /api/, ej: "/feed/facebook.csv"
+  if (req.url.startsWith('/feed/') || req.url === '/feed') return next();
   return globalLimiter(req, res, next);
 });
 
