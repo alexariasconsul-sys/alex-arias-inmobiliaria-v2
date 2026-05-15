@@ -2560,6 +2560,9 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
     }
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="meta_feed.csv"');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
     res.send(rows.join('\r\n'));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
