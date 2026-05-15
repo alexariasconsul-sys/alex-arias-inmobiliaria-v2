@@ -1384,7 +1384,8 @@ app.put('/api/properties/:id', requireAdmin, upload.array('images', 15), async (
       title, tipo, municipio, barrio, sector, direccion, piso,
       precio, precioArriendo, precioVenta,
       area, habitaciones, banos, parqueadero, cuarto_util, estudio,
-      descripcion, amenidades, estado, lat, lng
+      descripcion, amenidades, estado, lat, lng,
+      imageFilter, imageOrder
     } = req.body;
 
     const amenArr = (() => {
@@ -1404,7 +1405,19 @@ app.put('/api/properties/:id', requireAdmin, upload.array('images', 15), async (
       order_index: currentImages.length + i
     }));
 
-    const allImages = [...currentImages, ...newImages];
+    // Reordenar imágenes existentes si se envió imageOrder (array de IDs)
+    let orderedExisting = currentImages;
+    if (imageOrder) {
+      try {
+        const orderIds = JSON.parse(imageOrder);
+        const byId = Object.fromEntries(currentImages.map(i => [i.id, i]));
+        const reordered = orderIds.map(id => byId[id]).filter(Boolean);
+        const rest = currentImages.filter(i => !orderIds.includes(i.id));
+        orderedExisting = [...reordered, ...rest];
+      } catch { /* ignorar orden inválido */ }
+    }
+
+    const allImages = [...orderedExisting, ...newImages];
 
     // Construir el update solo con los campos enviados (evitar sobreescribir con undefined)
     const updateFields = {};
@@ -1429,6 +1442,7 @@ app.put('/api/properties/:id', requireAdmin, upload.array('images', 15), async (
     if (estado    !== undefined) updateFields.estado    = estado;
     if (lat       !== undefined) updateFields.lat       = Number(lat);
     if (lng       !== undefined) updateFields.lng       = Number(lng);
+    if (imageFilter !== undefined) updateFields.imageFilter = imageFilter;
 
     await db.updateAsync({ _id: req.params.id }, {
       $set: {

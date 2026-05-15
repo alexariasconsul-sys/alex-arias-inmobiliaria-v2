@@ -852,8 +852,25 @@
         </div>
         <div class="adm-image-preview" id="pfImagePreview"></div>
         <div id="pfExistingImgs" style="display:none">
-          <p class="adm-form-group" style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-top:12px">Fotos actuales</p>
-          <div class="adm-image-preview" id="pfExistingGrid"></div>
+          <p class="adm-form-group" style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-top:12px">Fotos actuales · <span style="font-weight:400;text-transform:none;color:#9ca3af">arrastra para reordenar · la primera es la portada</span></p>
+          <div class="adm-image-preview adm-sortable-grid" id="pfExistingGrid"></div>
+        </div>
+
+        <!-- Filtro de foto -->
+        <div class="adm-form-group" style="margin-top:14px">
+          <label class="adm-label">Filtro de foto</label>
+          <div class="adm-filter-row" id="pfFilterRow">
+            <button type="button" class="adm-filter-btn active" data-filter="natural">Natural</button>
+            <button type="button" class="adm-filter-btn" data-filter="vivid">Vívido</button>
+            <button type="button" class="adm-filter-btn" data-filter="warm">Cálido</button>
+            <button type="button" class="adm-filter-btn" data-filter="cool">Frío</button>
+            <button type="button" class="adm-filter-btn" data-filter="bright">Brillante</button>
+            <button type="button" class="adm-filter-btn" data-filter="drama">Dramático</button>
+          </div>
+          <input type="hidden" id="pfImageFilter" value="natural" />
+          <div id="pfFilterPreview" style="margin-top:8px;border-radius:8px;overflow:hidden;height:80px;background:#f3f4f6;display:none">
+            <img id="pfFilterPreviewImg" style="width:100%;height:80px;object-fit:cover;" />
+          </div>
         </div>
       </div>
 
@@ -1197,24 +1214,19 @@ function openPropPanel(prop = null) {
   setEstado(prop?.estado || 'libre');
   document.getElementById('pfImagePreview').innerHTML = '';
 
-  // Fotos existentes
+  // Fotos existentes con drag-and-drop para reordenar
   const existWrap = document.getElementById('pfExistingImgs');
   const existGrid = document.getElementById('pfExistingGrid');
   if (prop?.images?.length) {
     existWrap.style.display = 'block';
-    existGrid.innerHTML = prop.images.map(img => `
-      <div class="adm-img-thumb" style="position:relative">
-        <img src="/${img.filename}" style="width:72px;height:60px;object-fit:cover;border-radius:8px;display:block;" />
-        <button type="button" class="adm-img-del" data-img-id="${img.id}" style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
-      </div>`).join('');
-    existGrid.querySelectorAll('.adm-img-del').forEach(btn => {
-      btn.addEventListener('click', () => {
-        propDeleteImages.push(btn.dataset.imgId);
-        btn.closest('.adm-img-thumb').style.opacity = '.3';
-        btn.closest('.adm-img-thumb').style.pointerEvents = 'none';
-      });
-    });
+    renderExistingGrid(prop.images);
   } else { existWrap.style.display = 'none'; }
+
+  // Filtro de foto
+  const filterVal = prop?.imageFilter || 'natural';
+  document.getElementById('pfImageFilter').value = filterVal;
+  document.querySelectorAll('.adm-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === filterVal));
+  updateFilterPreview();
 
   document.getElementById('propPanel').classList.add('open');
   document.getElementById('propPanelOverlay').style.display = 'block';
@@ -1247,6 +1259,108 @@ function setEstado(val) {
 }
 document.querySelectorAll('.adm-tipo-btn').forEach(b => b.addEventListener('click', () => setTipo(b.dataset.val)));
 document.querySelectorAll('.adm-estado-btn').forEach(b => b.addEventListener('click', () => setEstado(b.dataset.val)));
+
+// ── REORDENAR FOTOS (drag-and-drop) ─────────────────────────────
+let dragSrc = null;
+
+function renderExistingGrid(images) {
+  const existGrid = document.getElementById('pfExistingGrid');
+  const existWrap = document.getElementById('pfExistingImgs');
+  existGrid.innerHTML = '';
+  existWrap.style.display = images.length ? 'block' : 'none';
+
+  images.forEach((img, i) => {
+    const div = document.createElement('div');
+    div.className = 'adm-img-thumb adm-img-draggable';
+    div.draggable = true;
+    div.dataset.imgId = img.id;
+    div.style.position = 'relative';
+    div.innerHTML = `
+      ${i === 0 ? '<span class="adm-img-cover-badge">Portada</span>' : ''}
+      <img src="/${img.filename}" style="width:72px;height:60px;object-fit:cover;border-radius:8px;display:block;" />
+      <button type="button" class="adm-img-del" data-img-id="${img.id}" style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>`;
+
+    div.addEventListener('dragstart', e => {
+      dragSrc = div;
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => div.classList.add('adm-drag-ghost'), 0);
+    });
+    div.addEventListener('dragend', () => {
+      div.classList.remove('adm-drag-ghost');
+      existGrid.querySelectorAll('.adm-drag-over').forEach(el => el.classList.remove('adm-drag-over'));
+      updateCoverBadge();
+      updateFilterPreview();
+    });
+    div.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; div.classList.add('adm-drag-over'); });
+    div.addEventListener('dragleave', () => div.classList.remove('adm-drag-over'));
+    div.addEventListener('drop', e => {
+      e.preventDefault();
+      div.classList.remove('adm-drag-over');
+      if (dragSrc && dragSrc !== div) {
+        const allThumbs = [...existGrid.querySelectorAll('.adm-img-thumb')];
+        const fromIdx = allThumbs.indexOf(dragSrc);
+        const toIdx   = allThumbs.indexOf(div);
+        if (fromIdx < toIdx) existGrid.insertBefore(dragSrc, div.nextSibling);
+        else existGrid.insertBefore(dragSrc, div);
+      }
+    });
+
+    div.querySelector('.adm-img-del').addEventListener('click', () => {
+      propDeleteImages.push(img.id);
+      div.style.opacity = '.3';
+      div.style.pointerEvents = 'none';
+      updateCoverBadge();
+    });
+
+    existGrid.appendChild(div);
+  });
+
+  updateFilterPreview();
+}
+
+function updateCoverBadge() {
+  const existGrid = document.getElementById('pfExistingGrid');
+  existGrid.querySelectorAll('.adm-img-cover-badge').forEach(b => b.remove());
+  const first = existGrid.querySelector('.adm-img-thumb:not([style*="opacity: 0.3"]):not([style*="opacity:.3"])');
+  if (first) first.insertAdjacentHTML('afterbegin', '<span class="adm-img-cover-badge">Portada</span>');
+}
+
+function updateFilterPreview() {
+  const existGrid = document.getElementById('pfExistingGrid');
+  const preview   = document.getElementById('pfFilterPreview');
+  const previewImg = document.getElementById('pfFilterPreviewImg');
+  const filterVal  = document.getElementById('pfImageFilter').value;
+  const firstImg   = existGrid?.querySelector('.adm-img-thumb:not([style*="opacity"]) img');
+  if (firstImg) {
+    previewImg.src = firstImg.src;
+    previewImg.style.filter = getFilterCSS(filterVal);
+    preview.style.display = 'block';
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+function getFilterCSS(f) {
+  const filters = {
+    natural:  '',
+    vivid:    'saturate(1.5) contrast(1.1)',
+    warm:     'saturate(1.2) sepia(0.25) brightness(1.05)',
+    cool:     'saturate(1.1) hue-rotate(15deg) brightness(1.03)',
+    bright:   'brightness(1.15) contrast(1.05)',
+    drama:    'contrast(1.25) saturate(1.3) brightness(0.95)',
+  };
+  return filters[f] || '';
+}
+
+// Botones de filtro
+document.getElementById('pfFilterRow').addEventListener('click', e => {
+  const btn = e.target.closest('.adm-filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('.adm-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pfImageFilter').value = btn.dataset.filter;
+  updateFilterPreview();
+});
 
 // Upload fotos
 document.getElementById('pfTriggerImages').addEventListener('click', () => document.getElementById('pfImages').click());
@@ -1293,9 +1407,16 @@ document.getElementById('propPanelSave').addEventListener('click', async () => {
   fd.append('cuarto_util',  document.getElementById('pfCuartoUtil').checked ? '1' : '0');
   fd.append('estudio',      document.getElementById('pfEstudio').checked ? '1' : '0');
   fd.append('amenidades',  document.getElementById('pfAmenidades').value);
-  fd.append('descripcion', document.getElementById('pfDescripcion').value);
-  fd.append('lat',         document.getElementById('pfLat').value);
-  fd.append('lng',         document.getElementById('pfLng').value);
+  fd.append('descripcion',  document.getElementById('pfDescripcion').value);
+  fd.append('lat',          document.getElementById('pfLat').value);
+  fd.append('lng',          document.getElementById('pfLng').value);
+  fd.append('imageFilter',  document.getElementById('pfImageFilter').value);
+
+  // Orden actual de imágenes existentes (para la portada y el feed de Meta)
+  const orderedIds = [...document.getElementById('pfExistingGrid').querySelectorAll('.adm-img-thumb[data-img-id]')]
+    .map(el => el.dataset.imgId);
+  if (orderedIds.length) fd.append('imageOrder', JSON.stringify(orderedIds));
+
   propNewImages.forEach(f => fd.append('images', f));
 
   const btn = document.getElementById('propPanelSave');

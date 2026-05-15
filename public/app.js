@@ -1025,6 +1025,13 @@ function cardHTML(p) {
     ? '<span class="tipo-badge tipo-badge--nuevo">Nuevo</span>'
     : '';
 
+  const imgFilterStyle = (() => {
+    const f = p.imageFilter;
+    if (!f || f === 'natural') return '';
+    const map = { vivid:'saturate(1.5) contrast(1.1)', warm:'saturate(1.2) sepia(0.25) brightness(1.05)', cool:'saturate(1.1) hue-rotate(15deg) brightness(1.03)', bright:'brightness(1.15) contrast(1.05)', drama:'contrast(1.25) saturate(1.3) brightness(0.95)' };
+    return map[f] ? ` style="filter:${map[f]}"` : '';
+  })();
+
   const slides = images.length
     ? images.map((img, i) => {
         const altText = `${p.title}, ${p.barrio}, ${p.municipio} - ${p.habitaciones} hab, ${p.banos} baño${p.banos !== 1 ? 's' : ''}, ${p.area} m² foto ${i + 1}`;
@@ -1033,7 +1040,7 @@ function cardHTML(p) {
           <img ${i === 0
             ? `src="/${encodeImgPath(img.filename)}" decoding="async"`
             : `data-src="/${encodeImgPath(img.filename)}" src="${BLANK_PLACEHOLDER}" loading="lazy" decoding="async"`
-          } alt="${altText}" title="${p.title} - ${p.municipio}" class="lazy-img img-loaded" />
+          } alt="${altText}" title="${p.title} - ${p.municipio}" class="lazy-img img-loaded"${imgFilterStyle} />
         </div>`;
       }).join('')
     : `<div class="property-slide is-active"><div class="no-photo-placeholder"><svg viewBox="0 0 64 64" fill="none" width="44" height="44"><path d="M8 28L32 8l24 20v28H8V28z" fill="rgba(148,163,184,.25)" stroke="rgba(148,163,184,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 56V38h16v18" stroke="rgba(148,163,184,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Sin fotografía</span></div></div>`;
