@@ -2552,12 +2552,11 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         };
         const cityName   = (p.municipio || 'Sabaneta').trim();
         const postalCode = postalCodes[cityName.toLowerCase()] || '';
-        // address = dirección real del inmueble sin "#" (rompe geocodificadores).
-        // Fallback: barrio → sector → municipio. city/region/country van en columnas separadas.
+        // address = solo el nombre de la calle (antes del "#"), sin número de casa.
+        // El geocodificador de Meta no reconoce formato colombiano "Calle X # Y-Z".
         const rawDireccion = (p.direccion || p.barrio || p.sector || '').trim();
-        const address = rawDireccion
-          ? rawDireccion.replace(/#+/g, '').replace(/\s{2,}/g, ' ').trim()
-          : cityName;
+        const streetOnly = rawDireccion.split('#')[0].trim().replace(/,\s*$/, '').trim();
+        const address = streetOnly || cityName;
         const price   = `${Number(rawPrice || 0).toFixed(2)} COP`; // Meta requiere 2 decimales
 
         rows.push([
