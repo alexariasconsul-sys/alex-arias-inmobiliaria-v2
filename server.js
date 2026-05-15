@@ -748,11 +748,10 @@ app.get('/api/feed/img/:filename', async (req, res) => {
     res.setHeader('Content-Type', 'image/jpeg');
     res.setHeader('Cache-Control', 'public, max-age=86400');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.setHeader('Content-Disposition', 'inline; filename="image.jpg"');
-    // Garantizar mínimo 800×800 para Meta (sin recortar, solo ampliar si es pequeña)
+    // Servir a 1200px (Meta recomienda mínimo 600px; sin agrandar si ya es grande)
     const buf = await sharp(filepath)
-      .resize({ width: 800, height: 800, fit: 'inside', withoutEnlargement: false })
-      .jpeg({ quality: 85 })
+      .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 90 })
       .toBuffer();
     res.send(buf);
   } catch (err) { res.status(500).end(); }
@@ -2464,12 +2463,13 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         if (!mainImg) continue;
 
         // WebP → JPEG para Meta. URL termina en .jpg para que Meta
-        // acepte el formato (valida la extensión además del Content-Type)
+        // acepte el formato (valida la extensión además del Content-Type).
+        // v=2 fuerza re-crawl en caso de que Meta tenga cacheado un 404 previo.
         const toMetaImg = url => {
           if (!url) return '';
           if (url.endsWith('.webp')) {
             const fname = url.split('/').pop().replace('.webp', '.jpg');
-            return `${baseUrl}/api/feed/img/${fname}`;
+            return `${baseUrl}/api/feed/img/${fname}?v=2`;
           }
           return url;
         };
@@ -2496,9 +2496,9 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         };
         const cityName   = (p.municipio || 'Sabaneta').trim();
         const postalCode = postalCodes[cityName.toLowerCase()] || '';
-        // Meta no geocodifica calles colombianas — usamos solo el municipio
-        // como address (siempre geocodificable) + código postal para precisión
-        const address = cityName;
+        // Meta no geocodifica calles colombianas. Incluir país y departamento
+        // en el campo address le da al geocodificador contexto suficiente.
+        const address = `${cityName}, Antioquia, Colombia`;
         const price   = `${Number(rawPrice || 0).toFixed(2)} COP`; // Meta requiere 2 decimales
 
         rows.push([
