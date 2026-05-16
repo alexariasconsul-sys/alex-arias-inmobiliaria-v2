@@ -72,6 +72,7 @@
   </style>
 
   <link rel="stylesheet" href="styles.min.css?v=13" />
+  <link rel="stylesheet" href="admin.css?v=4" />
 
   <!-- Leaflet CSS: Lazy load (media=print, onload para cambiar a all) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" media="print" onload="this.media='all'" />
@@ -885,274 +886,235 @@
     <!-- ═══ PHANTOM FOOTER (Buffer para tarjetas) ═════════════════ -->
     <div class="phantom-footer"></div>
 
-    <!-- ═══ MODAL: UPLOAD ══════════════════════════════════════════ -->
-    <div class="modal-overlay" id="uploadModal" style="display:none" role="dialog" aria-modal="true">
-      <div class="modal-content">
-        <button class="modal-close" id="closeUpload" aria-label="Cerrar">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        </button>
+    <!-- ═══ PANEL: EDITOR INMUEBLE (estilo admin) ════════════════ -->
+    <div class="adm-panel-overlay" id="uploadModalOverlay" style="display:none"></div>
+    <div class="adm-panel" id="uploadModal" role="dialog" aria-modal="true">
+      <div class="adm-panel-header">
+        <h2 id="uploadPanelTitle">Publicar Inmueble</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button type="button" class="adm-btn-outline" id="btnIntegraciones" title="Integraciones &amp; APIs" style="padding:6px 12px;font-size:12px">
+            <svg viewBox="0 0 24 24" fill="none" width="12" height="12"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            APIs
+          </button>
+          <button type="button" class="adm-btn-outline" id="parseToggleBtn" style="padding:6px 12px;font-size:12px">
+            <svg viewBox="0 0 24 24" fill="none" width="12" height="12"><path d="M12 3l1.5 4.5H18l-3.75 2.72 1.5 4.5L12 12l-3.75 2.72 1.5-4.5L6 7.5h4.5L12 3z" fill="currentColor"/></svg>
+            Parsear texto
+          </button>
+          <button class="adm-panel-close" id="closePanelUpload">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="adm-panel-body">
 
-        <!-- Formulario de publicación -->
-        <div id="stepUpload">
-
-          <!-- Header -->
-          <div class="publish-header">
-            <h2 id="uploadFormTitle">Publicar Inmueble</h2>
-            <button type="button" class="admin-integ-btn" id="btnIntegraciones" title="Integraciones &amp; APIs">
-              <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-              APIs
-            </button>
-            <button type="button" class="parse-toggle-btn" id="parseToggleBtn">
-              <svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M12 3l1.5 4.5H18l-3.75 2.72 1.5 4.5L12 12l-3.75 2.72 1.5-4.5L6 7.5h4.5L12 3z" fill="currentColor"/></svg>
-              Parsear texto
-            </button>
-          </div>
-
-          <!-- Parse area (colapsable) -->
-          <div class="parse-area parse-area--collapsible" id="parseArea" style="display:none">
-            <textarea id="rawTextInput" class="form-textarea" rows="5" placeholder="Pega aquí el texto con los datos del inmueble. Ej: Apartamento en Arriendo en Vivaré Plaza, Sabaneta, $3.500.000, 87m², 3 hab, 2.5 baños, parqueadero, piscina, seguridad…"></textarea>
-            <button class="btn-parse" id="parseTextBtn">
-              <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <!-- Parse area (colapsable) -->
+        <div class="adm-parse-area" id="parseArea" style="display:none">
+          <textarea id="rawTextInput" class="adm-textarea" rows="4" placeholder="Pega aquí el texto con los datos del inmueble. Ej: Apartamento en Arriendo en Vivaré Plaza, Sabaneta, $3.500.000, 87m², 3 hab, 2.5 baños, parqueadero, piscina, seguridad 24h…"></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button type="button" class="adm-btn-primary" id="parseTextBtn" style="flex:1;justify-content:center">
+              <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
               Parsear automáticamente
             </button>
-            <div class="form-divider" style="margin-top:4px"><span>o ingresa manualmente</span></div>
+            <button type="button" class="adm-btn-outline" id="parseClear">Limpiar</button>
+          </div>
+        </div>
+
+        <form id="uploadForm">
+          <input type="hidden" id="editingId" value="" />
+          <input type="hidden" id="fTipo" value="arriendo" />
+          <input type="hidden" id="fEstado" value="libre" />
+
+          <!-- Tipo de operación -->
+          <div class="adm-form-section">
+            <p class="adm-form-section-title">Tipo de operación</p>
+            <div class="adm-tipo-btns adm-tipo-btns--3">
+              <button type="button" class="adm-tipo-btn active" data-val="arriendo">Arriendo</button>
+              <button type="button" class="adm-tipo-btn" data-val="venta">Venta</button>
+              <button type="button" class="adm-tipo-btn" data-val="combinado">Arriendo y Venta</button>
+            </div>
+            <div class="adm-estado-btns" style="margin-top:8px">
+              <button type="button" class="adm-estado-btn active" data-val="libre">● Disponible</button>
+              <button type="button" class="adm-estado-btn" data-val="ocupado">● Ocupado</button>
+            </div>
           </div>
 
-          <!-- Form fields -->
-          <form id="uploadForm" class="upload-form">
-            <input type="hidden" id="editingId" value="" />
-            <!-- Selects ocultos controlados por los botones visuales -->
-            <select id="fTipo" style="display:none"><option value="arriendo">Arriendo</option><option value="venta">Venta</option></select>
-            <select id="fEstado" style="display:none"><option value="libre">Libre</option><option value="ocupado">Ocupado</option></select>
+          <!-- Información básica -->
+          <div class="adm-form-section">
+            <p class="adm-form-section-title">Información básica</p>
+            <div class="adm-form-group"><label>Título *</label><input type="text" id="fTitle" class="adm-input" placeholder="Ej: Apartamento en Vivaré Plaza Residencial" /></div>
+            <div class="adm-form-row">
+              <div class="adm-form-group"><label>Municipio</label><input type="text" id="fMunicipio" class="adm-input" placeholder="Sabaneta" list="listMunicipios" /><datalist id="listMunicipios"><option value="Sabaneta"/><option value="Envigado"/><option value="Medellín"/><option value="Itagüí"/><option value="Bello"/><option value="La Estrella"/><option value="Caldas"/><option value="Copacabana"/></datalist></div>
+              <div class="adm-form-group"><label>Barrio / Conjunto</label><input type="text" id="fBarrio" class="adm-input" placeholder="Vivaré Plaza" /></div>
+            </div>
+            <div class="adm-form-group"><label>Sector / Referencia</label><input type="text" id="fSector" class="adm-input" placeholder="Av. Las Vegas / Metro La Estrella" /></div>
+            <div class="adm-form-row">
+              <div class="adm-form-group"><label>Dirección</label><input type="text" id="fDireccion" class="adm-input" placeholder="Calle 78cSur # 47G - 10" /></div>
+              <div class="adm-form-group" style="max-width:90px"><label>Piso</label><input type="text" id="fPiso" class="adm-input" placeholder="8" /></div>
+            </div>
+          </div>
 
-            <!-- ── Sección 1: Tipo de operación ── -->
-            <div class="form-section">
-              <div class="form-section-header">
-                <div class="section-icon">
-                  <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="9 22 9 12 15 12 15 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </div>
-                <span>Tipo de operación</span>
-              </div>
-              <div class="tipo-row">
-                <button type="button" class="tipo-btn active" data-value="arriendo">
-                  <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" stroke="currentColor" stroke-width="1.8"/></svg>
-                  <strong>Arriendo</strong>
-                  <span>Alquiler mensual</span>
-                </button>
-                <button type="button" class="tipo-btn" data-value="venta">
-                  <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  <strong>Venta</strong>
-                  <span>Venta directa</span>
-                </button>
-              </div>
-              <div class="estado-row">
-                <button type="button" class="estado-btn active" data-value="libre">
-                  <span class="estado-dot libre"></span> Disponible
-                </button>
-                <button type="button" class="estado-btn" data-value="ocupado">
-                  <span class="estado-dot ocupado"></span> Ocupado
-                </button>
+          <!-- Precio y detalles -->
+          <div class="adm-form-section">
+            <p class="adm-form-section-title">Precio y detalles</p>
+            <div id="fPrecioSimple">
+              <div class="adm-form-group">
+                <label>Precio (COP) *</label>
+                <div class="adm-input-prefix-wrap"><span class="adm-input-prefix">$</span><input type="number" id="fPrecio" class="adm-input adm-input--prefix" placeholder="3500000" min="0" step="50000" /></div>
               </div>
             </div>
-
-            <!-- ── Sección 2: Información básica ── -->
-            <div class="form-section">
-              <div class="form-section-header">
-                <div class="section-icon">
-                  <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v4l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <div id="fPrecioCombinado" style="display:none">
+              <div class="adm-form-row">
+                <div class="adm-form-group">
+                  <label>Precio Arriendo (COP)</label>
+                  <div class="adm-input-prefix-wrap"><span class="adm-input-prefix">$</span><input type="number" id="fPrecioArriendo" class="adm-input adm-input--prefix" placeholder="3500000" min="0" /></div>
                 </div>
-                <span>Información básica</span>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Título del inmueble *</label>
-                <input type="text" id="fTitle" class="form-input" placeholder="Ej: Apartamento en Vivaré Plaza Residencial" />
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label">Municipio</label>
-                  <input type="text" id="fMunicipio" class="form-input" placeholder="Sabaneta" list="listMunicipios" />
-                  <datalist id="listMunicipios">
-                    <option value="Sabaneta"/><option value="Envigado"/><option value="Medellín"/>
-                    <option value="Itagüí"/><option value="Bello"/><option value="La Estrella"/>
-                    <option value="Caldas"/><option value="Copacabana"/>
-                  </datalist>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Barrio / Conjunto</label>
-                  <input type="text" id="fBarrio" class="form-input" placeholder="Vivaré Plaza" />
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Sector / Referencia</label>
-                <input type="text" id="fSector" class="form-input" placeholder="Av. Las Vegas / Metro La Estrella" />
-              </div>
-              <div class="form-row">
-                <div class="form-group" style="flex:1">
-                  <label class="form-label">Dirección</label>
-                  <input type="text" id="fDireccion" class="form-input" placeholder="Calle 78cSur # 47G - 10" />
-                </div>
-                <div class="form-group" style="width:76px;flex-shrink:0">
-                  <label class="form-label">Piso</label>
-                  <input type="text" id="fPiso" class="form-input" placeholder="8" />
+                <div class="adm-form-group">
+                  <label>Precio Venta (COP)</label>
+                  <div class="adm-input-prefix-wrap"><span class="adm-input-prefix">$</span><input type="number" id="fPrecioVenta" class="adm-input adm-input--prefix" placeholder="450000000" min="0" /></div>
                 </div>
               </div>
             </div>
-
-            <!-- ── Sección 3: Precio y detalles ── -->
-            <div class="form-section">
-              <div class="form-section-header">
-                <div class="section-icon">
-                  <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><line x1="12" y1="1" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                </div>
-                <span>Precio y detalles</span>
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label">Precio (COP) *</label>
-                  <div class="input-affix-wrap">
-                    <span class="input-prefix">$</span>
-                    <input type="number" id="fPrecio" class="form-input input-with-pre" placeholder="3500000" min="0" step="50000" />
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Área</label>
-                  <div class="input-affix-wrap">
-                    <input type="number" id="fArea" class="form-input input-with-suf" placeholder="87" min="0" />
-                    <span class="input-suffix">m²</span>
-                  </div>
+            <div class="adm-form-group">
+              <label>Área</label>
+              <div class="adm-input-suffix-wrap"><input type="number" id="fArea" class="adm-input adm-input--suffix" placeholder="87" min="0" /><span class="adm-input-suffix">m²</span></div>
+            </div>
+            <div class="adm-form-row">
+              <div class="adm-form-group">
+                <label>Habitaciones</label>
+                <div class="adm-counter-wrap">
+                  <button type="button" class="adm-counter-btn" data-for="fHab" data-step="1" data-dir="-1">−</button>
+                  <input type="number" id="fHab" class="adm-counter-input" placeholder="0" min="0" max="20" />
+                  <button type="button" class="adm-counter-btn" data-for="fHab" data-step="1" data-dir="1">+</button>
                 </div>
               </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label">Habitaciones</label>
-                  <div class="counter-wrap">
-                    <button type="button" class="counter-btn" data-for="fHab" data-step="1" data-dir="-1">−</button>
-                    <input type="number" id="fHab" class="counter-input" placeholder="0" min="0" max="20" />
-                    <button type="button" class="counter-btn" data-for="fHab" data-step="1" data-dir="1">+</button>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Baños</label>
-                  <div class="counter-wrap">
-                    <button type="button" class="counter-btn" data-for="fBanos" data-step="0.5" data-dir="-1">−</button>
-                    <input type="number" id="fBanos" class="counter-input" placeholder="0" min="0" max="20" step="0.5" />
-                    <button type="button" class="counter-btn" data-for="fBanos" data-step="0.5" data-dir="1">+</button>
-                  </div>
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Características</label>
-                <div class="caract-pills">
-                  <input type="checkbox" id="fParqueadero" class="caract-check" />
-                  <label class="caract-pill" for="fParqueadero">
-                    <svg viewBox="0 0 24 24" fill="none" width="13" height="13"><rect x="2" y="7" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="currentColor" stroke-width="2"/><line x1="12" y1="12" x2="12" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="14" x2="14" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                    Parqueadero
-                  </label>
-                  <input type="checkbox" id="fCuartoUtil" class="caract-check" />
-                  <label class="caract-pill" for="fCuartoUtil">
-                    <svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" stroke="currentColor" stroke-width="2"/></svg>
-                    Cuarto Útil
-                  </label>
-                  <input type="checkbox" id="fEstudio" class="caract-check" />
-                  <label class="caract-pill" for="fEstudio">
-                    <svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    Estudio
-                  </label>
+              <div class="adm-form-group">
+                <label>Baños</label>
+                <div class="adm-counter-wrap">
+                  <button type="button" class="adm-counter-btn" data-for="fBanos" data-step="0.5" data-dir="-1">−</button>
+                  <input type="number" id="fBanos" class="adm-counter-input" placeholder="0" min="0" max="20" step="0.5" />
+                  <button type="button" class="adm-counter-btn" data-for="fBanos" data-step="0.5" data-dir="1">+</button>
                 </div>
               </div>
             </div>
-
-            <!-- ── Sección 4: Amenidades ── -->
-            <div class="form-section">
-              <div class="form-section-header">
-                <div class="section-icon">
-                  <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </div>
-                <span>Amenidades</span>
-              </div>
-              <div class="form-group">
-                <textarea id="fAmenidades" class="form-textarea" rows="3" placeholder="Piscina, Seguridad 24h, Zona de ropas, Gimnasio…"></textarea>
-                <span class="field-hint">Una por línea o separadas por coma</span>
+            <div class="adm-form-group"><label>Características</label>
+              <div class="adm-check-pills">
+                <label class="adm-check-pill"><input type="checkbox" id="fParqueadero" /> Parqueadero</label>
+                <label class="adm-check-pill"><input type="checkbox" id="fCuartoUtil" /> Cuarto útil</label>
+                <label class="adm-check-pill"><input type="checkbox" id="fEstudio" /> Estudio</label>
               </div>
             </div>
+          </div>
 
-            <!-- ── Sección 5: Ubicación exacta ── -->
-            <div class="form-section">
-              <div class="form-section-header">
-                <div class="section-icon">
-                  <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2"/></svg>
-                </div>
-                <span>Ubicación exacta</span>
+          <!-- Amenidades -->
+          <div class="adm-form-section">
+            <p class="adm-form-section-title">Amenidades y características adicionales</p>
+            <div class="adm-form-group">
+              <div class="adm-caract-sugerencias" id="fSugChips">
+                <button type="button" class="adm-sug-pill" data-sug="Balcón">Balcón</button>
+                <button type="button" class="adm-sug-pill" data-sug="Terraza">Terraza</button>
+                <button type="button" class="adm-sug-pill" data-sug="Ascensor">Ascensor</button>
+                <button type="button" class="adm-sug-pill" data-sug="Depósito">Depósito</button>
+                <button type="button" class="adm-sug-pill" data-sug="Piscina">Piscina</button>
+                <button type="button" class="adm-sug-pill" data-sug="Gimnasio">Gimnasio</button>
+                <button type="button" class="adm-sug-pill" data-sug="Zona BBQ">Zona BBQ</button>
+                <button type="button" class="adm-sug-pill" data-sug="Portería 24h">Portería 24h</button>
+                <button type="button" class="adm-sug-pill" data-sug="Zona de ropas">Zona de ropas</button>
+                <button type="button" class="adm-sug-pill" data-sug="Cuarto de servicio">Cuarto de servicio</button>
+                <button type="button" class="adm-sug-pill" data-sug="Salón comunal">Salón comunal</button>
+                <button type="button" class="adm-sug-pill" data-sug="Jacuzzi">Jacuzzi</button>
+                <button type="button" class="adm-sug-pill" data-sug="Vista panorámica">Vista panorámica</button>
+                <button type="button" class="adm-sug-pill" data-sug="Calentador">Calentador</button>
+                <button type="button" class="adm-sug-pill" data-sug="Gas natural">Gas natural</button>
+                <button type="button" class="adm-sug-pill" data-sug="Cancha">Cancha</button>
+                <button type="button" class="adm-sug-pill" data-sug="Parque infantil">Parque infantil</button>
+                <button type="button" class="adm-sug-pill" data-sug="Zona de mascotas">Zona de mascotas</button>
+                <button type="button" class="adm-sug-pill" data-sug="Bikeroom">Bikeroom</button>
+                <button type="button" class="adm-sug-pill" data-sug="Coworking">Coworking</button>
+                <button type="button" class="adm-sug-pill" data-sug="Chimenea">Chimenea</button>
+                <button type="button" class="adm-sug-pill" data-sug="Sauna">Sauna</button>
+                <button type="button" class="adm-sug-pill" data-sug="Closets">Closets</button>
+                <button type="button" class="adm-sug-pill" data-sug="Cocina integral">Cocina integral</button>
+                <button type="button" class="adm-sug-pill" data-sug="Patio">Patio</button>
+                <button type="button" class="adm-sug-pill" data-sug="Jardín">Jardín</button>
               </div>
-              <p class="section-hint">Toca el mapa o arrastra el pin para ubicar el inmueble con precisión</p>
-              <div class="form-map-wrap">
-                <div id="formMap"></div>
-                <button type="button" class="btn-locate-me" id="btnLocateMe">
-                  <svg viewBox="0 0 24 24" fill="none" width="13" height="13"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                  Mi ubicación
-                </button>
+              <div class="adm-tags-input-wrap" id="amenidadesTagsWrap">
+                <div class="adm-tags-list" id="amenidadesList"></div>
+                <input type="text" class="adm-tags-text-input" id="amenidadesInput" placeholder="Escribe y presiona Enter…" autocomplete="off" />
               </div>
-              <button type="button" class="btn-geocode" id="btnGeocode">
-                <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                Buscar dirección en mapa
-              </button>
-              <div class="form-row coords-row">
-                <div class="form-group">
-                  <label class="form-label">Latitud</label>
-                  <input type="number" id="fLat" class="form-input" placeholder="6.1510" step="any" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Longitud</label>
-                  <input type="number" id="fLng" class="form-input" placeholder="-75.6190" step="any" />
-                </div>
-              </div>
+              <input type="hidden" id="fAmenidades" />
+              <span class="adm-field-hint">Clic en sugerencia o escribe y presiona Enter / coma</span>
             </div>
+          </div>
 
-            <!-- ── Sección 6: Descripción ── -->
-            <div class="form-section">
-              <div class="form-section-header">
-                <div class="section-icon">
-                  <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="10 9 9 9 8 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </div>
-                <span>Descripción</span>
-              </div>
-              <div class="form-group">
-                <textarea id="fDescripcion" class="form-textarea" rows="4" placeholder="Describe el inmueble: características especiales, entorno, transporte cercano…"></textarea>
-              </div>
-            </div>
-
-            <!-- ── Sección 7: Fotos ── -->
-            <div class="form-section">
-              <div class="form-section-header">
-                <div class="section-icon">
-                  <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="2"/></svg>
-                </div>
-                <span>Fotos <span class="section-badge">máx. 15</span></span>
-              </div>
-              <div class="image-upload-area" id="imageUploadArea">
-                <input type="file" id="fImages" accept="image/jpeg,image/png,image/webp" multiple style="display:none" />
-                <div class="upload-icon-wrap">
-                  <svg viewBox="0 0 24 24" fill="none" width="28" height="28"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </div>
-                <p>Arrastra fotos aquí o <button type="button" class="link-btn" id="triggerImages">selecciona</button></p>
-                <span class="upload-hint">JPG, PNG, WEBP · Máx 10MB por foto</span>
-              </div>
-              <div class="image-preview-list" id="imagePreviewList"></div>
-              <div class="existing-images" id="existingImages" style="display:none">
-                <p class="form-label" style="margin-top:12px">Fotos actuales</p>
-                <div class="existing-images-grid" id="existingImagesGrid"></div>
-              </div>
-            </div>
-
-            <div class="form-actions">
-              <button type="button" class="btn-secondary" id="cancelUpload">Cancelar</button>
-              <button type="submit" class="btn-primary" id="submitProperty">
-                <span id="submitLabel">Publicar Inmueble</span>
-                <div class="spinner-sm" id="submitSpinner" style="display:none"></div>
+          <!-- Ubicación exacta -->
+          <div class="adm-form-section">
+            <p class="adm-form-section-title">Ubicación exacta</p>
+            <p class="adm-field-hint" style="margin-bottom:8px">Toca el mapa o arrastra el pin para ubicar el inmueble con precisión</p>
+            <div class="adm-map-wrap">
+              <div id="formMap"></div>
+              <button type="button" class="adm-map-locate-btn" id="btnLocateMe" title="Mi ubicación">
+                <svg viewBox="0 0 24 24" fill="none" width="13" height="13"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
               </button>
             </div>
-          </form>
-        </div>
+            <button type="button" class="adm-btn-outline" id="btnGeocode" style="width:100%;margin:8px 0;justify-content:center;font-size:12px">
+              <svg viewBox="0 0 24 24" fill="none" width="13" height="13"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              Buscar dirección en mapa
+            </button>
+            <div class="adm-form-row">
+              <div class="adm-form-group"><label>Latitud</label><input type="number" id="fLat" class="adm-input" placeholder="6.1510" step="any" /></div>
+              <div class="adm-form-group"><label>Longitud</label><input type="number" id="fLng" class="adm-input" placeholder="-75.6190" step="any" /></div>
+            </div>
+          </div>
+
+          <!-- Descripción -->
+          <div class="adm-form-section">
+            <p class="adm-form-section-title">Descripción</p>
+            <div class="adm-form-group"><textarea id="fDescripcion" class="adm-textarea" rows="4" placeholder="Describe el inmueble: características especiales, entorno, transporte cercano…"></textarea></div>
+          </div>
+
+          <!-- Fotos -->
+          <div class="adm-form-section">
+            <p class="adm-form-section-title">Fotos <span class="adm-badge-sm">máx. 15</span></p>
+            <div class="adm-upload-area" id="imageUploadArea">
+              <input type="file" id="fImages" accept="image/jpeg,image/png,image/webp" multiple style="display:none" />
+              <svg viewBox="0 0 24 24" fill="none" width="24" height="24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <p>Arrastra fotos aquí o <button type="button" class="adm-link-btn" id="triggerImages">selecciona</button></p>
+              <span class="adm-field-hint">JPG, PNG, WEBP · Máx 10MB por foto</span>
+            </div>
+            <div class="adm-image-preview" id="imagePreviewList"></div>
+            <div id="existingImages" style="display:none">
+              <p style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-top:12px">Fotos actuales · <span style="font-weight:400;text-transform:none;color:#9ca3af">arrastra para reordenar · la primera es la portada</span></p>
+              <div class="adm-image-preview adm-sortable-grid" id="existingImagesGrid"></div>
+            </div>
+
+            <!-- Filtro de foto -->
+            <div class="adm-form-group" style="margin-top:14px">
+              <label class="adm-label">Filtro de foto</label>
+              <div class="adm-filter-row" id="fFilterRow">
+                <button type="button" class="adm-filter-btn active" data-filter="natural">Natural</button>
+                <button type="button" class="adm-filter-btn" data-filter="vivid">Vívido</button>
+                <button type="button" class="adm-filter-btn" data-filter="warm">Cálido</button>
+                <button type="button" class="adm-filter-btn" data-filter="cool">Frío</button>
+                <button type="button" class="adm-filter-btn" data-filter="bright">Brillante</button>
+                <button type="button" class="adm-filter-btn" data-filter="drama">Dramático</button>
+                <button type="button" class="adm-filter-btn" data-filter="aclarar">Aclarar</button>
+              </div>
+              <input type="hidden" id="fImageFilter" value="natural" />
+              <div id="fFilterPreview" style="margin-top:8px;border-radius:8px;overflow:hidden;height:80px;background:#f3f4f6;display:none">
+                <img id="fFilterPreviewImg" style="width:100%;height:80px;object-fit:cover;" alt="preview filtro" />
+              </div>
+            </div>
+          </div>
+
+        </form>
+      </div>
+      <div class="adm-panel-footer">
+        <button class="adm-btn-outline" id="cancelUpload">Cancelar</button>
+        <button type="button" class="adm-btn-primary" id="submitProperty">
+          <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+          <span id="submitLabel">Publicar Inmueble</span>
+          <div class="spinner-sm" id="submitSpinner" style="display:none"></div>
+        </button>
       </div>
     </div>
 
@@ -1719,6 +1681,6 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
 
   <!-- App.js: Minificado para producción -->
-  <script src="app.min.js?v=27"></script>
+  <script src="app.min.js?v=28"></script>
 </body>
 </html>

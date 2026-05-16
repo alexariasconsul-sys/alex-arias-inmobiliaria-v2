@@ -3832,7 +3832,7 @@ function initTagsInput() {
   wrap.addEventListener('click', () => input.focus());
 
   // Chips de sugerencias rápidas
-  document.querySelectorAll('.caract-sug-pill').forEach(btn => {
+  document.querySelectorAll('.adm-sug-pill').forEach(btn => {
     btn.addEventListener('click', () => {
       const sug = btn.dataset.sug;
       if (!sug) return;
@@ -3883,7 +3883,7 @@ function _renderAmenidadesTags() {
 }
 
 function _syncSugChips() {
-  document.querySelectorAll('.caract-sug-pill').forEach(btn => {
+  document.querySelectorAll('.adm-sug-pill').forEach(btn => {
     const already = _amenidadesTags.includes(btn.dataset.sug);
     btn.classList.toggle('sug-added', already);
     btn.disabled = already;
@@ -3895,17 +3895,114 @@ function _syncAmenidadesHidden() {
   if (hidden) hidden.value = JSON.stringify(_amenidadesTags);
 }
 
+// ─── UPLOAD PANEL – DRAG & DROP EXISTING IMAGES ───────────────
+let _uploadDragSrc = null;
+
+function renderUploadExistingGrid(images, propId) {
+  const existGrid = document.getElementById('existingImagesGrid');
+  const existWrap = document.getElementById('existingImages');
+  existGrid.innerHTML = '';
+  existWrap.style.display = images.length ? 'block' : 'none';
+
+  images.forEach((img, i) => {
+    const div = document.createElement('div');
+    div.className = 'adm-img-thumb adm-img-draggable';
+    div.draggable = true;
+    div.dataset.imgId = img.id;
+    div.style.position = 'relative';
+    div.innerHTML = `
+      ${i === 0 ? '<span class="adm-img-cover-badge">Portada</span>' : ''}
+      <img src="/${encodeImgPath(img.filename)}" style="width:72px;height:60px;object-fit:cover;border-radius:8px;display:block;" alt="foto" />
+      <button type="button" class="adm-img-del" data-img-id="${img.id}" data-prop-id="${propId}" style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>`;
+
+    div.addEventListener('dragstart', e => {
+      _uploadDragSrc = div;
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => div.classList.add('adm-drag-ghost'), 0);
+    });
+    div.addEventListener('dragend', () => {
+      div.classList.remove('adm-drag-ghost');
+      existGrid.querySelectorAll('.adm-drag-over').forEach(el => el.classList.remove('adm-drag-over'));
+      updateUploadCoverBadge();
+      updateUploadFilterPreview();
+    });
+    div.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; div.classList.add('adm-drag-over'); });
+    div.addEventListener('dragleave', () => div.classList.remove('adm-drag-over'));
+    div.addEventListener('drop', e => {
+      e.preventDefault();
+      div.classList.remove('adm-drag-over');
+      if (_uploadDragSrc && _uploadDragSrc !== div) {
+        const all = [...existGrid.querySelectorAll('.adm-img-thumb')];
+        const fromIdx = all.indexOf(_uploadDragSrc);
+        const toIdx   = all.indexOf(div);
+        if (fromIdx < toIdx) existGrid.insertBefore(_uploadDragSrc, div.nextSibling);
+        else existGrid.insertBefore(_uploadDragSrc, div);
+      }
+    });
+
+    div.querySelector('.adm-img-del').addEventListener('click', async () => {
+      if (!confirm('¿Eliminar esta foto?')) return;
+      try {
+        await apiFetch(`/api/properties/${div.querySelector('.adm-img-del').dataset.propId}/images/${img.id}`, { method: 'DELETE' });
+        div.style.opacity = '.3';
+        div.style.pointerEvents = 'none';
+        updateUploadCoverBadge();
+        updateUploadFilterPreview();
+        showToast('Foto eliminada');
+      } catch (_) { showToast('Error al eliminar foto'); }
+    });
+
+    existGrid.appendChild(div);
+  });
+
+  updateUploadCoverBadge();
+  updateUploadFilterPreview();
+}
+
+function updateUploadCoverBadge() {
+  const existGrid = document.getElementById('existingImagesGrid');
+  if (!existGrid) return;
+  existGrid.querySelectorAll('.adm-img-cover-badge').forEach(b => b.remove());
+  const first = existGrid.querySelector('.adm-img-thumb:not([style*="opacity: 0.3"]):not([style*="opacity:.3"])');
+  if (first) first.insertAdjacentHTML('afterbegin', '<span class="adm-img-cover-badge">Portada</span>');
+}
+
+function updateUploadFilterPreview() {
+  const existGrid  = document.getElementById('existingImagesGrid');
+  const preview    = document.getElementById('fFilterPreview');
+  const previewImg = document.getElementById('fFilterPreviewImg');
+  const filterVal  = document.getElementById('fImageFilter')?.value || 'natural';
+  const firstImg   = existGrid?.querySelector('.adm-img-thumb:not([style*="opacity"]) img');
+  if (firstImg && preview && previewImg) {
+    previewImg.src = firstImg.src;
+    previewImg.style.filter = getUploadFilterCSS(filterVal);
+    preview.style.display = 'block';
+  } else if (preview) {
+    preview.style.display = 'none';
+  }
+}
+
+function getUploadFilterCSS(f) {
+  const filters = {
+    natural: '', vivid: 'saturate(1.5) contrast(1.1)',
+    warm:    'saturate(1.2) sepia(0.25) brightness(1.05)',
+    cool:    'saturate(1.1) hue-rotate(15deg) brightness(1.03)',
+    bright:  'brightness(1.15) contrast(1.05)',
+    drama:   'contrast(1.25) saturate(1.3) brightness(0.95)',
+    aclarar: 'brightness(1.35) contrast(1.15) saturate(1.1)',
+  };
+  return filters[f] || '';
+}
+
 // ─── UPLOAD MODAL ─────────────────────────────────────────────
 function setupUploadModal() {
-  const modal = document.getElementById('uploadModal');
   const btnUpload = document.getElementById('btnUpload');
-  const closeBtn = document.getElementById('closeUpload');
-  const cancelBtn = document.getElementById('cancelUpload');
+  const overlay   = document.getElementById('uploadModalOverlay');
 
   btnUpload.addEventListener('click', () => openUploadModal());
-  closeBtn.addEventListener('click', closeUploadModal);
-  cancelBtn?.addEventListener('click', closeUploadModal);
-  modal.addEventListener('click', e => { if (e.target === modal) closeUploadModal(); });
+  document.getElementById('closePanelUpload').addEventListener('click', closeUploadModal);
+  document.getElementById('cancelUpload').addEventListener('click', closeUploadModal);
+  overlay.addEventListener('click', closeUploadModal);
 
   // Inicializar tag input de amenidades
   initTagsInput();
@@ -3919,6 +4016,11 @@ function setupUploadModal() {
     btn.classList.toggle('active', !isOpen);
   });
 
+  // Parse – limpiar
+  document.getElementById('parseClear').addEventListener('click', () => {
+    document.getElementById('rawTextInput').value = '';
+  });
+
   // Parse text
   document.getElementById('parseTextBtn').addEventListener('click', () => {
     const text = document.getElementById('rawTextInput').value;
@@ -3928,31 +4030,32 @@ function setupUploadModal() {
     showToast('Información parseada. Revisa y ajusta los campos.');
   });
 
-  // Tipo / Estado visual buttons
-  document.querySelectorAll('.tipo-btn').forEach(btn => {
+  // Tipo visual buttons (admin style: data-val)
+  document.querySelectorAll('.adm-tipo-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.adm-tipo-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      const val = btn.dataset.value;
+      const val = btn.dataset.val;
       document.getElementById('fTipo').value = val;
-      // Mostrar/ocultar campos de precio según tipo
       const isCombinado = val === 'combinado';
-      const precioSimple = document.getElementById('precioSimple');
-      const precioCombinado = document.getElementById('precioCombinado');
+      const precioSimple    = document.getElementById('fPrecioSimple');
+      const precioCombinado = document.getElementById('fPrecioCombinado');
       if (precioSimple)    precioSimple.style.display    = isCombinado ? 'none' : '';
       if (precioCombinado) precioCombinado.style.display = isCombinado ? ''     : 'none';
     });
   });
-  document.querySelectorAll('.estado-btn').forEach(btn => {
+
+  // Estado visual buttons (admin style: data-val)
+  document.querySelectorAll('.adm-estado-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.estado-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.adm-estado-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      document.getElementById('fEstado').value = btn.dataset.value;
+      document.getElementById('fEstado').value = btn.dataset.val;
     });
   });
 
-  // Counter buttons (+/-)
-  document.querySelectorAll('.counter-btn').forEach(btn => {
+  // Counter buttons (+/-) admin style
+  document.querySelectorAll('.adm-counter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const input = document.getElementById(btn.dataset.for);
       if (!input) return;
@@ -3966,6 +4069,16 @@ function setupUploadModal() {
     });
   });
 
+  // Filter buttons
+  document.querySelectorAll('#fFilterRow .adm-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#fFilterRow .adm-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('fImageFilter').value = btn.dataset.filter;
+      updateUploadFilterPreview();
+    });
+  });
+
   // Image upload
   const imgInput = document.getElementById('fImages');
   document.getElementById('triggerImages').addEventListener('click', e => { e.stopPropagation(); imgInput.click(); });
@@ -3974,11 +4087,11 @@ function setupUploadModal() {
 
   // Drag & drop on upload area
   const uploadArea = document.getElementById('imageUploadArea');
-  uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.style.borderColor = '#000'; });
-  uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = ''; });
+  uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag-active'); });
+  uploadArea.addEventListener('dragleave', () => { uploadArea.classList.remove('drag-active'); });
   uploadArea.addEventListener('drop', e => {
     e.preventDefault();
-    uploadArea.style.borderColor = '';
+    uploadArea.classList.remove('drag-active');
     const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
     addImages(files);
   });
@@ -4025,9 +4138,12 @@ function setupUploadModal() {
   document.getElementById('fLat').addEventListener('change', syncMapFromInputs);
   document.getElementById('fLng').addEventListener('change', syncMapFromInputs);
 
-  // Form submit
+  // Form submit (también por botón directo)
   document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    await submitProperty();
+  });
+  document.getElementById('submitProperty').addEventListener('click', async () => {
     await submitProperty();
   });
 }
@@ -4105,8 +4221,11 @@ function openUploadModal(prop = null) {
     window.location.href = '/auth/google';
     return;
   }
-  const modal = document.getElementById('uploadModal');
-  modal.style.display = 'flex';
+  const modal   = document.getElementById('uploadModal');
+  const overlay = document.getElementById('uploadModalOverlay');
+  modal.classList.add('open');
+  overlay.style.display = 'block';
+  document.body.style.overflow = 'hidden';
   if (prop) openEditModal(prop);
   else resetForm();
   setTimeout(() => initFormMap(), 80);
@@ -4114,7 +4233,7 @@ function openUploadModal(prop = null) {
 
 function openEditModal(prop) {
   state.editingId = prop.id;
-  document.getElementById('uploadFormTitle').textContent = 'Editar Inmueble';
+  document.getElementById('uploadPanelTitle').textContent = 'Editar Inmueble';
   document.getElementById('editingId').value = prop.id;
   document.getElementById('submitLabel').textContent = 'Guardar Cambios';
 
@@ -4123,81 +4242,67 @@ function openEditModal(prop) {
   document.getElementById('fTipo').value   = tipo;
   document.getElementById('fEstado').value = estado;
 
-  // Sync visual tipo/estado buttons
-  document.querySelectorAll('.tipo-btn').forEach(b => b.classList.toggle('active', b.dataset.value === tipo));
-  document.querySelectorAll('.estado-btn').forEach(b => b.classList.toggle('active', b.dataset.value === estado));
+  // Sync visual tipo/estado buttons (admin style: data-val)
+  document.querySelectorAll('.adm-tipo-btn').forEach(b => b.classList.toggle('active', b.dataset.val === tipo));
+  document.querySelectorAll('.adm-estado-btn').forEach(b => b.classList.toggle('active', b.dataset.val === estado));
 
   // Mostrar/ocultar precio según tipo
   const isCombinado = tipo === 'combinado';
-  const precioSimpleEl    = document.getElementById('precioSimple');
-  const precioCombinadoEl = document.getElementById('precioCombinado');
+  const precioSimpleEl    = document.getElementById('fPrecioSimple');
+  const precioCombinadoEl = document.getElementById('fPrecioCombinado');
   if (precioSimpleEl)    precioSimpleEl.style.display    = isCombinado ? 'none' : '';
   if (precioCombinadoEl) precioCombinadoEl.style.display = isCombinado ? ''     : 'none';
 
-  document.getElementById('fTitle').value = prop.title || '';
+  document.getElementById('fTitle').value     = prop.title     || '';
   document.getElementById('fMunicipio').value = prop.municipio || '';
-  document.getElementById('fBarrio').value = prop.barrio || '';
-  document.getElementById('fSector').value = prop.sector || '';
+  document.getElementById('fBarrio').value    = prop.barrio    || '';
+  document.getElementById('fSector').value    = prop.sector    || '';
   document.getElementById('fDireccion').value = prop.direccion || '';
-  document.getElementById('fPiso').value = prop.piso || '';
-  document.getElementById('fPrecio').value = prop.precio || '';
-  document.getElementById('fPrecioArriendo') && (document.getElementById('fPrecioArriendo').value = prop.precioArriendo || '');
-  document.getElementById('fPrecioVenta')    && (document.getElementById('fPrecioVenta').value    = prop.precioVenta    || '');
-  document.getElementById('fArea').value = prop.area || '';
-  document.getElementById('fHab').value = prop.habitaciones || '';
-  document.getElementById('fBanos').value = prop.banos || '';
+  document.getElementById('fPiso').value      = prop.piso      || '';
+  document.getElementById('fPrecio').value    = prop.precio    || '';
+  document.getElementById('fPrecioArriendo').value = prop.precioArriendo || '';
+  document.getElementById('fPrecioVenta').value    = prop.precioVenta    || '';
+  document.getElementById('fArea').value      = prop.area      || '';
+  document.getElementById('fHab').value       = prop.habitaciones || '';
+  document.getElementById('fBanos').value     = prop.banos     || '';
   document.getElementById('fParqueadero').checked = !!prop.parqueadero;
-  document.getElementById('fCuartoUtil').checked = !!prop.cuarto_util;
-  document.getElementById('fEstudio').checked = !!prop.estudio;
+  document.getElementById('fCuartoUtil').checked  = !!prop.cuarto_util;
+  document.getElementById('fEstudio').checked     = !!prop.estudio;
+
   const propLat = parseFloat(prop.lat) || 6.1510;
   const propLng = parseFloat(prop.lng) || -75.6190;
   document.getElementById('fLat').value = prop.lat || '';
   document.getElementById('fLng').value = prop.lng || '';
-  // Update map to property location
   setTimeout(() => setFormMapLocation(propLat, propLng, 16), 120);
 
   const amenidades = Array.isArray(prop.amenidades) ? prop.amenidades : JSON.parse(prop.amenidades || '[]');
   setAmenidadesTags(amenidades);
   document.getElementById('fDescripcion').value = prop.descripcion || '';
 
-  // Existing images
-  const existingImgs = document.getElementById('existingImages');
-  const existingGrid = document.getElementById('existingImagesGrid');
-  if (prop.images && prop.images.length) {
-    existingImgs.style.display = 'block';
-    existingGrid.innerHTML = prop.images.map(img => `
-      <div class="existing-img-item" data-img-id="${img.id}">
-        <img src="/${encodeImgPath(img.filename)}" alt="foto" />
-        <button class="existing-img-remove" data-img-id="${img.id}" data-prop-id="${prop.id}" type="button">×</button>
-      </div>`).join('');
+  // Existing images – drag & drop grid
+  renderUploadExistingGrid(prop.images || [], prop.id);
 
-    existingGrid.querySelectorAll('.existing-img-remove').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        if (!confirm('¿Eliminar esta foto?')) return;
-        try {
-          await apiFetch(`/api/properties/${btn.dataset.propId}/images/${btn.dataset.imgId}`, { method: 'DELETE' });
-          btn.parentElement.remove();
-          showToast('Foto eliminada');
-        } catch (_) { showToast('Error al eliminar foto'); }
-      });
-    });
-  } else {
-    existingImgs.style.display = 'none';
-  }
+  // Filtro de foto
+  const filterVal = prop.imageFilter || 'natural';
+  document.getElementById('fImageFilter').value = filterVal;
+  document.querySelectorAll('#fFilterRow .adm-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === filterVal));
+  updateUploadFilterPreview();
 
   state.pendingImages = [];
   renderImagePreviews();
 }
 
 function closeUploadModal() {
-  document.getElementById('uploadModal').style.display = 'none';
+  document.getElementById('uploadModal').classList.remove('open');
+  document.getElementById('uploadModalOverlay').style.display = 'none';
+  document.body.style.overflow = '';
   state.pendingEditProp = null;
   resetForm();
 }
 
 function resetForm() {
   state.editingId = null;
-  document.getElementById('uploadFormTitle').textContent = 'Publicar Inmueble';
+  document.getElementById('uploadPanelTitle').textContent = 'Publicar Inmueble';
   document.getElementById('submitLabel').textContent = 'Publicar Inmueble';
   document.getElementById('editingId').value = '';
   document.getElementById('uploadForm').reset();
@@ -4205,19 +4310,29 @@ function resetForm() {
   state.pendingImages = [];
   renderImagePreviews();
   document.getElementById('existingImages').style.display = 'none';
+  document.getElementById('existingImagesGrid').innerHTML = '';
 
-  // Reset tipo/estado visual buttons
-  document.querySelectorAll('.tipo-btn').forEach(b => b.classList.toggle('active', b.dataset.value === 'arriendo'));
-  document.querySelectorAll('.estado-btn').forEach(b => b.classList.toggle('active', b.dataset.value === 'libre'));
+  // Reset tipo/estado hidden inputs
+  document.getElementById('fTipo').value   = 'arriendo';
+  document.getElementById('fEstado').value = 'libre';
+
+  // Reset tipo/estado visual buttons (admin style: data-val)
+  document.querySelectorAll('.adm-tipo-btn').forEach(b => b.classList.toggle('active', b.dataset.val === 'arriendo'));
+  document.querySelectorAll('.adm-estado-btn').forEach(b => b.classList.toggle('active', b.dataset.val === 'libre'));
 
   // Mostrar precio simple, ocultar combinado
-  const precioSimpleEl    = document.getElementById('precioSimple');
-  const precioCombinadoEl = document.getElementById('precioCombinado');
+  const precioSimpleEl    = document.getElementById('fPrecioSimple');
+  const precioCombinadoEl = document.getElementById('fPrecioCombinado');
   if (precioSimpleEl)    precioSimpleEl.style.display    = '';
   if (precioCombinadoEl) precioCombinadoEl.style.display = 'none';
 
   // Limpiar tags de amenidades
   setAmenidadesTags([]);
+
+  // Reset filtro a natural
+  document.getElementById('fImageFilter').value = 'natural';
+  document.querySelectorAll('#fFilterRow .adm-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === 'natural'));
+  document.getElementById('fFilterPreview').style.display = 'none';
 
   // Reset map to default location
   setTimeout(() => setFormMapLocation(6.1510, -75.6190, 14), 80);
@@ -4270,7 +4385,7 @@ async function addImages(files) {
   if (!toAdd.length) return;
 
   // Feedback visual de compresión
-  const hint = document.querySelector('#imageUploadArea .upload-hint');
+  const hint = document.querySelector('#imageUploadArea .adm-field-hint');
   if (hint) hint.textContent = `Optimizando ${toAdd.length} imagen${toAdd.length > 1 ? 'es' : ''}…`;
 
   const compressed = await Promise.all(toAdd.map(f => compressImage(f)));
@@ -4283,12 +4398,12 @@ async function addImages(files) {
 function renderImagePreviews() {
   const list = document.getElementById('imagePreviewList');
   list.innerHTML = state.pendingImages.map((file, i) => `
-    <div class="image-preview-item">
+    <div class="adm-img-thumb" style="position:relative">
       <img src="${URL.createObjectURL(file)}" alt="preview ${i}" />
-      <button class="image-preview-remove" data-index="${i}" type="button">×</button>
+      <button class="adm-img-del" data-index="${i}" type="button" style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
     </div>`).join('');
 
-  list.querySelectorAll('.image-preview-remove').forEach(btn => {
+  list.querySelectorAll('.adm-img-del').forEach(btn => {
     btn.addEventListener('click', () => {
       state.pendingImages.splice(Number(btn.dataset.index), 1);
       renderImagePreviews();
@@ -4345,6 +4460,15 @@ async function submitProperty() {
     formData.append('amenidades', JSON.stringify(amenidades));
     formData.append('lat', document.getElementById('fLat').value || '6.15');
     formData.append('lng', document.getElementById('fLng').value || '-75.62');
+
+    // Filtro de foto
+    const imageFilter = document.getElementById('fImageFilter')?.value || 'natural';
+    formData.append('imageFilter', imageFilter);
+
+    // Orden de imágenes (drag-and-drop)
+    const orderedIds = [...document.querySelectorAll('#existingImagesGrid .adm-img-thumb[data-img-id]')]
+      .map(el => el.dataset.imgId);
+    if (orderedIds.length) formData.append('imageOrder', JSON.stringify(orderedIds));
 
     state.pendingImages.forEach(file => formData.append('images', file));
 
@@ -4461,7 +4585,12 @@ function parsePropertyText(text) {
 function fillFormFromParsed(p) {
   if (p.tipo) {
     document.getElementById('fTipo').value = p.tipo;
-    document.querySelectorAll('.tipo-btn').forEach(b => b.classList.toggle('active', b.dataset.value === p.tipo));
+    document.querySelectorAll('.adm-tipo-btn').forEach(b => b.classList.toggle('active', b.dataset.val === p.tipo));
+    const isCombinado = p.tipo === 'combinado';
+    const precioSimpleEl    = document.getElementById('fPrecioSimple');
+    const precioCombinadoEl = document.getElementById('fPrecioCombinado');
+    if (precioSimpleEl)    precioSimpleEl.style.display    = isCombinado ? 'none' : '';
+    if (precioCombinadoEl) precioCombinadoEl.style.display = isCombinado ? ''     : 'none';
   }
   if (p.title)        document.getElementById('fTitle').value       = p.title;
   if (p.municipio)    document.getElementById('fMunicipio').value   = p.municipio;
