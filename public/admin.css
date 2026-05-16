@@ -1883,6 +1883,65 @@ body {
   font-size: 12px;
 }
 
+/* ── Toast de like ───────────────────────────────────────────── */
+.like-toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: #0f172a;
+  color: #f1f5f9;
+  padding: 10px 18px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  text-align: center;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+  box-shadow: 0 4px 24px rgba(0,0,0,.35);
+  transition: opacity .25s ease, transform .25s ease;
+  border: 1px solid rgba(255,255,255,.08);
+}
+.like-toast--show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.like-toast small {
+  display: block;
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* ── Tooltip en botón de like ────────────────────────────────── */
+.like-btn {
+  position: relative;
+}
+.like-btn[data-tip]::before {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15,23,42,.92);
+  color: #f1f5f9;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 9px;
+  border-radius: 7px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .18s ease;
+  z-index: 10;
+  border: 1px solid rgba(255,255,255,.1);
+}
+.like-btn[data-tip]:hover::before {
+  opacity: 1;
+}
+
 /* ── SSR block (solo para Google, invisible al usuario) ────── */
 .ssr-props-block {
   position: absolute;

@@ -1900,16 +1900,29 @@ function setupSlider(card) {
 function setupLikeBtn(card) {
   const btn = card.querySelector('.like-btn');
   if (!btn) return;
+
+  // Tooltip inicial
+  const id0 = String(btn.dataset.id);
+  btn.setAttribute('data-tip', state.likedIds.has(id0) ? 'Quitar de favoritos' : '¡Guardar en favoritos!');
+
+  btn.addEventListener('mouseenter', () => {
+    const id = String(btn.dataset.id);
+    btn.setAttribute('data-tip', state.likedIds.has(id) ? 'Quitar de favoritos' : '¡Guardar en favoritos!');
+  });
+
   btn.addEventListener('click', async (e) => {
     e.stopPropagation();
     const id = String(btn.dataset.id);
     const isLiked = state.likedIds.has(id);
-    const action = isLiked ? 'remove' : 'add';
 
     // Optimistic update
     toggleLikeUI(id, !isLiked);
     if (isLiked) state.likedIds.delete(id); else state.likedIds.add(id);
     saveLikedIds();
+    showLikeToast(!isLiked);
+
+    // Actualizar tooltip
+    btn.setAttribute('data-tip', !isLiked ? 'Quitar de favoritos' : '¡Guardar en favoritos!');
 
     // ── Facebook Pixel: AddToWishlist (solo al agregar, no al quitar) ─
     if (!isLiked && typeof fbq === 'function') {
@@ -1937,7 +1950,7 @@ function setupLikeBtn(card) {
       const res = await apiFetch(`/api/properties/${id}/like`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action })
+        body: JSON.stringify({ deviceId: getOrCreateDeviceId() })
       });
       updateLikeCount(id, res.likes);
     } catch (err) {
@@ -1973,12 +1986,59 @@ function saveLikedIds() {
   updateFavBadge();
 }
 
-function loadLikedIds() {
+// ─── DEVICE ID (identificador permanente por dispositivo) ─────
+function getOrCreateDeviceId() {
+  let id = localStorage.getItem('deviceId');
+  if (!id) {
+    id = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('deviceId', id);
+  }
+  return id;
+}
+
+async function loadLikedIds() {
+  // 1. Cargar localStorage primero (instantáneo)
   try {
     const saved = JSON.parse(localStorage.getItem('likedProperties') || '[]');
     state.likedIds = new Set(saved.map(String));
   } catch (_) { state.likedIds = new Set(); }
   updateFavBadge();
+
+  // 2. Sincronizar con servidor (likes permanentes)
+  try {
+    const deviceId = getOrCreateDeviceId();
+    const res = await apiFetch(`/api/likes?deviceId=${encodeURIComponent(deviceId)}`);
+    if (res && Array.isArray(res.ids) && res.ids.length > 0) {
+      res.ids.forEach(id => state.likedIds.add(String(id)));
+      saveLikedIds();
+      // Pintar corazones recuperados
+      state.likedIds.forEach(id => toggleLikeUI(id, true));
+    }
+  } catch (_) { /* fail silently */ }
+}
+
+// ─── TOAST DE LIKE ────────────────────────────────────────────
+function showLikeToast(added) {
+  let toast = document.getElementById('likeToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'likeToast';
+    document.body.appendChild(toast);
+  }
+  const firstTime = added && !localStorage.getItem('hasLikedBefore');
+  if (added) {
+    if (firstTime) {
+      toast.innerHTML = '💙 <strong>¡Guardado en favoritos!</strong><br><small>Se guardan en tu dispositivo · Sin cuenta ni registro</small>';
+      localStorage.setItem('hasLikedBefore', '1');
+    } else {
+      toast.innerHTML = '💙 <strong>¡Guardado en favoritos!</strong>';
+    }
+  } else {
+    toast.innerHTML = '🩶 Quitado de favoritos';
+  }
+  toast.className = 'like-toast like-toast--show';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { toast.className = 'like-toast'; }, added && firstTime ? 4000 : 2500);
 }
 
 function updateFavBadge() {
@@ -5012,7 +5072,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     [50, 150, 400, 800].forEach(ms => setTimeout(() => { if (!_si.matches(':focus')) _si.value = ''; }, ms));
   }
 
-  loadLikedIds();
+  loadLikedIds(); // async — carga local primero, luego sincroniza con servidor
 
   // Medir la altura real del top-bar y setear variable CSS global
   function updateTopBarHeight() {

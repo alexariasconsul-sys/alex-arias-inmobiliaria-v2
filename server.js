@@ -32,6 +32,11 @@ const leadsDB = new Datastore({ filename: path.join(__dirname, 'leads.db'), auto
 // Base de datos de eventos Pixel/CAPI — debug y auditoría (máx 500 entradas)
 const pixelEventsDB = new Datastore({ filename: path.join(__dirname, 'pixel_events.db'), autoload: true });
 
+// Base de datos de likes por dispositivo (permanentes, sin cuenta)
+const likesDB = new Datastore({ filename: path.join(__dirname, 'likes.db'), autoload: true });
+likesDB.ensureIndexAsync({ fieldName: 'deviceId' }).catch(() => {});
+likesDB.ensureIndexAsync({ fieldName: 'propertyId' }).catch(() => {});
+
 // Base de datos de reseñas Google
 let _reviewsDB = null;
 function getReviewsDB() {
@@ -1584,17 +1589,46 @@ app.delete('/api/properties/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// ─── TOGGLE LIKE ──────────────────────────────────────────────
+// ─── TOGGLE LIKE (permanente por deviceId) ────────────────────
 app.post('/api/properties/:id/like', async (req, res) => {
   try {
     const db = getDB();
-    const { action } = req.body;
-    const doc = await db.findOneAsync({ _id: req.params.id });
+    const { deviceId, action } = req.body;
+    const propId = req.params.id;
+    const doc = await db.findOneAsync({ _id: propId });
     if (!doc) return res.status(404).json({ error: 'No encontrado' });
-    const newLikes = Math.max(0, (doc.likes || 0) + (action === 'remove' ? -1 : 1));
-    await db.updateAsync({ _id: req.params.id }, { $set: { likes: newLikes } });
-    io.emit('likes-update', { id: req.params.id, likes: newLikes });
-    res.json({ likes: newLikes });
+
+    let resultAction = action; // fallback legacy
+
+    if (deviceId) {
+      // Nuevo sistema: auto-toggle basado en likesDB
+      const likeKey = `${deviceId}_${propId}`;
+      const existing = await likesDB.findOneAsync({ _id: likeKey });
+      if (existing) {
+        await likesDB.removeAsync({ _id: likeKey }, {});
+        resultAction = 'remove';
+      } else {
+        await likesDB.insertAsync({ _id: likeKey, deviceId, propertyId: propId, createdAt: new Date() });
+        resultAction = 'add';
+      }
+    }
+
+    const newLikes = Math.max(0, (doc.likes || 0) + (resultAction === 'remove' ? -1 : 1));
+    await db.updateAsync({ _id: propId }, { $set: { likes: newLikes } });
+    io.emit('likes-update', { id: propId, likes: newLikes });
+    res.json({ likes: newLikes, action: resultAction });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── OBTENER LIKES DE UN DISPOSITIVO ─────────────────────────
+app.get('/api/likes', async (req, res) => {
+  try {
+    const { deviceId } = req.query;
+    if (!deviceId) return res.json({ ids: [] });
+    const docs = await likesDB.findAsync({ deviceId });
+    res.json({ ids: docs.map(d => d.propertyId) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
