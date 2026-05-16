@@ -1915,30 +1915,25 @@ body {
   margin-top: 2px;
 }
 
-/* ── Tooltip en botón de like ────────────────────────────────── */
-.like-btn {
-  position: relative;
-}
-.like-btn[data-tip]::before {
-  content: attr(data-tip);
-  position: absolute;
-  bottom: calc(100% + 7px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(15,23,42,.92);
+/* ── Tooltip flotante de like (JS-based, no se corta) ────────── */
+.like-tooltip {
+  position: fixed;
+  transform: translateX(-50%) translateY(calc(-100% - 8px));
+  background: rgba(15,23,42,.93);
   color: #f1f5f9;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 500;
-  padding: 5px 9px;
-  border-radius: 7px;
+  padding: 5px 10px;
+  border-radius: 8px;
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
   transition: opacity .18s ease;
-  z-index: 10;
+  z-index: 99999;
   border: 1px solid rgba(255,255,255,.1);
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
 }
-.like-btn[data-tip]:hover::before {
+.like-tooltip--show {
   opacity: 1;
 }
 

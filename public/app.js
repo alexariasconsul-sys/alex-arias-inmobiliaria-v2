@@ -1896,19 +1896,35 @@ function setupSlider(card) {
   go(0);
 }
 
+// ─── TOOLTIP FLOTANTE (se agrega al body, nunca se recorta) ───
+function showLikeTip(btn) {
+  const id = String(btn.dataset.id);
+  const text = state.likedIds.has(id) ? 'Quitar de favoritos' : '¡Guardar en favoritos!';
+  let tip = document.getElementById('likeTooltip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.id = 'likeTooltip';
+    tip.className = 'like-tooltip';
+    document.body.appendChild(tip);
+  }
+  tip.textContent = text;
+  const rect = btn.getBoundingClientRect();
+  tip.style.left = (rect.left + rect.width / 2) + 'px';
+  tip.style.top = rect.top + 'px';
+  tip.classList.add('like-tooltip--show');
+}
+function hideLikeTip() {
+  const tip = document.getElementById('likeTooltip');
+  if (tip) tip.classList.remove('like-tooltip--show');
+}
+
 // ─── LIKE ─────────────────────────────────────────────────────
 function setupLikeBtn(card) {
   const btn = card.querySelector('.like-btn');
   if (!btn) return;
 
-  // Tooltip inicial
-  const id0 = String(btn.dataset.id);
-  btn.setAttribute('data-tip', state.likedIds.has(id0) ? 'Quitar de favoritos' : '¡Guardar en favoritos!');
-
-  btn.addEventListener('mouseenter', () => {
-    const id = String(btn.dataset.id);
-    btn.setAttribute('data-tip', state.likedIds.has(id) ? 'Quitar de favoritos' : '¡Guardar en favoritos!');
-  });
+  btn.addEventListener('mouseenter', () => showLikeTip(btn));
+  btn.addEventListener('mouseleave', hideLikeTip);
 
   btn.addEventListener('click', async (e) => {
     e.stopPropagation();
@@ -1916,13 +1932,11 @@ function setupLikeBtn(card) {
     const isLiked = state.likedIds.has(id);
 
     // Optimistic update
+    hideLikeTip();
     toggleLikeUI(id, !isLiked);
     if (isLiked) state.likedIds.delete(id); else state.likedIds.add(id);
     saveLikedIds();
     showLikeToast(!isLiked);
-
-    // Actualizar tooltip
-    btn.setAttribute('data-tip', !isLiked ? 'Quitar de favoritos' : '¡Guardar en favoritos!');
 
     // ── Facebook Pixel: AddToWishlist (solo al agregar, no al quitar) ─
     if (!isLiked && typeof fbq === 'function') {
