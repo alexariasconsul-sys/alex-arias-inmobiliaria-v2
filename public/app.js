@@ -953,7 +953,7 @@ function renderGrid() {
   );
   state._top3LikeIds = top3Ids;
 
-  grid.innerHTML = props.map(p => cardHTML(p)).join('') +
+  grid.innerHTML = props.map((p, idx) => cardHTML(p, idx === 0)).join('') +
     '<div class="grid-bottom-spacer" aria-hidden="true"></div>';
 
   // Animación de entrada (se agrega después de insertar en DOM)
@@ -990,7 +990,7 @@ function renderGrid() {
 }
 
 // ─── CARD HTML ────────────────────────────────────────────────
-function cardHTML(p) {
+function cardHTML(p, isFirst = false) {
   const images = p.images || [];
   let amenidades = [];
   try { amenidades = Array.isArray(p.amenidades) ? p.amenidades : JSON.parse(p.amenidades || '[]'); } catch { amenidades = []; }
@@ -1038,7 +1038,7 @@ function cardHTML(p) {
         return `
         <div class="property-slide ${i === 0 ? 'is-active' : ''}">
           <img ${i === 0
-            ? `src="/${encodeImgPath(img.filename)}" decoding="async"`
+            ? `src="/${encodeImgPath(img.filename)}" decoding="async"${isFirst ? ' fetchpriority="high"' : ''}`
             : `data-src="/${encodeImgPath(img.filename)}" src="${BLANK_PLACEHOLDER}" loading="lazy" decoding="async"`
           } alt="${altText}" title="${p.title} - ${p.municipio}" class="lazy-img img-loaded"${imgFilterStyle} />
         </div>`;

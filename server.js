@@ -208,7 +208,8 @@ async function serveIndex(req, res, overrides = {}) {
       cityFilter  = null,
       tipoFilter  = null,
       pixelId     = '',
-      ssrProps    = []          // propiedades pre-renderizadas para Google
+      ssrProps    = [],          // propiedades pre-renderizadas para Google
+      lcpImageUrl = null         // URL de la primera imagen para preload LCP
     } = overrides;
 
     const injectedTags = `
@@ -235,7 +236,12 @@ async function serveIndex(req, res, overrides = {}) {
     html = html.replace(/id="pageTitle">([^<]*)<\/title>/,   `id="pageTitle">${esc(pageTitle)}</title>`);
     html = html.replace(/id="metaDesc" name="description" content="([^"]*)"/, `id="metaDesc" name="description" content="${esc(metaDesc)}"`);
     html = html.replace('id="canonicalUrl" rel="canonical" href="https://alexariasc.com/"', `id="canonicalUrl" rel="canonical" href="${esc(ogUrl)}"`);
-    html = html.replace('</head>', injectedTags + '\n</head>');
+
+    // LCP: precargar primera imagen de propiedad antes de que corra el JS
+    const lcpPreload = lcpImageUrl
+      ? `\n  <link rel="preload" as="image" href="${lcpImageUrl}" fetchpriority="high" />`
+      : '';
+    html = html.replace('</head>', lcpPreload + injectedTags + '\n</head>');
 
     // ── SSR: inyectar listado de propiedades para Googlebot ──────────────────
     // Sin esto Google ve un grid vacío y no indexa las páginas de aterrizaje.
@@ -347,9 +353,11 @@ CITY_PAGES.forEach(({ route, municipio, slug, desc }) => {
   <script type="application/ld+json">${JSON.stringify(agentSchema)}</script>`;
 
       const settings = readSettings();
+      const sortedProps = [...props].sort((a,b) => (new Date(b.created_at)||0)-(new Date(a.created_at)||0));
+      const lcpImageUrl = sortedProps[0]?.images?.length ? `/${sortedProps[0].images[0].filename}` : null;
       await serveIndex(req, res, {
         pageTitle, metaDesc, ogTitle: pageTitle, ogDesc: metaDesc, ogUrl,
-        extraSchema, cityFilter: municipio, ssrProps: props,
+        extraSchema, cityFilter: municipio, ssrProps: props, lcpImageUrl,
         pixelId: (settings.facebookPixelId || '').trim()
       });
     } catch (err) {
@@ -405,9 +413,11 @@ TIPO_PAGES.forEach(({ route, tipo, label, title, desc }) => {
         .map(s => `<script type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n  ');
 
       const settings = readSettings();
+      const sortedProps2 = [...props].sort((a,b) => (new Date(b.created_at)||0)-(new Date(a.created_at)||0));
+      const lcpImageUrl2 = sortedProps2[0]?.images?.length ? `/${sortedProps2[0].images[0].filename}` : null;
       await serveIndex(req, res, {
         pageTitle, metaDesc, ogTitle: pageTitle, ogDesc: metaDesc, ogUrl,
-        extraSchema, tipoFilter: tipo, ssrProps: props,
+        extraSchema, tipoFilter: tipo, ssrProps: props, lcpImageUrl: lcpImageUrl2,
         pixelId: (settings.facebookPixelId || '').trim()
       });
     } catch (err) {
@@ -467,9 +477,11 @@ TIPO_CIUDAD_PAGES.forEach(({ route, municipio, slug, tipo, label, lat, lon }) =>
         .map(s => `<script type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n  ');
 
       const settings = readSettings();
+      const sortedProps3 = [...props].sort((a,b) => (new Date(b.created_at)||0)-(new Date(a.created_at)||0));
+      const lcpImageUrl3 = sortedProps3[0]?.images?.length ? `/${sortedProps3[0].images[0].filename}` : null;
       await serveIndex(req, res, {
         pageTitle, metaDesc, ogTitle: pageTitle, ogDesc: metaDesc, ogUrl,
-        extraSchema, cityFilter: municipio, tipoFilter: tipo, ssrProps: props,
+        extraSchema, cityFilter: municipio, tipoFilter: tipo, ssrProps: props, lcpImageUrl: lcpImageUrl3,
         pixelId: (settings.facebookPixelId || '').trim()
       });
     } catch (err) {
@@ -638,7 +650,12 @@ app.get('/', async (req, res) => {
     html = html.replace(/id="pageTitle">([^<]*)<\/title>/,                        `id="pageTitle">${esc(pageTitle)}</title>`);
     html = html.replace(/id="metaDesc" name="description" content="([^"]*)"/,    `id="metaDesc" name="description" content="${esc(metaDesc)}"`);
     html = html.replace('id="canonicalUrl" rel="canonical" href="https://alexariasc.com/"', `id="canonicalUrl" rel="canonical" href="${esc(ogUrl)}"`);
-    html = html.replace('</head>', injected + '\n</head>');
+
+    // LCP: precargar imagen de la primera propiedad antes de que corra el JS
+    const rootFirstProp = [...activeProps].sort((a,b) => (new Date(b.created_at)||0)-(new Date(a.created_at)||0))[0];
+    const rootLcpImg    = rootFirstProp?.images?.length ? `/${rootFirstProp.images[0].filename}` : null;
+    const rootLcpTag    = rootLcpImg ? `\n  <link rel="preload" as="image" href="${rootLcpImg}" fetchpriority="high" />` : '';
+    html = html.replace('</head>', rootLcpTag + injected + '\n</head>');
     html = html.replace('<!-- SSR_LANDING_BLOCK -->', ''); // limpia placeholder en ruta raíz
     res.send(html);
   } catch (err) {

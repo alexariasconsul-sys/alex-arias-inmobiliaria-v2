@@ -55,8 +55,9 @@
   <link rel="dns-prefetch" href="https://www.google-analytics.com" />
   <link rel="dns-prefetch" href="https://unpkg.com" />
 
-  <!-- Google Fonts con display=swap para mejor CLS -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <!-- Google Fonts — no bloqueante (mejora FCP) -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" /></noscript>
 
   <!-- Critical CSS: Solo lo mínimo para evitar FOUC -->
   <style>
@@ -1682,6 +1683,6 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
 
   <!-- App.js: Minificado para producción -->
-  <script src="app.min.js?v=29"></script>
+  <script src="app.min.js?v=30"></script>
 </body>
 </html>
