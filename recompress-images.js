@@ -22,9 +22,9 @@ let ok = 0, skip = 0, fail = 0;
     const tmp = fp + '.tmp';
     try {
       const meta = await sharp(fp).metadata();
-      // Si ya es pequeña (< 200KB) la dejamos como está
+      // Si ya es pequeña (< 100KB) la dejamos como está
       const stat = fs.statSync(fp);
-      if (stat.size < 200 * 1024) { skip++; continue; }
+      if (stat.size < 100 * 1024) { skip++; continue; }
 
       await sharp(fp)
         .resize(1280, 1280, { fit: 'inside', withoutEnlargement: true })

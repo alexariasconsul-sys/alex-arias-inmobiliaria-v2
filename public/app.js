@@ -1037,8 +1037,8 @@ function cardHTML(p, isFirst = false) {
         const altText = `${p.title}, ${p.barrio}, ${p.municipio} - ${p.habitaciones} hab, ${p.banos} baño${p.banos !== 1 ? 's' : ''}, ${p.area} m² foto ${i + 1}`;
         return `
         <div class="property-slide ${i === 0 ? 'is-active' : ''}">
-          <img ${i === 0
-            ? `src="/${encodeImgPath(img.filename)}" decoding="async"${isFirst ? ' fetchpriority="high"' : ''}`
+          <img ${i === 0 && isFirst
+            ? `src="/${encodeImgPath(img.filename)}" decoding="async" fetchpriority="high"`
             : `data-src="/${encodeImgPath(img.filename)}" src="${BLANK_PLACEHOLDER}" loading="lazy" decoding="async"`
           } alt="${altText}" title="${p.title} - ${p.municipio}" class="lazy-img img-loaded"${imgFilterStyle} />
         </div>`;
