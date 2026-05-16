@@ -2469,8 +2469,10 @@ app.get('/api/feed/facebook.json', async (req, res) => {
       const listingType = useRent ? 'for_rent' : 'for_sale';
       const avail       = p.estado === 'ocupado' ? 'recently_sold' : listingType;
 
+      // Bug fix: arriendo usa p._id puro (coincide con Pixel content_ids),
+      // venta usa p._id + '_vta' para distinguir la variante en catálogo.
       const listingId   = isComb
-        ? `${p._id}_${useRent ? 'arr' : 'vta'}`
+        ? (useRent ? p._id : `${p._id}_vta`)
         : p._id;
 
       const descBase = p.descripcion
@@ -2483,7 +2485,7 @@ app.get('/api/feed/facebook.json', async (req, res) => {
         price,
         listing_type:     listingType,
         availability:     avail,
-        url:              `${baseUrl}/?prop=${p._id}`,
+        url:              `${baseUrl}/?id=${p._id}`,
         image_url:        imgUrl,
         image_cdn_urls:   allImgs,          // todas las fotos para el carrusel del anuncio
         address: {
@@ -2503,7 +2505,7 @@ app.get('/api/feed/facebook.json', async (req, res) => {
         year_built:       p.anio_construccion ? Number(p.anio_construccion) : null,
         brand:            brandName,
         neighborhood:     p.barrio || '',
-        applink:          { web_url: `${baseUrl}/?prop=${p._id}` }
+        applink:          { web_url: `${baseUrl}/?id=${p._id}` }
       };
     }
 
@@ -2541,7 +2543,7 @@ app.get('/api/feed/facebook.xml', async (req, res) => {
       const price       = `${Number(rawPrice).toFixed(0)} COP`;
       const listingType = useRent ? 'for_rent' : 'for_sale';
       const avail       = p.estado === 'ocupado' ? 'recently_sold' : listingType;
-      const listingId   = isComb ? `${p._id}_${useRent ? 'arr' : 'vta'}` : p._id;
+      const listingId   = isComb ? (useRent ? p._id : `${p._id}_vta`) : p._id;
 
       const allImgs = (p.images || []).filter(i => i.filename).map(i => `${baseUrl}/${i.filename}`);
       const mainImg = allImgs[0] || '';
@@ -2558,7 +2560,7 @@ app.get('/api/feed/facebook.xml', async (req, res) => {
       <listing_type>${listingType}</listing_type>
       <availability>${avail}</availability>
       <price>${esc(price)}</price>
-      <url>${esc(`${baseUrl}/?prop=${p._id}`)}</url>
+      <url>${esc(`${baseUrl}/?id=${p._id}`)}</url>
       <image_url>${esc(mainImg)}</image_url>
 ${extraImgs}
       <address>${esc([p.direccion, p.barrio, p.municipio].filter(Boolean).join(', '))}</address>
@@ -2620,7 +2622,7 @@ app.get('/api/feed/productos.csv', async (req, res) => {
         const useRent   = variant === 'rent';
         const isComb    = p.tipo === 'combinado';
         const rawPrice  = useRent ? (p.precioArriendo || p.precio || 0) : (p.precioVenta || p.precio || 0);
-        const listingId = isComb ? `${p._id}_${useRent ? 'arr' : 'vta'}` : p._id;
+        const listingId = isComb ? (useRent ? p._id : `${p._id}_vta`) : p._id;
 
         const imgs = (p.images || []).filter(i => i.filename);
         if (!imgs.length) continue;
@@ -2658,7 +2660,7 @@ app.get('/api/feed/productos.csv', async (req, res) => {
           q(avail),
           '"new"',
           q(`${Number(rawPrice).toFixed(2)} COP`),
-          q(`${baseUrl}/?prop=${p._id}`),
+          q(`${baseUrl}/?id=${p._id}`),
           q(mainImg),
           q(extraImgs),
           '"Alex Arias"',   // brand
@@ -2774,7 +2776,7 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
           ? (p.precioArriendo || p.precio || 0)
           : (p.precioVenta    || p.precio || 0);
 
-        const listingId   = isComb ? `${p._id}_${useRent ? 'arr' : 'vta'}` : p._id;
+        const listingId   = isComb ? (useRent ? p._id : `${p._id}_vta`) : p._id;
         const availability = p.estado === 'ocupado' ? 'off_market' : (useRent ? 'for_rent' : 'for_sale');
         const listingType  = useRent ? 'for_rent_by_agent' : 'for_sale_by_agent';
 
@@ -2861,7 +2863,7 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
           q(metaExtraImg),            // additional_image_link (opcional)
           q(listingType),
           q(price),                   // "3500000 COP"
-          q(`${baseUrl}/?prop=${p._id}`),
+          q(`${baseUrl}/?id=${p._id}`),
           q(address),
           q(cityName),
           q('Antioquia'),
