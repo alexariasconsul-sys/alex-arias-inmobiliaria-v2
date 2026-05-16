@@ -202,7 +202,8 @@ async function serveIndex(req, res, overrides = {}) {
       extraSchema = '',
       cityFilter  = null,
       tipoFilter  = null,
-      pixelId     = ''
+      pixelId     = '',
+      ssrProps    = []          // propiedades pre-renderizadas para Google
     } = overrides;
 
     const injectedTags = `
@@ -230,6 +231,49 @@ async function serveIndex(req, res, overrides = {}) {
     html = html.replace(/id="metaDesc" name="description" content="([^"]*)"/, `id="metaDesc" name="description" content="${esc(metaDesc)}"`);
     html = html.replace('id="canonicalUrl" rel="canonical" href="https://alexariasc.com/"', `id="canonicalUrl" rel="canonical" href="${esc(ogUrl)}"`);
     html = html.replace('</head>', injectedTags + '\n</head>');
+
+    // ── SSR: inyectar listado de propiedades para Googlebot ──────────────────
+    // Sin esto Google ve un grid vacío y no indexa las páginas de aterrizaje.
+    if (ssrProps.length) {
+      const formatPrice = p => {
+        if (p.tipo === 'combinado') {
+          const a = p.precioArriendo ? `Arriendo $${Number(p.precioArriendo).toLocaleString('es-CO')}` : '';
+          const v = p.precioVenta    ? `Venta $${Number(p.precioVenta).toLocaleString('es-CO')}`       : '';
+          return [a, v].filter(Boolean).join(' · ');
+        }
+        return p.precio ? `$${Number(p.precio).toLocaleString('es-CO')}` : '';
+      };
+      const tipoLabel = p => ({ arriendo:'Arriendo', venta:'Venta', combinado:'Arriendo y Venta' }[p.tipo] || p.tipo);
+
+      const items = ssrProps.map(p => {
+        const zone   = [p.barrio, p.municipio].filter(Boolean).join(', ');
+        const hab    = p.habitaciones ? `${p.habitaciones} hab` : '';
+        const banos  = p.banos        ? `${p.banos} baños`      : '';
+        const area   = p.area         ? `${p.area} m²`          : '';
+        const detail = [hab, banos, area].filter(Boolean).join(' · ');
+        const price  = formatPrice(p);
+        return `<li class="ssr-prop-item"><strong>${esc(p.title || '')}</strong> — ${esc(tipoLabel(p))}${zone ? ` en ${esc(zone)}` : ''}${price ? ` · ${esc(price)}` : ''}${detail ? ` · ${esc(detail)}` : ''}</li>`;
+      }).join('\n');
+
+      const label = cityFilter
+        ? `Apartamentos en ${cityFilter}${tipoFilter ? ` en ${tipoFilter}` : ''} disponibles`
+        : tipoFilter
+          ? `Apartamentos en ${tipoFilter} disponibles`
+          : 'Inmuebles disponibles';
+
+      const ssrBlock = `
+      <section class="ssr-props-block" aria-label="${esc(label)}" style="padding:16px 0 0;border-top:1px solid #e5e7eb;margin-top:12px">
+        <h2 style="font-size:13px;font-weight:600;color:#6b7280;margin:0 16px 8px">${esc(label)} (${ssrProps.length})</h2>
+        <ul style="list-style:none;padding:0 16px;margin:0;display:flex;flex-direction:column;gap:4px">
+          ${items}
+        </ul>
+      </section>`;
+
+      html = html.replace('<!-- SSR_LANDING_BLOCK -->', ssrBlock);
+    } else {
+      html = html.replace('<!-- SSR_LANDING_BLOCK -->', '');
+    }
+
     res.send(html);
   } catch (err) {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -300,7 +344,7 @@ CITY_PAGES.forEach(({ route, municipio, slug, desc }) => {
       const settings = readSettings();
       await serveIndex(req, res, {
         pageTitle, metaDesc, ogTitle: pageTitle, ogDesc: metaDesc, ogUrl,
-        extraSchema, cityFilter: municipio,
+        extraSchema, cityFilter: municipio, ssrProps: props,
         pixelId: (settings.facebookPixelId || '').trim()
       });
     } catch (err) {
@@ -358,7 +402,7 @@ TIPO_PAGES.forEach(({ route, tipo, label, title, desc }) => {
       const settings = readSettings();
       await serveIndex(req, res, {
         pageTitle, metaDesc, ogTitle: pageTitle, ogDesc: metaDesc, ogUrl,
-        extraSchema, tipoFilter: tipo,
+        extraSchema, tipoFilter: tipo, ssrProps: props,
         pixelId: (settings.facebookPixelId || '').trim()
       });
     } catch (err) {
@@ -420,7 +464,7 @@ TIPO_CIUDAD_PAGES.forEach(({ route, municipio, slug, tipo, label, lat, lon }) =>
       const settings = readSettings();
       await serveIndex(req, res, {
         pageTitle, metaDesc, ogTitle: pageTitle, ogDesc: metaDesc, ogUrl,
-        extraSchema, cityFilter: municipio, tipoFilter: tipo,
+        extraSchema, cityFilter: municipio, tipoFilter: tipo, ssrProps: props,
         pixelId: (settings.facebookPixelId || '').trim()
       });
     } catch (err) {
@@ -590,6 +634,7 @@ app.get('/', async (req, res) => {
     html = html.replace(/id="metaDesc" name="description" content="([^"]*)"/,    `id="metaDesc" name="description" content="${esc(metaDesc)}"`);
     html = html.replace('id="canonicalUrl" rel="canonical" href="https://alexariasc.com/"', `id="canonicalUrl" rel="canonical" href="${esc(ogUrl)}"`);
     html = html.replace('</head>', injected + '\n</head>');
+    html = html.replace('<!-- SSR_LANDING_BLOCK -->', ''); // limpia placeholder en ruta raíz
     res.send(html);
   } catch (err) {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -713,6 +758,57 @@ app.get('/post.html', async (req, res) => {
     html = html.replace(
       'id="articleSchema"></script>',
       `id="articleSchema">${JSON.stringify(articleSchema)}</script>`
+    );
+
+    // ── INYECCIÓN DE CONTENIDO EN BODY (crítico para indexación Google) ──────
+    // Google ve HTML vacío (todo cargado por JS) → "Rastreada: sin indexar"
+    // Solución: pre-renderizar el contenido en el HTML del servidor
+
+    // 1. Mostrar cover image
+    if (rawCover) {
+      html = html.replace(
+        'id="postCoverWrap" style="display:none"',
+        'id="postCoverWrap"'
+      );
+      html = html.replace(
+        /id="postCoverImg"[^>]*>/,
+        `id="postCoverImg" src="${esc(ogImage)}" alt="${esc(ogTitle)}" loading="eager">`
+      );
+    }
+
+    // 2. Categoría
+    if (post.category) {
+      html = html.replace(
+        '<span class="post-category-badge" id="postCategory"></span>',
+        `<span class="post-category-badge" id="postCategory">${esc(post.category)}</span>`
+      );
+    }
+
+    // 3. Título H1 (más importante para SEO)
+    html = html.replace(
+      '<h1 class="post-title" id="postTitle" itemprop="headline"></h1>',
+      `<h1 class="post-title" id="postTitle" itemprop="headline">${esc(ogTitle)}</h1>`
+    );
+
+    // 4. Excerpt / bajada
+    if (ogDesc) {
+      html = html.replace(
+        '<p class="post-excerpt" id="postExcerpt" itemprop="description"></p>',
+        `<p class="post-excerpt" id="postExcerpt" itemprop="description">${esc(ogDesc)}</p>`
+      );
+    }
+
+    // 5. Fecha de publicación
+    const dateLabel = new Date(pubDate).toLocaleDateString('es-CO', { year:'numeric', month:'long', day:'numeric' });
+    html = html.replace(
+      '<time class="post-date" id="postDate" itemprop="datePublished"></time>',
+      `<time class="post-date" id="postDate" itemprop="datePublished" datetime="${pubDate}">${dateLabel}</time>`
+    );
+
+    // 6. Contenido del artículo (lo más importante — sin esto Google no indexa)
+    html = html.replace(
+      '<!-- HTML del artículo inyectado por JS -->',
+      post.content || ''
     );
 
     res.set('Content-Type', 'text/html; charset=utf-8');
