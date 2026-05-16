@@ -75,8 +75,8 @@ async function saveOptimizedImage(buffer) {
   const filename = `${Date.now()}_${Math.random().toString(36).substr(2, 8)}.webp`;
   const filepath = path.join(uploadsDir, filename);
   await sharp(buffer)
-    .resize(1600, 1600, { fit: 'inside', withoutEnlargement: true })
-    .webp({ quality: 82, effort: 4 })
+    .resize(1280, 1280, { fit: 'inside', withoutEnlargement: true })
+    .webp({ quality: 72, effort: 5 })
     .toFile(filepath);
   return filename;
 }
@@ -846,9 +846,12 @@ app.use(express.static(path.join(__dirname, 'public'), {
   etag: true,
   lastModified: true,
   setHeaders(res, filePath) {
-    // Imágenes en /public pueden cachearse más tiempo
     if (/\.(png|jpe?g|webp|gif|ico|svg)$/i.test(filePath)) {
-      res.setHeader('Cache-Control', 'public, max-age=604800'); // 7 días
+      // Imágenes: 30 días
+      res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
+    } else if (/\.(css|js)$/i.test(filePath)) {
+      // CSS/JS versionados con ?v=N → 1 año
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     } else {
       res.setHeader('Cache-Control', 'no-cache');
     }
