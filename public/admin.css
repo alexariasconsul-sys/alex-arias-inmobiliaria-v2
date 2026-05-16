@@ -111,9 +111,11 @@ body {
   border-bottom: 1px solid rgba(255,255,255,.07);
 }
 .adm-sidebar-logo {
-  height: 34px;
-  width: auto;
-  filter: brightness(0) invert(1);
+  height: 38px;
+  width: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 .adm-sidebar-name { display: block; font-size: 13px; font-weight: 700; color: #fff; }
 .adm-sidebar-sub  { display: block; font-size: 10px; font-weight: 500; color: rgba(255,255,255,.4); }
