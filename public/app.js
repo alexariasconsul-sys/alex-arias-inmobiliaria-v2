@@ -3216,12 +3216,12 @@ function deactivateAllMarkers() {
 }
 
 function getVisibleProperties() {
-  if (!state.leafletMap) return state.properties;
+  if (!state.leafletMap) return state.filtered;
   const bounds = state.leafletMap.getBounds();
-  const withCoords = state.properties.filter(p => p.lat && p.lng);
-  if (!withCoords.length) return state.properties;
+  const withCoords = state.filtered.filter(p => p.lat && p.lng);
+  if (!withCoords.length) return state.filtered;
   const visible = withCoords.filter(p => bounds.contains([p.lat, p.lng]));
-  return visible.length ? visible : state.properties.filter(p => p.lat && p.lng);
+  return visible.length ? visible : state.filtered.filter(p => p.lat && p.lng);
 }
 
 function initMap() {
@@ -3306,10 +3306,12 @@ function closeMapOverlay() {
 function _getOverlayCardHTML(prop) {
   const firstImg   = prop.images?.[0]?.filename;
   const imgSrc     = firstImg ? `/${encodeImgPath(firstImg)}` : '';
+  const isComb     = prop.tipo === 'combinado';
+  const displayPrc = isComb ? (prop.precioArriendo || prop.precio) : prop.precio;
   const waPhone    = (window._profileData?.whatsapp || '573122588521').replace(/\D/g, '');
-  const waText     = encodeURIComponent(`Hola, me interesa: ${prop.title} - ${formatPrice(prop.precio)}`);
-  const tipoLbl    = prop.tipo === 'venta' ? 'VENTA' : 'ARRIENDO';
-  const tipoClass  = prop.tipo === 'venta' ? 'venta' : 'arriendo';
+  const waText     = encodeURIComponent(`Hola, me interesa: ${prop.title} - ${formatPrice(displayPrc)}`);
+  const tipoLbl    = isComb ? 'ARR · VENTA' : (prop.tipo === 'venta' ? 'VENTA' : 'ARRIENDO');
+  const tipoClass  = isComb ? 'combinado'   : (prop.tipo === 'venta' ? 'venta' : 'arriendo');
   const isOccupied = prop.estado === 'ocupado';
   const statusLbl  = isOccupied ? 'OCUPADO' : 'LIBRE';
   const loc        = [prop.municipio, prop.barrio].filter(Boolean).join(' · ');
@@ -3345,7 +3347,7 @@ function _getOverlayCardHTML(prop) {
           ${loc ? `<span class="map-overlay-loc">${loc}</span>` : ''}
           <div class="map-overlay-name-price">
             <span class="map-overlay-name">${prop.title}</span>
-            <span class="map-overlay-price">${formatPrice(prop.precio)}</span>
+            <span class="map-overlay-price">${formatPrice(displayPrc)}</span>
           </div>
         </div>
       </div>
@@ -3525,11 +3527,13 @@ function updateMapMarkers() {
   state.leafletMap.off('click', closeMapOverlay);
   state.leafletMap.on('click', closeMapOverlay);
 
-  state.properties.forEach(prop => {
+  state.filtered.forEach(prop => {
     if (!prop.lat || !prop.lng) return;
 
     const isOccupied = prop.estado === 'ocupado';
-    const priceLabel = formatPriceShort(prop.precio);
+    const priceLabel = prop.tipo === 'combinado'
+      ? formatPriceShort(prop.precioArriendo || prop.precio)
+      : formatPriceShort(prop.precio);
 
     const icon = L.divIcon({
       html: `<div class="map-price-marker${isOccupied ? ' occupied' : ''}">${priceLabel}</div>`,
