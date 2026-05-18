@@ -1223,13 +1223,13 @@ a { text-decoration: none; color: inherit; }
 }
 
 .status-btn.status-libre {
-  background: rgba(22, 163, 74, 0.28);
+  background: rgba(22, 163, 74, 0.18);
   color: #fff;
 }
 .status-btn.status-libre .status-dot { background: #fff; }
 
 .status-btn.status-ocupado {
-  background: rgba(220, 38, 38, 0.28);
+  background: rgba(220, 38, 38, 0.18);
   color: #fff;
 }
 .status-btn.status-ocupado .status-dot { background: #fff; }
