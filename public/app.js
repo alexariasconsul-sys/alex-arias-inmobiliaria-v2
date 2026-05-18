@@ -1123,7 +1123,7 @@ function cardHTML(p, isFirst = false) {
           </div>
           <button class="share-btn card-share-btn" data-id="${p.id}" type="button" aria-label="Compartir">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <path d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <span class="share-count" data-id="${p.id}">${p.shares || 0}</span>
           </button>
@@ -1179,7 +1179,7 @@ function cardHTML(p, isFirst = false) {
             <div class="detail-actions">
               <button class="share-btn" data-id="${p.id}" type="button">
                 <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
                 Compartir
               </button>
@@ -3093,7 +3093,7 @@ function mapCardHTML(prop) {
     <div class="map-card-detail">
       <div class="map-card-actions">
         <button class="map-card-btn-share" data-id="${prop.id}">
-          <svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Compartir
         </button>
         <a class="map-card-btn-wa" href="https://api.whatsapp.com/send?phone=573122588521&text=${waText}" target="_blank" rel="noopener">
