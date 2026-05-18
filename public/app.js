@@ -1613,20 +1613,22 @@ const _lazyObserver = new IntersectionObserver((entries) => {
 }, { rootMargin: '600px' });
 
 function initSliderLazy(card) {
-  // Ocultar spinner cuando la primera imagen termina de cargar
-  const firstImg = card.querySelector('.property-slide img:not([data-src])');
-  if (firstImg) {
-    const media = card.querySelector('.property-media');
-    if (media) {
-      if (firstImg.complete && firstImg.naturalHeight !== 0) {
-        media.classList.add('img-ready');
-      } else {
-        firstImg.addEventListener('load',  () => media.classList.add('img-ready'), { once: true });
-        firstImg.addEventListener('error', () => media.classList.add('img-ready'), { once: true });
-      }
+  // Ocultar spinner cuando la primera imagen termina de cargar.
+  // La primera slide puede ser eager (sin data-src) o lazy (con data-src).
+  const firstSlideImg = card.querySelector('.property-slide.is-active img');
+  const media = card.querySelector('.property-media');
+  if (firstSlideImg && media) {
+    const dismiss = () => media.classList.add('img-ready');
+    if (!firstSlideImg.dataset.src && firstSlideImg.complete && firstSlideImg.naturalHeight !== 0) {
+      // Eager y ya cargó — desactivar spinner de inmediato
+      dismiss();
+    } else {
+      // Eager pendiente O lazy: escuchar el evento load (funciona en ambos casos)
+      firstSlideImg.addEventListener('load',  dismiss, { once: true });
+      firstSlideImg.addEventListener('error', dismiss, { once: true });
     }
   }
-  // Observar imágenes de slides 2, 3... para cargarlas con IntersectionObserver
+  // Observar todas las imágenes con data-src (lazy)
   card.querySelectorAll('img.lazy-img[data-src]').forEach(img => {
     _lazyObserver.observe(img);
   });
