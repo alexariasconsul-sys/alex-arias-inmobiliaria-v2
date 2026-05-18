@@ -1756,12 +1756,24 @@ app.delete('/api/properties/:id/images/:imgId', requireAdmin, async (req, res) =
 });
 
 // ─── FILTROS DISPONIBLES ──────────────────────────────────────
+// Deduplicación insensible a tildes: "Rio" y "Río" → una sola entrada
+function _dedupeOptions(arr) {
+  const seen = new Map();
+  arr.forEach(s => {
+    if (!s) return;
+    const clean = String(s).trim().replace(/\s+/g, ' ');
+    const key = clean.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    if (!seen.has(key)) seen.set(key, clean);
+  });
+  return [...seen.values()].sort((a, b) => a.localeCompare(b, 'es'));
+}
+
 app.get('/api/filters', async (req, res) => {
   try {
     const db = getDB();
     const all = await db.findAsync({});
-    const municipios = [...new Set(all.map(p => p.municipio?.trim()).filter(Boolean))].sort();
-    const barrios    = [...new Set(all.map(p => p.barrio?.trim()).filter(Boolean))].sort();
+    const municipios = _dedupeOptions(all.map(p => p.municipio));
+    const barrios    = _dedupeOptions(all.map(p => p.barrio));
     res.json({ municipios, barrios });
   } catch (err) {
     res.status(500).json({ error: err.message });

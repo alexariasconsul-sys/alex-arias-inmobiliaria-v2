@@ -722,14 +722,27 @@ function initCustDrops() {
   });
 }
 
+// Deduplicación insensible a tildes y espacios extra para dropdowns de filtro.
+// Ej: "Terrazas del Rio" y "Terrazas del Río" → solo aparece una vez.
+function _dedupeOptions(arr) {
+  const seen = new Map();
+  arr.forEach(s => {
+    if (!s) return;
+    const clean = String(s).trim().replace(/\s+/g, ' ');
+    const key = clean.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    if (!seen.has(key)) seen.set(key, clean);
+  });
+  return [...seen.values()].sort((a, b) => a.localeCompare(b, 'es'));
+}
+
 function updateFilterDropdowns() {
-  const municipios = [...new Set(state.properties.map(p => p.municipio?.trim()).filter(Boolean))].sort();
+  const municipios = _dedupeOptions(state.properties.map(p => p.municipio));
   populateSelect('filterMunicipio', municipios, 'Municipio');
 
   const municipio = document.getElementById('filterMunicipio')?.value || '';
-  const barriosFiltrados = [...new Set(state.properties
+  const barriosFiltrados = _dedupeOptions(state.properties
     .filter(p => !municipio || p.municipio?.trim() === municipio)
-    .map(p => p.barrio?.trim()).filter(Boolean))].sort();
+    .map(p => p.barrio));
   populateSelect('filterBarrio', barriosFiltrados, 'Barrio');
 
   // Sincronizar selectores del panel móvil
@@ -747,9 +760,9 @@ function updateFilterDropdowns() {
   }
   if (mBarrio) {
     const selectedMunicipio = mMunicipio ? mMunicipio.value : '';
-    const barriosMobile = [...new Set(state.properties
+    const barriosMobile = _dedupeOptions(state.properties
       .filter(p => !selectedMunicipio || p.municipio === selectedMunicipio)
-      .map(p => p.barrio).filter(Boolean))].sort();
+      .map(p => p.barrio));
     const curB = mBarrio.value;
     mBarrio.innerHTML = '<option value="">Todos los barrios</option>';
     barriosMobile.forEach(b => {
@@ -915,9 +928,9 @@ function setupMobileBarrioFilter() {
   if (!mMunicipio || !mBarrio) return;
   mMunicipio.addEventListener('change', () => {
     const m = mMunicipio.value;
-    const barrios = [...new Set(state.properties
+    const barrios = _dedupeOptions(state.properties
       .filter(p => !m || p.municipio === m)
-      .map(p => p.barrio).filter(Boolean))].sort();
+      .map(p => p.barrio));
     mBarrio.innerHTML = '<option value="">Todos los barrios</option>';
     barrios.forEach(b => {
       const o = document.createElement('option');
@@ -2365,9 +2378,9 @@ function setupFilters() {
 
   function updateMegaBarrioSelect() {
     const selectedMunicipio = document.getElementById('filterMunicipio').value;
-    const barrios = [...new Set(state.properties
+    const barrios = _dedupeOptions(state.properties
       .filter(p => !selectedMunicipio || p.municipio === selectedMunicipio)
-      .map(p => p.barrio).filter(Boolean))].sort();
+      .map(p => p.barrio));
 
     barrioSel.innerHTML = '<option value="">Barrio</option>';
     barrios.forEach(b => {
