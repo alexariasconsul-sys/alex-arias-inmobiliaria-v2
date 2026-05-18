@@ -2077,20 +2077,52 @@ function updateFavBadge() {
 }
 
 // ─── SHARE ───────────────────────────────────────────────────
+const _shareTimers = new Map(); // evita doble conteo por clic rápido
+
 function setupShareBtn(card) {
   card.querySelectorAll('.share-btn').forEach(btn => {
+    // Tooltip
+    btn.addEventListener('mouseenter', () => showFloatTip(btn, '¡Comparte con alguien a quien le interese!'));
+    btn.addEventListener('mouseleave', hideFloatTip);
+
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
+      hideFloatTip();
       const id = card.dataset.cardId;
       state.shareTargetId = id;
       showShareSheet();
-      // Incrementar contador de compartidos
-      try {
-        const res = await apiFetch(`/api/properties/${id}/share`, { method: 'POST' });
-        if (res?.shares !== undefined) updateShareCount(id, res.shares);
-      } catch (_) {}
+
+      // Delay de 3s antes de contar — igual que redes sociales
+      // (evita contar clics accidentales o curiosos que cierran de inmediato)
+      if (_shareTimers.has(id)) return; // ya tiene timer pendiente
+      _shareTimers.set(id, setTimeout(async () => {
+        _shareTimers.delete(id);
+        try {
+          const res = await apiFetch(`/api/properties/${id}/share`, { method: 'POST' });
+          if (res?.shares !== undefined) updateShareCount(id, res.shares);
+        } catch (_) {}
+      }, 3000));
     });
   });
+}
+
+// ─── TOOLTIP FLOTANTE GENÉRICO ────────────────────────────────
+function showFloatTip(btn, text) {
+  let tip = document.getElementById('floatTip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.id = 'floatTip';
+    tip.className = 'like-tooltip'; // reutiliza estilos del tooltip de likes
+    document.body.appendChild(tip);
+  }
+  tip.textContent = text;
+  const rect = btn.getBoundingClientRect();
+  tip.style.left = (rect.left + rect.width / 2) + 'px';
+  tip.style.top  = rect.top + 'px';
+  tip.classList.add('like-tooltip--show');
+}
+function hideFloatTip() {
+  document.getElementById('floatTip')?.classList.remove('like-tooltip--show');
 }
 
 function updateShareCount(id, count) {
