@@ -1224,15 +1224,15 @@ a { text-decoration: none; color: inherit; }
 
 .status-btn.status-libre {
   background: rgba(22, 163, 74, 0.28);
-  color: #15803d;
+  color: #fff;
 }
-.status-btn.status-libre .status-dot { background: #15803d; }
+.status-btn.status-libre .status-dot { background: #fff; }
 
 .status-btn.status-ocupado {
   background: rgba(220, 38, 38, 0.28);
-  color: #b91c1c;
+  color: #fff;
 }
-.status-btn.status-ocupado .status-dot { background: #b91c1c; }
+.status-btn.status-ocupado .status-dot { background: #fff; }
 
 /* Bottom of overlay: location + price */
 .media-overlay-bottom {
