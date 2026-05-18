@@ -259,6 +259,7 @@ body {
 .adm-kpi-icon--posts  { background: var(--blue-bg);     color: var(--blue); }
 .adm-kpi-icon--views  { background: var(--green-bg);    color: var(--green); }
 .adm-kpi-icon--likes  { background: var(--amber-bg);    color: var(--amber); }
+.adm-kpi-icon--shares { background: #eff6ff;            color: #3b82f6; }
 
 .adm-kpi-info { display: flex; flex-direction: column; gap: 2px; }
 .adm-kpi-val  { font-size: 26px; font-weight: 800; color: var(--text); line-height: 1; letter-spacing: -.03em; }
@@ -320,7 +321,8 @@ body {
 .adm-list-stats { display: flex; gap: 6px; flex-shrink: 0; }
 .adm-stat-pill  { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
 .adm-stat-pill.views { background: var(--green-bg); color: var(--green); }
-.adm-stat-pill.likes { background: var(--amber-bg); color: var(--amber); }
+.adm-stat-pill.likes  { background: var(--amber-bg); color: var(--amber); }
+.adm-stat-pill.shares { background: #eff6ff;         color: #3b82f6; }
 .adm-empty { font-size: 13px; color: var(--muted); padding: 16px 12px; text-align: center; }
 
 /* ─── BADGES ──────────────────────────────────────────────── */

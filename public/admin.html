@@ -123,6 +123,7 @@
         <div class="adm-kpi"><div class="adm-kpi-icon adm-kpi-icon--posts"><svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="2"/></svg></div><div class="adm-kpi-info"><span class="adm-kpi-val" id="kpiPosts">—</span><span class="adm-kpi-label">Artículos</span></div></div>
         <div class="adm-kpi"><div class="adm-kpi-icon adm-kpi-icon--views"><svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg></div><div class="adm-kpi-info"><span class="adm-kpi-val" id="kpiViews">—</span><span class="adm-kpi-label">Vistas totales</span></div></div>
         <div class="adm-kpi"><div class="adm-kpi-icon adm-kpi-icon--likes"><svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke="currentColor" stroke-width="2"/></svg></div><div class="adm-kpi-info"><span class="adm-kpi-val" id="kpiLikes">—</span><span class="adm-kpi-label">Me gusta</span></div></div>
+        <div class="adm-kpi"><div class="adm-kpi-icon adm-kpi-icon--shares"><svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="adm-kpi-info"><span class="adm-kpi-val" id="kpiShares">—</span><span class="adm-kpi-label">Compartidos</span></div></div>
       </div>
       <div class="adm-row">
         <div class="adm-card"><h2 class="adm-card-title">Por tipo</h2><div class="adm-donut-wrap"><canvas id="chartTipo" width="140" height="140"></canvas><div class="adm-donut-legend" id="legendTipo"></div></div></div>
@@ -217,7 +218,7 @@
       <div class="adm-card adm-card--full">
         <div class="adm-table-wrap">
           <table class="adm-table">
-            <thead><tr><th>Propiedad</th><th>Tipo</th><th>Precio</th><th>Estado</th><th>Vistas</th><th>Likes</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>Propiedad</th><th>Tipo</th><th>Precio</th><th>Estado</th><th>Vistas</th><th>Likes</th><th>Compartidos</th><th>Acciones</th></tr></thead>
             <tbody id="propTableBody"></tbody>
           </table>
           <div class="adm-table-empty" id="propTableEmpty" style="display:none">No hay propiedades aún</div>
@@ -1131,10 +1132,11 @@ async function loadStats() {
     document.getElementById('kpiPosts').textContent  = d.totals.publishedPosts;
     document.getElementById('kpiViews').textContent  = fmtNum(d.totals.views);
     document.getElementById('kpiLikes').textContent  = fmtNum(d.totals.likes);
+    document.getElementById('kpiShares').textContent = fmtNum(d.totals.shares || 0);
     drawDonut('chartTipo',   'legendTipo',   d.propsByType,   ['#E71433','#111827','#3b82f6','#f59e0b']);
     drawDonut('chartEstado', 'legendEstado', d.propsByStatus, ['#16a34a','#dc2626','#f59e0b']);
     document.getElementById('topPropsList').innerHTML = d.topProps.length ? d.topProps.map((p,i) => `
-      <div class="adm-list-item"><span class="adm-list-rank">${i+1}</span><div class="adm-list-info"><span class="adm-list-title">${p.title}</span><span class="adm-list-meta">${p.tipo}</span></div><div class="adm-list-stats"><span class="adm-stat-pill views">${fmtNum(p.views)} vistas</span><span class="adm-stat-pill likes">${p.likes} ♥</span></div></div>`).join('') : '<p class="adm-empty">Sin datos aún</p>';
+      <div class="adm-list-item"><span class="adm-list-rank">${i+1}</span><div class="adm-list-info"><span class="adm-list-title">${p.title}</span><span class="adm-list-meta">${p.tipo}</span></div><div class="adm-list-stats"><span class="adm-stat-pill views">${fmtNum(p.views)} vistas</span><span class="adm-stat-pill likes">${p.likes} ♥</span>${p.shares ? `<span class="adm-stat-pill shares">${p.shares} ↗</span>` : ''}</div></div>`).join('') : '<p class="adm-empty">Sin datos aún</p>';
     document.getElementById('topPostsList').innerHTML = d.topPosts.length ? d.topPosts.map((p,i) => `
       <div class="adm-list-item"><span class="adm-list-rank">${i+1}</span><div class="adm-list-info"><span class="adm-list-title">${p.title}</span><span class="adm-list-meta">${p.status==='published'?'Publicado':'Borrador'}</span></div><div class="adm-list-stats"><span class="adm-stat-pill views">${fmtNum(p.views)} vistas</span></div></div>`).join('') : '<p class="adm-empty">Sin datos aún</p>';
   } catch (err) { console.error(err); }
@@ -1161,7 +1163,7 @@ function renderPropsTable(props) {
     <td><span class="adm-badge adm-badge--${p.tipo}">${p.tipo}</span></td>
     <td>${fmtPrice(p.precio)}</td>
     <td><span class="adm-badge adm-badge--${p.estado}">${p.estado==='libre'?'Disponible':'Ocupado'}</span></td>
-    <td>${fmtNum(p.views||0)}</td><td>${p.likes||0}</td>
+    <td>${fmtNum(p.views||0)}</td><td>${p.likes||0}</td><td>${p.shares||0}</td>
     <td><div class="adm-tbl-actions">
       <button class="adm-tbl-btn adm-tbl-btn--edit" data-id="${p.id}" title="Editar">
         <svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>

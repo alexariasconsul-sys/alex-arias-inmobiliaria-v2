@@ -989,8 +989,9 @@ app.get('/api/stats', requireAdmin, async (req, res) => {
     const posts = await blogDB.findAsync({});
     const totalViews = props.reduce((s, p) => s + (p.views || 0), 0)
                      + posts.reduce((s, p) => s + (p.views || 0), 0);
-    const totalLikes = props.reduce((s, p) => s + (p.likes || 0), 0)
-                     + posts.reduce((s, p) => s + (p.likes || 0), 0);
+    const totalLikes  = props.reduce((s, p) => s + (p.likes  || 0), 0)
+                      + posts.reduce((s, p) => s + (p.likes  || 0), 0);
+    const totalShares = props.reduce((s, p) => s + (p.shares || 0), 0);
     const propsByType = props.reduce((acc, p) => {
       acc[p.tipo] = (acc[p.tipo] || 0) + 1; return acc;
     }, {});
@@ -998,7 +999,7 @@ app.get('/api/stats', requireAdmin, async (req, res) => {
       acc[p.estado] = (acc[p.estado] || 0) + 1; return acc;
     }, {});
     const topProps = [...props].sort((a,b) => (b.views||0)-(a.views||0)).slice(0,5).map(p => ({
-      id: p._id, title: p.title, views: p.views||0, likes: p.likes||0, tipo: p.tipo, estado: p.estado
+      id: p._id, title: p.title, views: p.views||0, likes: p.likes||0, shares: p.shares||0, tipo: p.tipo, estado: p.estado
     }));
     const topPosts = [...posts].sort((a,b) => (b.views||0)-(a.views||0)).slice(0,5).map(p => ({
       slug: p.slug, title: p.title, views: p.views||0, likes: p.likes||0, status: p.status
@@ -1015,7 +1016,8 @@ app.get('/api/stats', requireAdmin, async (req, res) => {
         posts: posts.length,
         publishedPosts: posts.filter(p => p.status === 'published').length,
         views: totalViews,
-        likes: totalLikes
+        likes: totalLikes,
+        shares: totalShares
       },
       propsByType,
       propsByStatus,
