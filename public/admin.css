@@ -1885,6 +1885,36 @@ body {
   font-size: 12px;
 }
 
+/* ── Botón compartir en barra de tarjeta ─────────────────────── */
+.card-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-2, #6b7280);
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: color .18s, background .18s;
+}
+.card-share-btn:hover {
+  color: #3b82f6;
+  background: rgba(59,130,246,.08);
+}
+.card-share-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.card-share-btn .share-count {
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Toast de like ───────────────────────────────────────────── */
 .like-toast {
   position: fixed;

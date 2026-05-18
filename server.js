@@ -1642,6 +1642,21 @@ app.post('/api/properties/:id/like', async (req, res) => {
   }
 });
 
+// ─── CONTADOR DE COMPARTIDOS ─────────────────────────────────
+app.post('/api/properties/:id/share', async (req, res) => {
+  try {
+    const db  = getDB();
+    const doc = await db.findOneAsync({ _id: req.params.id });
+    if (!doc) return res.status(404).json({ error: 'No encontrado' });
+    const newShares = (doc.shares || 0) + 1;
+    await db.updateAsync({ _id: req.params.id }, { $set: { shares: newShares } });
+    io.emit('shares-update', { id: req.params.id, shares: newShares });
+    res.json({ shares: newShares });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── OBTENER LIKES DE UN DISPOSITIVO ─────────────────────────
 app.get('/api/likes', async (req, res) => {
   try {

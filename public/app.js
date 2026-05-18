@@ -1019,8 +1019,9 @@ function cardHTML(p, isFirst = false) {
     ? '<span class="prop-corner-badge">Muy buscado</span>'
     : '';
 
-  // Badge inline (al lado de Arriendo/Venta): "Nuevo" si < 50 vistas
-  const isNuevo = (p.views || 0) < 50;
+  // Badge inline: "Nuevo" si tiene menos de 5 días desde su publicación
+  const _createdMs = p.created_at ? new Date(p.created_at).getTime() : 0;
+  const isNuevo = _createdMs > 0 && (Date.now() - _createdMs) < 5 * 24 * 60 * 60 * 1000;
   const nuevoBadgeHtml = isNuevo
     ? '<span class="tipo-badge tipo-badge--nuevo">Nuevo</span>'
     : '';
@@ -1120,6 +1121,12 @@ function cardHTML(p, isFirst = false) {
             </svg>
             <span class="views-count" data-id="${p.id}">${p.views || 0}</span>
           </div>
+          <button class="share-btn card-share-btn" data-id="${p.id}" type="button" aria-label="Compartir">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="share-count" data-id="${p.id}">${p.shares || 0}</span>
+          </button>
           <span class="tipo-badge tipo-badge--${isCombinado ? 'combinado' : (p.tipo === 'venta' ? 'venta' : 'arriendo')}">${isCombinado ? 'Arr · Venta' : (p.tipo === 'venta' ? 'Venta' : 'Arriendo')}</span>
           ${nuevoBadgeHtml}
           <button class="expand-toggle" type="button" aria-expanded="false" aria-label="Ver detalles">
@@ -2071,10 +2078,24 @@ function updateFavBadge() {
 
 // ─── SHARE ───────────────────────────────────────────────────
 function setupShareBtn(card) {
-  card.querySelector('.share-btn')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    state.shareTargetId = card.dataset.cardId;
-    showShareSheet();
+  card.querySelectorAll('.share-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = card.dataset.cardId;
+      state.shareTargetId = id;
+      showShareSheet();
+      // Incrementar contador de compartidos
+      try {
+        const res = await apiFetch(`/api/properties/${id}/share`, { method: 'POST' });
+        if (res?.shares !== undefined) updateShareCount(id, res.shares);
+      } catch (_) {}
+    });
+  });
+}
+
+function updateShareCount(id, count) {
+  document.querySelectorAll(`.share-count[data-id="${id}"]`).forEach(el => {
+    el.textContent = count;
   });
 }
 
@@ -4740,6 +4761,12 @@ function setupSocket() {
       updateViewCount(id, views);
       const prop = state.properties.find(p => p.id === id);
       if (prop) prop.views = views;
+    });
+
+    socket.on('shares-update', ({ id, shares }) => {
+      updateShareCount(id, shares);
+      const prop = state.properties.find(p => p.id === id);
+      if (prop) prop.shares = shares;
     });
 
     socket.on('new-property', async () => {
