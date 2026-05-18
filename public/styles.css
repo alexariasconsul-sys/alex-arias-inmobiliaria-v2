@@ -2591,7 +2591,7 @@ a { text-decoration: none; color: inherit; }
   position: relative;
   border: none;
   background: transparent;
-  color: rgba(255,255,255,.4);
+  color: rgba(255,255,255,.82);
   cursor: pointer;
   padding: 8px;
   display: flex; align-items: center; justify-content: center;
