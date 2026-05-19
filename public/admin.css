@@ -2228,3 +2228,34 @@ body {
   .leads-kpi-row { grid-template-columns: 1fr; }
   .leads-donut-layout { flex-direction: column; align-items: flex-start; }
 }
+
+/* ── MARKETING ANALYTICS ─────────────────────────────────── */
+.mkt-insight {
+  background: linear-gradient(135deg, #fff7ed, #fff);
+  border: 1px solid #fed7aa;
+  border-left: 3px solid #f97316;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.prop-temp { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 10px; }
+.prop-temp--hot  { background: rgba(239,68,68,.1); color: #dc2626; }
+.prop-temp--warm { background: rgba(245,158,11,.1); color: #d97706; }
+.prop-temp--cold { background: rgba(148,163,184,.1); color: #64748b; }
+
+.prop-perf-table td { vertical-align: middle; }
+
+.kpi-delta {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+  margin-top: 4px;
+  display: inline-block;
+}
+.kpi-delta--up   { background: rgba(16,185,129,.1); color: #059669; }
+.kpi-delta--down { background: rgba(239,68,68,.1);  color: #dc2626; }
+.kpi-delta--flat { background: rgba(148,163,184,.1); color: #64748b; }

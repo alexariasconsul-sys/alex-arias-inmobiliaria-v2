@@ -1053,16 +1053,23 @@ app.post('/api/searches/log', async (req, res) => {
 // ─── LOGGING DE LEADS ──────────────────────────────────────────
 app.post('/api/leads/log', async (req, res) => {
   try {
-    const { propId, propTitle, propPrice, contactChannel, source } = req.body;
+    const { propId, propTitle, propPrice, contactChannel, source, utm_source, utm_medium, utm_campaign, utm_content, device } = req.body;
     const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+    const userAgent = req.headers['user-agent'] || '';
 
     await leadsDB.insertAsync({
       propId: propId || '',
       propTitle: propTitle || '',
       propPrice: propPrice || 0,
       ip,
+      userAgent,
       contactChannel: contactChannel || 'unknown',
       source: source || 'unknown',
+      utm_source: utm_source || '',
+      utm_medium: utm_medium || '',
+      utm_campaign: utm_campaign || '',
+      utm_content: utm_content || '',
+      device: device || '',
       ts: new Date()
     });
     res.json({ ok: true });
@@ -1151,15 +1158,219 @@ app.get('/api/stats/leads', requireAdmin, async (req, res) => {
       leadsByDay[day] = (leadsByDay[day] || 0) + 1;
     });
 
+    // ── NUEVAS MÉTRICAS DE AUDIENCIA ──────────────────────────
+
+    // Leads por hora del día (0-23)
+    const hourCounts = {};
+    leads.forEach(l => {
+      const h = new Date(l.ts).getHours();
+      hourCounts[h] = (hourCounts[h] || 0) + 1;
+    });
+    const byHour = Array.from({ length: 24 }, (_, i) => ({ hour: i, count: hourCounts[i] || 0 }));
+
+    // Leads por dispositivo
+    const byDevice = { mobile: 0, desktop: 0, tablet: 0 };
+    leads.forEach(l => {
+      let d = l.device || '';
+      if (!d) {
+        const ua = l.userAgent || '';
+        if (/iPad|Tablet/i.test(ua)) d = 'tablet';
+        else if (/Mobile|Android|iPhone/i.test(ua)) d = 'mobile';
+        else d = 'desktop';
+      }
+      if (d === 'mobile') byDevice.mobile++;
+      else if (d === 'tablet') byDevice.tablet++;
+      else byDevice.desktop++;
+    });
+
+    // Atribución UTM
+    const utmSources = {}, utmMediums = {}, utmCampaigns = {};
+    leads.forEach(l => {
+      if (l.utm_source && l.utm_source !== 'unknown' && l.utm_source !== '') {
+        utmSources[l.utm_source] = (utmSources[l.utm_source] || 0) + 1;
+      }
+      if (l.utm_medium && l.utm_medium !== 'unknown' && l.utm_medium !== '') {
+        utmMediums[l.utm_medium] = (utmMediums[l.utm_medium] || 0) + 1;
+      }
+      if (l.utm_campaign && l.utm_campaign !== 'unknown' && l.utm_campaign !== '') {
+        utmCampaigns[l.utm_campaign] = (utmCampaigns[l.utm_campaign] || 0) + 1;
+      }
+    });
+    const byUTM = {
+      sources:   Object.entries(utmSources).sort((a,b) => b[1]-a[1]),
+      mediums:   Object.entries(utmMediums).sort((a,b) => b[1]-a[1]),
+      campaigns: Object.entries(utmCampaigns).sort((a,b) => b[1]-a[1])
+    };
+
+    // Rangos de precio
+    const priceRanges = { 'Hasta $2M': 0, '$2M-$3.5M': 0, '$3.5M-$5M': 0, '+$5M': 0 };
+    leads.forEach(l => {
+      const p = Number(l.propPrice) || 0;
+      if (p <= 2000000)       priceRanges['Hasta $2M']++;
+      else if (p <= 3500000)  priceRanges['$2M-$3.5M']++;
+      else if (p <= 5000000)  priceRanges['$3.5M-$5M']++;
+      else                    priceRanges['+$5M']++;
+    });
+    const byPriceRange = Object.entries(priceRanges);
+
+    // Semana actual vs semana anterior
+    const now = Date.now();
+    const weekMs = 7 * 24 * 60 * 60 * 1000;
+    const allLeads = await leadsDB.findAsync({});
+    const currentWeekLeads = allLeads.filter(l => (now - new Date(l.ts).getTime()) < weekMs).length;
+    const prevWeekLeads = allLeads.filter(l => {
+      const age = now - new Date(l.ts).getTime();
+      return age >= weekMs && age < 2 * weekMs;
+    }).length;
+    const wowDelta = currentWeekLeads - prevWeekLeads;
+    const wowPct = prevWeekLeads > 0
+      ? (wowDelta >= 0 ? '+' : '') + Math.round((wowDelta / prevWeekLeads) * 100) + '%'
+      : (currentWeekLeads > 0 ? '+100%' : '0%');
+    const weekOverWeek = { current: currentWeekLeads, previous: prevWeekLeads, delta: wowDelta, pct: wowPct };
+
+    // Top keywords de búsquedas (campo filters.search)
+    const allSearches = await searchesDB.findAsync({});
+    const kwCounts = {};
+    allSearches.forEach(s => {
+      const kw = (s.filters?.search || '').toLowerCase().trim();
+      if (kw) kwCounts[kw] = (kwCounts[kw] || 0) + 1;
+    });
+    const topKeywords = Object.entries(kwCounts).sort((a,b) => b[1]-a[1]).slice(0, 10);
+
+    // Insights automáticos
+    const insights = [];
+    const total = leads.length;
+    if (total > 0) {
+      // Canal principal
+      const topChannel = Object.entries(byChannel).sort((a,b) => b[1]-a[1])[0];
+      if (topChannel) {
+        const pct = Math.round((topChannel[1] / total) * 100);
+        if (pct >= 50) {
+          const chLabel = topChannel[0] === 'whatsapp' ? 'WhatsApp' : topChannel[0];
+          insights.push(`💬 El ${pct}% de tus leads llegan por ${chLabel} — optimiza tu perfil de WA Business`);
+        }
+      }
+      // Dispositivo móvil
+      const totalDev = byDevice.mobile + byDevice.desktop + byDevice.tablet;
+      if (totalDev > 0) {
+        const mobPct = Math.round((byDevice.mobile / totalDev) * 100);
+        if (mobPct >= 50) {
+          insights.push(`📱 El ${mobPct}% visita desde móvil — prioriza contenido vertical (Stories/Reels)`);
+        }
+      }
+      // Hora pico
+      const peakHour = byHour.reduce((best, h) => h.count > best.count ? h : best, { hour: 0, count: 0 });
+      if (peakHour.count > 0) {
+        const h = peakHour.hour;
+        const label = h === 0 ? '12am' : h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h-12}pm`;
+        const labelNext = (h+2) === 0 ? '12am' : (h+2) < 12 ? `${h+2}am` : (h+2) === 12 ? '12pm' : `${(h+2)-12}pm`;
+        insights.push(`🕐 Tu hora pico de leads es a las ${label} — publica en ese horario`);
+      }
+      // Semana sobre semana
+      if (wowDelta !== 0) {
+        if (wowDelta > 0) {
+          insights.push(`📈 Esta semana tuviste ${wowPct} más leads que la semana anterior`);
+        } else {
+          insights.push(`📉 Esta semana tuviste ${Math.abs(wowDelta)} leads menos que la semana anterior`);
+        }
+      }
+      // Rango de precio concentrado
+      const topRange = byPriceRange.filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1])[0];
+      if (topRange && topRange[1] > 0) {
+        const rangePct = Math.round((topRange[1] / total) * 100);
+        if (rangePct >= 30) {
+          insights.push(`💰 El rango ${topRange[0]} concentra el ${rangePct}% de tus leads`);
+        }
+      }
+    }
+
     res.json({
-      total: leads.length,
+      total,
       byChannel,
       bySource,
       byDay: Object.entries(leadsByDay).sort(),
-      recent: leads.slice(-50).reverse()
+      recent: leads.slice(-50).reverse(),
+      byHour,
+      byDevice,
+      byUTM,
+      byPriceRange,
+      weekOverWeek,
+      topKeywords,
+      insights
     });
   } catch (err) {
     console.error('Error getting lead stats:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── PERFORMANCE POR INMUEBLE ─────────────────────────────────
+app.get('/api/stats/property-performance', requireAdmin, async (req, res) => {
+  try {
+    const db = getDB();
+    const properties = await db.findAsync({});
+    const allLeads = await leadsDB.findAsync({});
+    const allViews = await viewsDB.findAsync({});
+
+    // Contar leads por propId
+    const leadsByProp = {};
+    allLeads.forEach(l => {
+      if (l.propId) leadsByProp[l.propId] = (leadsByProp[l.propId] || 0) + 1;
+    });
+
+    // Última vista por propertyId
+    const lastViewByProp = {};
+    allViews.forEach(v => {
+      if (!v.propertyId) return;
+      const t = new Date(v.ts).getTime();
+      if (!lastViewByProp[v.propertyId] || t > lastViewByProp[v.propertyId]) {
+        lastViewByProp[v.propertyId] = t;
+      }
+    });
+
+    const now = Date.now();
+    const sevenDaysMs  = 7  * 24 * 60 * 60 * 1000;
+    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+
+    const result = properties.map(p => {
+      const id = p._id || p.id || '';
+      const leads = leadsByProp[id] || 0;
+      const views = p.views || 0;
+      const conversionRate = views > 0 ? ((leads / views) * 100).toFixed(2) + '%' : '0.00%';
+      const createdAt = p.createdAt ? new Date(p.createdAt).getTime() : null;
+      const daysSincePublished = createdAt ? Math.floor((now - createdAt) / (24 * 60 * 60 * 1000)) : -1;
+      const lastViewTs = lastViewByProp[id] || null;
+      const lastViewDaysAgo = lastViewTs ? Math.floor((now - lastViewTs) / (24 * 60 * 60 * 1000)) : 999;
+
+      let temp = 'cold';
+      if (leads > 0 || (lastViewTs && (now - lastViewTs) < sevenDaysMs)) {
+        temp = 'hot';
+      } else if (lastViewTs && (now - lastViewTs) < thirtyDaysMs) {
+        temp = 'warm';
+      }
+
+      return {
+        id,
+        title: p.title || '',
+        precio: p.precio || 0,
+        tipo: p.tipo || '',
+        municipio: p.municipio || '',
+        estado: p.estado || '',
+        views,
+        likes: p.likes || 0,
+        shares: p.shares || 0,
+        leads,
+        conversionRate,
+        daysSincePublished,
+        lastViewDaysAgo,
+        temp
+      };
+    });
+
+    result.sort((a, b) => b.leads - a.leads || b.views - a.views);
+    res.json(result);
+  } catch (err) {
+    console.error('Error getting property performance:', err);
     res.status(500).json({ error: err.message });
   }
 });

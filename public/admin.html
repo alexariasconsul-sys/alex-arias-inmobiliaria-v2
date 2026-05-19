@@ -151,6 +151,8 @@
         <button class="adm-stats-tab" data-tab="leads">📱 Leads</button>
         <button class="adm-stats-tab" data-tab="conversión">📈 Conversión</button>
         <button class="adm-stats-tab" data-tab="patrones">🔍 Patrones</button>
+        <button class="adm-stats-tab" data-tab="audiencia">👥 Audiencia</button>
+        <button class="adm-stats-tab" data-tab="inmuebles">🏆 Inmuebles</button>
       </div>
 
       <!-- Tab: Búsquedas -->
@@ -303,6 +305,92 @@
       <div class="adm-stats-tab-content" data-tab="patrones">
         <div class="adm-card adm-card--full"><h3 class="adm-card-title">Análisis de Patrones de Búsqueda</h3><div id="patternsTableWrap" style="overflow-x:auto"><table class="adm-table"><thead><tr><th>Municipio</th><th>Búsquedas</th><th>% Total</th><th>Leads</th><th>Conversión</th></tr></thead><tbody id="patternsTableBody"><tr><td colspan="5" style="text-align:center;padding:20px">Cargando...</td></tr></tbody></table></div></div>
         <div class="adm-card adm-card--full"><h3 class="adm-card-title">Insights Automáticos</h3><div id="statsInsights" style="padding:20px;line-height:1.8;color:#6b7280"><p>Cargando insights...</p></div></div>
+      </div>
+
+      <!-- Tab: Audiencia -->
+      <div class="adm-stats-tab-content" data-tab="audiencia">
+        <!-- Row 1: device donut + hour heatmap -->
+        <div class="adm-row">
+          <div class="adm-card">
+            <h3 class="adm-card-title">Dispositivo</h3>
+            <div class="leads-donut-layout">
+              <div style="position:relative;width:140px;height:140px;flex-shrink:0">
+                <canvas id="chartDevice" width="140" height="140"></canvas>
+                <div class="leads-donut-center" id="deviceDonutCenter">—</div>
+              </div>
+              <div class="leads-channel-legend" id="deviceLegend"></div>
+            </div>
+          </div>
+          <div class="adm-card">
+            <h3 class="adm-card-title">Hora pico de leads</h3>
+            <p class="adm-card-subtitle" style="font-size:12px;color:#6b7280;margin-bottom:12px">¿A qué hora te contactan más?</p>
+            <div style="position:relative;height:160px">
+              <canvas id="chartHourHeatmap"></canvas>
+            </div>
+          </div>
+        </div>
+        <!-- Row 2: UTM attribution -->
+        <div class="adm-card adm-card--full" style="margin-top:16px">
+          <div class="adm-card-title-row" style="padding:20px 20px 0">
+            <h3 class="adm-card-title" style="margin-bottom:0">Atribución de campaña</h3>
+            <span class="adm-card-subtitle">¿De dónde vienen tus leads?</span>
+          </div>
+          <div style="overflow-x:auto;margin-top:12px">
+            <table class="adm-table">
+              <thead><tr><th>Fuente (utm_source)</th><th>Medio</th><th>Campaña</th><th>Leads</th><th>%</th></tr></thead>
+              <tbody id="utmTableBody"><tr><td colspan="5" style="text-align:center;padding:20px;color:#9ca3af">Sin datos UTM aún. Agrega ?utm_source=instagram a tus links de bio.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Row 3: keywords + price ranges -->
+        <div class="adm-row" style="margin-top:16px">
+          <div class="adm-card">
+            <h3 class="adm-card-title">Palabras clave buscadas</h3>
+            <div id="keywordsWrap" class="leads-top-list"></div>
+          </div>
+          <div class="adm-card">
+            <h3 class="adm-card-title">Rango de precio más consultado</h3>
+            <div style="position:relative;height:180px">
+              <canvas id="chartPriceRanges"></canvas>
+            </div>
+          </div>
+        </div>
+        <!-- Row 4: auto insights -->
+        <div class="adm-card adm-card--full" style="margin-top:16px">
+          <div style="padding:20px 20px 0"><h3 class="adm-card-title" style="margin-bottom:0">💡 Insights automáticos</h3></div>
+          <div id="mktInsights" style="padding:16px 20px 20px;display:flex;flex-direction:column;gap:10px">
+            <p style="color:#9ca3af;font-size:13px">Acumulando datos...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Inmuebles -->
+      <div class="adm-stats-tab-content" data-tab="inmuebles">
+        <div class="adm-card adm-card--full">
+          <div class="adm-card-title-row" style="padding:20px 20px 0">
+            <h3 class="adm-card-title" style="margin-bottom:0">Performance por inmueble</h3>
+            <span class="adm-card-subtitle" id="propPerfCount"></span>
+          </div>
+          <div style="overflow-x:auto;margin-top:12px">
+            <table class="adm-table prop-perf-table">
+              <thead>
+                <tr>
+                  <th>Inmueble</th>
+                  <th>Precio</th>
+                  <th>👁 Vistas</th>
+                  <th>❤️ Likes</th>
+                  <th>💬 Leads</th>
+                  <th>Conversión</th>
+                  <th>Publicado</th>
+                  <th>Temp.</th>
+                </tr>
+              </thead>
+              <tbody id="propPerfBody">
+                <tr><td colspan="8" style="text-align:center;padding:20px;color:#9ca3af">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -2476,6 +2564,176 @@ function loadLeadsStats(data) {
     }).join('')
     : '<tr><td colspan="4" style="text-align:center;padding:24px;color:#9ca3af">Sin leads registrados aún</td></tr>';
   }
+
+  // Render audience tab with same data
+  renderAudienceTab(data);
+}
+
+function renderAudienceTab(data) {
+  // Device donut
+  const deviceData = data.byDevice || {};
+  const deviceEntries = [
+    ['📱 Móvil', deviceData.mobile || 0],
+    ['🖥 Desktop', deviceData.desktop || 0],
+    ['📟 Tablet', deviceData.tablet || 0]
+  ].filter(([,v]) => v > 0);
+  const totalDev = deviceEntries.reduce((s,[,v])=>s+v, 0);
+  const cDev = document.getElementById('chartDevice');
+  if (cDev) drawDonutChart(cDev, deviceEntries, 'Dispositivo');
+  const dc = document.getElementById('deviceDonutCenter');
+  if (dc) dc.textContent = totalDev || '—';
+
+  // Device legend
+  const devLeg = document.getElementById('deviceLegend');
+  if (devLeg) {
+    devLeg.innerHTML = deviceEntries.length > 0 ? deviceEntries.map(([label, cnt], i) => {
+      const pct = totalDev > 0 ? Math.round(cnt/totalDev*100) : 0;
+      return `<div class="leads-legend-item">
+        <span class="leads-legend-dot" style="background:${CHART_COLORS[i]}"></span>
+        <span class="leads-legend-label">${label}</span>
+        <span class="leads-legend-cnt">${cnt}</span>
+        <div class="leads-legend-bar-wrap"><div class="leads-legend-bar-fill" style="width:${pct}%;background:${CHART_COLORS[i]}"></div></div>
+        <span class="leads-legend-pct">${pct}%</span>
+      </div>`;
+    }).join('') : '<p style="color:#9ca3af;font-size:13px">Sin datos aún</p>';
+  }
+
+  // Hour heatmap — bar chart 0-23
+  const hourData = data.byHour || [];
+  const cHour = document.getElementById('chartHourHeatmap');
+  if (cHour) {
+    _destroyChart(cHour.id);
+    const labels = Array.from({length:24}, (_,i) => i === 0 ? '12am' : i < 12 ? `${i}am` : i === 12 ? '12pm' : `${i-12}pm`);
+    const counts = Array.from({length:24}, (_,i) => {
+      const found = hourData.find(h => h.hour === i);
+      return found ? found.count : 0;
+    });
+    const maxVal = Math.max(...counts, 1);
+    _chartInst[cHour.id] = new Chart(cHour, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          data: counts,
+          backgroundColor: counts.map(c => {
+            const intensity = c / maxVal;
+            return `rgba(231, 20, 51, ${0.15 + intensity * 0.75})`;
+          }),
+          borderRadius: 4,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: {
+          callbacks: { label: ctx => ` ${ctx.raw} leads` }
+        }},
+        scales: {
+          x: { ticks: { font: { size: 9 }, maxRotation: 0 }, grid: { display: false } },
+          y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } }, grid: { color: '#f3f4f6' } }
+        }
+      }
+    });
+  }
+
+  // UTM table
+  const utmBody = document.getElementById('utmTableBody');
+  if (utmBody) {
+    const utmData = data.byUTM || {};
+    const sources = utmData.sources || [];
+    const mediums = utmData.mediums || [];
+    const campaigns = utmData.campaigns || [];
+    const totalLeads = data.total || 0;
+    if (sources.length === 0) {
+      utmBody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#9ca3af">Sin datos UTM aún. Agrega <code>?utm_source=instagram</code> a tus links de bio.</td></tr>';
+    } else {
+      utmBody.innerHTML = sources.slice(0,10).map(([src, cnt]) => {
+        const med = (mediums[0] || ['—'])[0];
+        const camp = (campaigns[0] || ['—'])[0];
+        const pct = totalLeads > 0 ? Math.round(cnt/totalLeads*100) : 0;
+        return `<tr>
+          <td><strong>${src}</strong></td>
+          <td>${med}</td>
+          <td>${camp}</td>
+          <td><strong>${cnt}</strong></td>
+          <td>${pct}%</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  // Keywords
+  const kwWrap = document.getElementById('keywordsWrap');
+  if (kwWrap) {
+    const kws = data.topKeywords || [];
+    if (kws.length === 0) {
+      kwWrap.innerHTML = '<p style="color:#9ca3af;font-size:13px;padding:8px 0">Sin búsquedas de texto aún</p>';
+    } else {
+      const max = kws[0][1] || 1;
+      kwWrap.innerHTML = kws.map(([kw, cnt], i) => `
+        <div class="leads-top-item">
+          <span class="leads-top-rank">${i+1}</span>
+          <div class="leads-top-info">
+            <p class="leads-top-title">"${kw}"</p>
+            <div class="leads-top-bar-wrap"><div class="leads-top-bar-fill" style="width:${Math.round(cnt/max*100)}%"></div></div>
+          </div>
+          <span class="leads-top-cnt">${cnt}</span>
+        </div>`).join('');
+    }
+  }
+
+  // Price ranges chart
+  const cPrice = document.getElementById('chartPriceRanges');
+  if (cPrice && data.byPriceRange) {
+    drawBarChart(cPrice, data.byPriceRange, 'Precio');
+  }
+
+  // Insights
+  const insEl = document.getElementById('mktInsights');
+  if (insEl) {
+    const insights = data.insights || [];
+    insEl.innerHTML = insights.length > 0
+      ? insights.map(ins => `<div class="mkt-insight">${ins}</div>`).join('')
+      : '<p style="color:#9ca3af;font-size:13px">Acumulando datos para generar insights...</p>';
+  }
+}
+
+async function renderPropPerformance() {
+  const tbody = document.getElementById('propPerfBody');
+  const countEl = document.getElementById('propPerfCount');
+  if (!tbody) return;
+  try {
+    const res = await fetch('/api/stats/property-performance', { credentials: 'include' });
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#9ca3af">Sin datos</td></tr>';
+      return;
+    }
+    if (countEl) countEl.textContent = data.length + ' inmuebles';
+
+    const TEMP_LABEL = {
+      hot:  '<span class="prop-temp prop-temp--hot">🔥 Caliente</span>',
+      warm: '<span class="prop-temp prop-temp--warm">☀️ Activo</span>',
+      cold: '<span class="prop-temp prop-temp--cold">❄️ Frío</span>'
+    };
+
+    tbody.innerHTML = data.map(p => {
+      const price = p.precio >= 1000000 ? '$' + (p.precio/1000000).toFixed(1) + 'M' : '$' + (p.precio||0).toLocaleString('es-CO');
+      return `<tr>
+        <td><span class="leads-cell-title">${(p.title||'—').substring(0,28)}</span><br><span style="font-size:11px;color:#9ca3af">${p.municipio||''}</span></td>
+        <td>${price}</td>
+        <td>${p.views||0}</td>
+        <td>${p.likes||0}</td>
+        <td><strong style="color:${p.leads>0?'#E71433':'inherit'}">${p.leads||0}</strong></td>
+        <td>${p.conversionRate}</td>
+        <td>${p.daysSincePublished >= 0 ? p.daysSincePublished + 'd' : '—'}</td>
+        <td>${TEMP_LABEL[p.temp] || '—'}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#9ca3af">Error cargando datos</td></tr>';
+  }
 }
 
 function loadConversionStats(data) {
@@ -2679,6 +2937,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.classList.add('active');
       const tab = btn.getAttribute('data-tab');
       document.querySelector(`.adm-stats-tab-content[data-tab="${tab}"]`)?.classList.add('active');
+      if (tab === 'inmuebles') renderPropPerformance();
     });
   });
 

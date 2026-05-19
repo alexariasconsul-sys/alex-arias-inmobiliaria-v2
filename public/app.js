@@ -1631,6 +1631,27 @@ async function logSearch(resultsCount) {
   }
 }
 
+// ─── UTM + DEVICE HELPERS ─────────────────────────────────────
+function getUTMParams() {
+  const url = new URLSearchParams(window.location.search);
+  const stored = JSON.parse(sessionStorage.getItem('utm_params') || '{}');
+  const params = {
+    utm_source:   url.get('utm_source')   || stored.utm_source   || '',
+    utm_medium:   url.get('utm_medium')   || stored.utm_medium   || '',
+    utm_campaign: url.get('utm_campaign') || stored.utm_campaign || '',
+    utm_content:  url.get('utm_content')  || stored.utm_content  || '',
+  };
+  if (url.get('utm_source')) sessionStorage.setItem('utm_params', JSON.stringify(params));
+  return params;
+}
+
+function getDeviceType() {
+  const ua = navigator.userAgent;
+  if (/iPad|Tablet/i.test(ua)) return 'tablet';
+  if (/Mobile|Android|iPhone|iPod/i.test(ua)) return 'mobile';
+  return 'desktop';
+}
+
 // ─── LOGGING DE LEADS ─────────────────────────────────────────
 async function logLead(propId, propTitle, propPrice, contactChannel, source) {
   try {
@@ -1642,7 +1663,9 @@ async function logLead(propId, propTitle, propPrice, contactChannel, source) {
         propTitle: propTitle || '',
         propPrice: propPrice || 0,
         contactChannel: contactChannel || 'unknown',
-        source: source || 'unknown'
+        source: source || 'unknown',
+        ...getUTMParams(),
+        device: getDeviceType()
       }),
       credentials: 'same-origin'
     });
