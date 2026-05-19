@@ -2465,7 +2465,8 @@ app.get('/api/feed/facebook.json', async (req, res) => {
   try {
     const db      = getDB();
     const profile = readProfile();
-    const docs    = await db.findAsync({});
+    const allDocs = await db.findAsync({});
+    const docs    = allDocs.filter(p => p.estado !== 'ocupado');
     const baseUrl = `${req.protocol}://${req.get('host')}`;
 
     // Mapea property_type al enum válido de Meta Real Estate Catalog
@@ -2558,7 +2559,8 @@ app.get('/api/feed/facebook.xml', async (req, res) => {
   try {
     const db      = getDB();
     const profile = readProfile();
-    const docs    = await db.findAsync({});
+    const allDocs = await db.findAsync({});
+    const docs    = allDocs.filter(p => p.estado !== 'ocupado');
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const esc = v => String(v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const brandName = profile.name || 'Alex Arias Consultor Inmobiliario';
@@ -2712,7 +2714,9 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
   try {
     const db      = getDB();
     const profile = readProfile();
-    const docs    = await db.findAsync({});
+    const allDocs = await db.findAsync({});
+    // Excluir ocupados: no tiene sentido anunciar inmuebles no disponibles
+    const docs    = allDocs.filter(p => p.estado !== 'ocupado');
     const baseUrl = process.env.SITE_URL || 'https://alexariasc.com';
 
     // Propiedad de test eliminada — causaba contaminación en el catálogo real de Meta
