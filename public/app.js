@@ -951,7 +951,12 @@ function setupMobileBarrioFilter() {
 function renderGrid() {
   const grid = document.getElementById('propertiesGrid');
   const countEl = document.getElementById('resultsCount');
-  const props = state.filtered;
+  let props = state.filtered;
+
+  // Mover ocupados al final: LIBRES primero, OCUPADOS después
+  const libres = props.filter(p => p.estado !== 'ocupado');
+  const ocupados = props.filter(p => p.estado === 'ocupado');
+  props = [...libres, ...ocupados];
 
   countEl.textContent = props.length
     ? `${props.length} inmueble${props.length !== 1 ? 's' : ''}`
