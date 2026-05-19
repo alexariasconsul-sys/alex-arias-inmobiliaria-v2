@@ -1008,6 +1008,9 @@ function renderGrid() {
     if (state.isAdmin) setupAdminActions(card);
   });
 
+  // Hint animations: like + share
+  setupHintAnimations(grid);
+
   // Auto-abrir inmueble desde ?id= en URL (guardado en state antes de que
   // pushFilterState() sobrescriba la URL)
   const urlId = state.autoOpenId;
@@ -5873,6 +5876,75 @@ function setupWelcomeBanner() {
 }
 
 // ─── AUTO-ABRIR INMUEBLE MÁS POPULAR ─────────────────────────
+// ── HINT ANIMATIONS ──────────────────────────────────────────────
+// Dispara una animación sutil en los botones de like y share cuando
+// la card entra en el viewport por primera vez, para que el usuario
+// entienda que son interactivos. Solo ocurre UNA vez por card/sesión.
+const _hintedCards = new Set();
+let _hintObserver = null;
+
+function setupHintAnimations(grid) {
+  // Desconectar el observer anterior si existe (evita listeners duplicados)
+  if (_hintObserver) _hintObserver.disconnect();
+
+  // Agregar data-hint a los botones para el label flotante
+  grid.querySelectorAll('.like-btn').forEach(btn => {
+    btn.setAttribute('data-hint', '♡ Me gusta');
+  });
+  grid.querySelectorAll('.share-btn.card-share-btn').forEach(btn => {
+    btn.setAttribute('data-hint', '↗ Compartir');
+  });
+
+  _hintObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const card = entry.target;
+      const cardId = card.dataset.cardId || card.dataset.id;
+
+      // Si ya fue animada esta sesión, no repetir
+      if (_hintedCards.has(cardId)) {
+        _hintObserver.unobserve(card);
+        return;
+      }
+
+      // Delay escalonado: las primeras 2 cards arrancan en 1.2s,
+      // las que vienen después (scroll) en 0.6s
+      const isFirstLoad = !document.documentElement.dataset.hintFirstDone;
+      const delay = isFirstLoad ? 1200 : 600;
+
+      setTimeout(() => {
+        // Verificar que la card siga visible antes de animar
+        const rect = card.getBoundingClientRect();
+        const inView = rect.top < window.innerHeight && rect.bottom > 0;
+        if (!inView) return;
+
+        _hintedCards.add(cardId);
+        card.classList.add('hint--active');
+
+        // Calcular duración total: animación × iteraciones + delay del share
+        // hint-heartbeat: 0.72s × 2 = 1.44s
+        // hint-send: delay 0.2s + 0.58s × 2 = 1.36s
+        // Total: ~1.5s + margen
+        setTimeout(() => {
+          card.classList.remove('hint--active');
+        }, 1700);
+
+        _hintObserver.unobserve(card);
+      }, delay);
+    });
+
+    // Marcar que la primera tanda ya se procesó
+    document.documentElement.dataset.hintFirstDone = '1';
+  }, {
+    threshold: 0.45,  // Al menos 45% de la card visible
+    rootMargin: '0px 0px -60px 0px'  // No disparar si está casi saliendo
+  });
+
+  grid.querySelectorAll('.property-card').forEach(card => {
+    _hintObserver.observe(card);
+  });
+}
+
 function autoOpenTopProperty() {
   // No interferir si ya viene con ?id= en la URL
   if (state.autoOpenId) return;

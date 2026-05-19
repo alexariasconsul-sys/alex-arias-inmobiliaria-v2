@@ -1068,6 +1068,73 @@ a { text-decoration: none; color: inherit; }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ─── HINT ANIMATIONS: like + share ───────────────────────────── */
+/* Latido doble, como un corazón real: lub-dub */
+@keyframes hint-heartbeat {
+  0%   { transform: scale(1); }
+  12%  { transform: scale(1.28); }
+  24%  { transform: scale(1.10); }
+  36%  { transform: scale(1.22); }
+  54%  { transform: scale(1); }
+  100% { transform: scale(1); }
+}
+
+/* Micro-sacudida del papel-avión: da sensación de "mandar" algo */
+@keyframes hint-send {
+  0%   { transform: rotate(0deg) translate(0, 0); }
+  20%  { transform: rotate(-14deg) translate(-2px, 1px); }
+  45%  { transform: rotate(10deg) translate(3px, -2px); }
+  65%  { transform: rotate(-6deg) translate(-1px, 1px); }
+  82%  { transform: rotate(4deg) translate(1px, -1px); }
+  100% { transform: rotate(0deg) translate(0, 0); }
+}
+
+/* El corazón late 2 veces. delay 0 — es el primer CTA que ve el usuario */
+.property-card.hint--active .like-btn svg {
+  animation: hint-heartbeat 0.72s cubic-bezier(.36,.07,.19,.97) 0s 2 both;
+  transform-origin: center;
+}
+
+/* El share se sacude 2 veces, arranca 0.2s después para que no sean simultáneos */
+.property-card.hint--active .share-btn svg {
+  animation: hint-send 0.58s cubic-bezier(.36,.07,.19,.97) 0.2s 2 both;
+  transform-origin: center;
+}
+
+/* Label flotante "Dar me gusta" / "Compartir" que aparece brevemente bajo cada botón */
+.like-btn::after,
+.share-btn::after {
+  content: attr(data-hint);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(10px) saturate(1.4);
+  -webkit-backdrop-filter: blur(10px) saturate(1.4);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  padding: 4px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 10;
+}
+.like-btn,
+.share-btn {
+  position: relative;
+}
+.property-card.hint--active .like-btn::after,
+.property-card.hint--active .share-btn::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  transition-delay: 0.08s;
+}
+
 /* ─── ANIMACIÓN DE CONTADORES ──────────────────────────────────── */
 @keyframes countUp {
   from { transform: translateY(8px); opacity: 0; }
