@@ -2770,6 +2770,16 @@ a { text-decoration: none; color: inherit; }
   border-top: 6px solid #fff;
 }
 
+/* Variante "leer reseñas" — fondo dorado/cálido para diferenciarlo */
+.reviews-nudge.nudge--read {
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.35);
+}
+.reviews-nudge.nudge--read .reviews-nudge-arrow {
+  border-top-color: #f97316;
+}
+
 /* Tooltips en hover */
 .float-icon::after {
   content: attr(aria-label);

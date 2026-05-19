@@ -5365,30 +5365,37 @@ function setupReviewsPanel() {
     setTimeout(() => switchView('map'), 400);
   }
 
-  // ── Burbuja sutil "¿Nos calificas?" ──────────────────────────
+  // ── Burbuja sutil sobre el ícono de reseñas ──────────────────
+  // < 5 reseñas → "¿Nos calificas?" (invita a dejar reseña)
+  // ≥ 5 reseñas → "Mira lo que opinan las personas" (invita a leerlas)
   const nudge = document.getElementById('reviewsNudge');
   if (nudge) {
-    const NUDGE_KEY = 'reviews_nudge_last';
-    const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
-    const lastShown = Number(localStorage.getItem(NUDGE_KEY) || 0);
-    const shouldShow = Date.now() - lastShown > THREE_DAYS;
+    const NUDGE_KEY   = 'reviews_nudge_last';
+    const THREE_DAYS  = 3 * 24 * 60 * 60 * 1000;
+    const lastShown   = Number(localStorage.getItem(NUDGE_KEY) || 0);
+    const shouldShow  = Date.now() - lastShown > THREE_DAYS;
 
     if (shouldShow) {
-      // Mostrar después de 4 segundos
       const nudgeTimer = setTimeout(() => {
+        const total = _stats?.total || 0;
+
+        if (total >= 5) {
+          // Modo lectura: motivar a ver las reseñas
+          nudge.innerHTML = `Mira lo que opinan las personas <span class="reviews-nudge-arrow"></span>`;
+          nudge.classList.add('nudge--read');
+        }
+        // Si < 5, mantiene el HTML original "¿Nos calificas? ⭐"
+
         nudge.classList.add('is-visible');
         localStorage.setItem(NUDGE_KEY, String(Date.now()));
-        // Auto-ocultar tras 6 segundos
-        setTimeout(() => nudge.classList.remove('is-visible'), 6000);
+        setTimeout(() => nudge.classList.remove('is-visible'), 7000);
       }, 4000);
 
-      // Ocultar si hace clic en la estrella
       btnOpen.addEventListener('click', () => {
         clearTimeout(nudgeTimer);
         nudge.classList.remove('is-visible');
       }, { once: true });
 
-      // Ocultar si hace clic en la burbuja (abre el panel)
       nudge.addEventListener('click', () => {
         nudge.classList.remove('is-visible');
         openPanel();
