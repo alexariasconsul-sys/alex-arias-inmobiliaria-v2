@@ -5272,6 +5272,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFiltersData();
   renderSavedSearches();
   setupSocket();
+  setupWelcomeBanner();
+  autoOpenTopProperty();
 
   // ── Facebook Pixel: Lead en botones de WhatsApp del mapa ─────
   // Event delegation global para capturar clics en elementos
@@ -5805,4 +5807,88 @@ function setupReviewsPanel() {
 
   // Load on startup (for badge)
   loadReviews();
+}
+
+// ─── BANNER DE BIENVENIDA CONTEXTUAL ─────────────────────────
+function setupWelcomeBanner() {
+  const banner  = document.getElementById('welcomeBanner');
+  const textEl  = document.getElementById('welcomeBannerText');
+  const closeBtn = document.getElementById('welcomeBannerClose');
+  if (!banner || !textEl) return;
+
+  // No mostrar si ya se vio en esta sesión
+  if (sessionStorage.getItem('welcomeSeen')) return;
+
+  // Detectar origen: Instagram Ads, Facebook Ads, o referral social
+  const ref     = document.referrer || '';
+  const params  = new URLSearchParams(location.search);
+  const utmSrc  = (params.get('utm_source') || '').toLowerCase();
+  const hasFbclid = !!params.get('fbclid');
+  const fromInstagram = utmSrc.includes('instagram') || ref.includes('instagram.com') || hasFbclid;
+  const fromFacebook  = utmSrc.includes('facebook')  || ref.includes('facebook.com') || ref.includes('m.facebook.com');
+  const fromSocial    = fromInstagram || fromFacebook;
+
+  // Calcular disponibles para el mensaje
+  const available = (state.properties || []).filter(p => p.estado !== 'ocupado').length;
+  const prices    = (state.properties || []).filter(p => p.estado !== 'ocupado' && p.precio > 0).map(p => p.precio);
+  const minPrice  = prices.length ? Math.min(...prices) : 0;
+  const priceStr  = minPrice ? `desde ${formatPrice(minPrice)}` : '';
+
+  let msg = '';
+  if (fromInstagram) {
+    msg = `Bienvenido — Tenemos ${available} apartamentos disponibles ${priceStr}. ¡Explóralos!`;
+  } else if (fromFacebook) {
+    msg = `Hola — Encontraste el lugar indicado. ${available} opciones disponibles ${priceStr}.`;
+  } else {
+    // Solo mostrar para tráfico social, no para todos
+    return;
+  }
+
+  textEl.textContent = msg;
+  sessionStorage.setItem('welcomeSeen', '1');
+
+  // Mostrar después de 1.5s
+  setTimeout(() => {
+    banner.style.display = 'flex';
+    requestAnimationFrame(() => banner.classList.add('is-visible'));
+  }, 1500);
+
+  // Auto-cerrar después de 7s
+  const autoClose = setTimeout(() => closeBanner(), 7000);
+
+  function closeBanner() {
+    clearTimeout(autoClose);
+    banner.classList.remove('is-visible');
+    setTimeout(() => banner.style.display = 'none', 400);
+  }
+
+  closeBtn?.addEventListener('click', closeBanner);
+}
+
+// ─── AUTO-ABRIR INMUEBLE MÁS POPULAR ─────────────────────────
+function autoOpenTopProperty() {
+  // No interferir si ya viene con ?id= en la URL
+  if (state.autoOpenId) return;
+  // Solo una vez por sesión
+  if (sessionStorage.getItem('autoOpened')) return;
+  // Solo en desktop (en mobile ocupa toda la pantalla)
+  if (window.innerWidth < 768) return;
+
+  // Encontrar el inmueble con más engagement (vistas + likes)
+  const top = (state.filtered || [])
+    .filter(p => p.estado !== 'ocupado')
+    .sort((a, b) => ((b.views || 0) + (b.likes || 0) * 3) - ((a.views || 0) + (a.likes || 0) * 3))[0];
+
+  if (!top) return;
+
+  sessionStorage.setItem('autoOpened', '1');
+
+  // Abrir con delay para que el usuario vea el grid primero
+  setTimeout(() => {
+    const card = document.querySelector(`[data-card-id="${top.id}"]`);
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => openCard(card), 600);
+    }
+  }, 2500);
 }

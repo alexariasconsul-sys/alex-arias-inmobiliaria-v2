@@ -72,7 +72,7 @@
     @media(max-width:767px){.app-shell{padding-bottom:calc(50px + env(safe-area-inset-bottom,0px))}}
   </style>
 
-  <link rel="stylesheet" href="styles.min.css?v=28" />
+  <link rel="stylesheet" href="styles.min.css?v=29" />
   <link rel="stylesheet" href="admin.min.css?v=7" />
 
   <!-- Leaflet CSS: Lazy load (media=print, onload para cambiar a all) -->
@@ -830,6 +830,13 @@
       <div class="map-pane" id="mapPane">
         <div id="leafletMap"></div>
       </div>
+    </div>
+
+    <!-- ═══ BANNER DE BIENVENIDA CONTEXTUAL ════════════════════════ -->
+    <div class="welcome-banner" id="welcomeBanner" style="display:none" role="status">
+      <span class="welcome-banner-icon">👋</span>
+      <span class="welcome-banner-text" id="welcomeBannerText"></span>
+      <button class="welcome-banner-close" id="welcomeBannerClose" aria-label="Cerrar">✕</button>
     </div>
 
     <!-- ═══ FLOATING BOTTOM BAR ═══════════════════════════════════ -->
@@ -1708,6 +1715,6 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
 
   <!-- App.js: Minificado para producción -->
-  <script src="app.min.js?v=49"></script>
+  <script src="app.min.js?v=50"></script>
 </body>
 </html>
