@@ -2644,6 +2644,42 @@ a { text-decoration: none; color: inherit; }
 }
 
 /* ─── FLOATING BAR ──────────────────────────────────────────── */
+/* Contador de visitantes en tiempo real */
+.viewers-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 3px 10px 3px 7px;
+  backdrop-filter: blur(8px);
+}
+.viewers-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: viewersPulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes viewersPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+.viewers-count {
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.viewers-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1;
+}
+
 .floating-bar {
   position: fixed;
   left: 50%; bottom: 40px;

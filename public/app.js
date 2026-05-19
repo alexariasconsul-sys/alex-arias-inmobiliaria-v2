@@ -4860,6 +4860,18 @@ function setupSocket() {
       if (prop) prop.shares = shares;
     });
 
+    socket.on('viewers-update', ({ count }) => {
+      const pill  = document.getElementById('viewersPill');
+      const label = document.getElementById('viewersCount');
+      if (!pill || !label) return;
+      if (count >= 2) {
+        label.textContent = count;
+        pill.style.display = 'flex';
+      } else {
+        pill.style.display = 'none'; // ocultar si hay 1 o 0 (solo el admin)
+      }
+    });
+
     socket.on('new-property', async () => {
       await loadProperties();
       await loadFiltersData();

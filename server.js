@@ -3014,8 +3014,16 @@ app.delete('/api/reviews/:id/reply', requireAdmin, async (req, res) => {
 
 // ─── Socket.io ────────────────────────────────────────────────
 io.on('connection', (socket) => {
-  console.log('Cliente conectado:', socket.id);
-  socket.on('disconnect', () => console.log('Desconectado:', socket.id));
+  // Emitir conteo actual al nuevo visitante
+  const count = io.engine.clientsCount;
+  io.emit('viewers-update', { count });
+
+  socket.on('disconnect', () => {
+    // Pequeño delay para que el conteo se actualice antes de emitir
+    setTimeout(() => {
+      io.emit('viewers-update', { count: io.engine.clientsCount });
+    }, 200);
+  });
 });
 
 // ─── Arrancar servidor ────────────────────────────────────────
