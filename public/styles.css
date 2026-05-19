@@ -2644,19 +2644,25 @@ a { text-decoration: none; color: inherit; }
 }
 
 /* ─── FLOATING BAR ──────────────────────────────────────────── */
+/* Barra de resultados: contador inmuebles + viewers pill */
+.results-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 /* Contador de visitantes en tiempo real */
 .viewers-pill {
   display: flex;
   align-items: center;
   gap: 5px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: 999px;
-  padding: 3px 10px 3px 7px;
-  backdrop-filter: blur(8px);
+  padding: 3px 9px 3px 6px;
 }
 .viewers-dot {
-  width: 7px; height: 7px;
+  width: 6px; height: 6px;
   border-radius: 50%;
   background: #ef4444;
   animation: viewersPulse 2s ease-in-out infinite;
@@ -2664,19 +2670,20 @@ a { text-decoration: none; color: inherit; }
 }
 @keyframes viewersPulse {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.85); }
+  50% { opacity: 0.5; transform: scale(0.8); }
 }
 .viewers-count {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
-  color: #fff;
+  color: #ef4444;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 .viewers-label {
   font-size: 11px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.7);
+  color: #ef4444;
+  opacity: 0.8;
   line-height: 1;
 }
 

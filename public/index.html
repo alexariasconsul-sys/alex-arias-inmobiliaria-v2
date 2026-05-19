@@ -72,7 +72,7 @@
     @media(max-width:767px){.app-shell{padding-bottom:calc(50px + env(safe-area-inset-bottom,0px))}}
   </style>
 
-  <link rel="stylesheet" href="styles.min.css?v=27" />
+  <link rel="stylesheet" href="styles.min.css?v=28" />
   <link rel="stylesheet" href="admin.min.css?v=7" />
 
   <!-- Leaflet CSS: Lazy load (media=print, onload para cambiar a all) -->
@@ -385,7 +385,14 @@
         </button>
 
       </div>
-      <div class="results-count" id="resultsCount"></div>
+      <div class="results-bar">
+        <div class="results-count" id="resultsCount"></div>
+        <div class="viewers-pill" id="viewersPill" style="display:none">
+          <span class="viewers-dot"></span>
+          <span class="viewers-count" id="viewersCount">0</span>
+          <span class="viewers-label">viendo</span>
+        </div>
+      </div>
     </header>
 
     <!-- ═══ PANEL MÓVIL: MEGAFILTRO ESTILO AIRBNB ════════════════ -->
@@ -827,11 +834,6 @@
 
     <!-- ═══ FLOATING BOTTOM BAR ═══════════════════════════════════ -->
     <div class="floating-bar">
-      <div class="viewers-pill" id="viewersPill" style="display:none">
-        <span class="viewers-dot"></span>
-        <span class="viewers-count" id="viewersCount">0</span>
-        <span class="viewers-label">viendo</span>
-      </div>
       <button type="button" class="float-icon active" id="btnViewGrid" aria-label="Ver lista">
         <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/></svg>
       </button>
@@ -1706,6 +1708,6 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
 
   <!-- App.js: Minificado para producción -->
-  <script src="app.min.js?v=48"></script>
+  <script src="app.min.js?v=49"></script>
 </body>
 </html>
