@@ -2715,27 +2715,7 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
     const docs    = await db.findAsync({});
     const baseUrl = process.env.SITE_URL || 'https://alexariasc.com';
 
-    // TEST property for Meta geocoder validation - Medellin address
-    const testProperty = {
-      _id: 'TEST_MEDELLIN_DIAGNOSTIC',
-      title: 'TEST Apartamento de Prueba - Medellin El Poblado',
-      tipo: 'arriendo',
-      municipio: 'Medellin',
-      barrio: 'El Poblado',
-      direccion: 'Calle 10 No. 43-9',
-      precio: 4000000,
-      area: 75,
-      habitaciones: 2,
-      banos: 2,
-      descripcion: 'Property diagnostic test - Medellin El Poblado. Central location in internationally recognized area.',
-      estado: 'libre',
-      lat: 6.2247,
-      lng: -75.5953,
-      images: [
-        { filename: 'assets/Arriendo en Vivaré Plaza Residencial  (1).jpeg', order_index: 0 }
-      ]
-    };
-    docs.push(testProperty);
+    // Propiedad de test eliminada — causaba contaminación en el catálogo real de Meta
 
     // Envuelve en comillas dobles y escapa comillas internas
     const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';

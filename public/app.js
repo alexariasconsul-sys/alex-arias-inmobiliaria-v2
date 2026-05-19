@@ -1458,25 +1458,35 @@ function openCard(card) {
   // ── Facebook Pixel: ViewContent ────────────────────────────────
   if (typeof fbq === 'function') {
     const propId = card.dataset.cardId || card.dataset.mapCardId || '';
-    const prop   = state.properties.find(p => String(p.id) === propId);
-    const eid    = _fbEventId('ViewContent');
-    const vcData = {
-      content_ids:      [propId],
-      content_type:     'home_listing',
-      content_name:     prop?.title   || '',
-      content_category: [prop?.municipio, prop?.barrio].filter(Boolean).join(', '),
-      value:            _propNumPrice(prop),
-      currency:         'COP',
-      eventID:          eid
-    };
-    fbq('track', 'ViewContent', vcData);
-    _sendCAPI('ViewContent', {
-      content_ids:      [propId],
-      content_type:     'home_listing',
-      content_name:     prop?.title || '',
-      value:            _propNumPrice(prop),
-      currency:         'COP'
-    }, eid);
+    if (propId) {  // Solo disparar si tenemos un ID válido
+      const prop = state.properties.find(p => String(p.id) === propId);
+      const eid  = _fbEventId('ViewContent');
+
+      // Para propiedades combinado, el catálogo de Meta tiene DOS variantes:
+      // p._id (arriendo) y p._id + '_vta' (venta). Enviamos ambos IDs para
+      // garantizar coincidencia con el catálogo.
+      const contentIds = prop?.tipo === 'combinado'
+        ? [propId, `${propId}_vta`]
+        : [propId];
+
+      const vcData = {
+        content_ids:      contentIds,
+        content_type:     'home_listing',
+        content_name:     prop?.title   || '',
+        content_category: [prop?.municipio, prop?.barrio].filter(Boolean).join(', '),
+        value:            _propNumPrice(prop),
+        currency:         'COP',
+        eventID:          eid
+      };
+      fbq('track', 'ViewContent', vcData);
+      _sendCAPI('ViewContent', {
+        content_ids:      contentIds,
+        content_type:     'home_listing',
+        content_name:     prop?.title || '',
+        value:            _propNumPrice(prop),
+        currency:         'COP'
+      }, eid);
+    }
   }
   card.querySelector('.expand-toggle')?.setAttribute('aria-expanded', 'true');
   card.querySelector('.property-details-scroll')?.scrollTo(0, 0);
