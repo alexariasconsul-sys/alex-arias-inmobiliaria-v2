@@ -967,17 +967,30 @@ function renderGrid() {
     return;
   }
 
-  // Calcular top 3 con más likes (de TODAS las propiedades, no solo filtered)
-  const top3Ids = new Set(
-    [...state.properties]
-      .filter(p => (p.likes || 0) > 0)
-      .sort((a, b) => (b.likes || 0) - (a.likes || 0))
-      .slice(0, 3)
-      .map(p => String(p.id))
-  );
-  state._top3LikeIds = top3Ids;
+  // Calcular "Muy interesante" basado en engagement score (likes + vistas + compartidos)
+  const engagementScore = (p) => {
+    const likes = p.likes || 0;
+    const views = p.views || 0;
+    const shares = p.shares || 0;
+    return likes * 2 + views * 0.5 + shares * 3;
+  };
 
-  grid.innerHTML = props.map((p, idx) => cardHTML(p, idx === 0)).join('') +
+  const trendingIds = new Set(
+    [...state.properties]
+      .map(p => ({ id: String(p.id), score: engagementScore(p) }))
+      .filter(p => p.score >= 60)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map(p => p.id)
+  );
+  state._trendingIds = trendingIds;
+
+  // Ordenar props: "Muy interesante" primero, luego el resto
+  const trendingProps = props.filter(p => trendingIds.has(String(p.id)));
+  const otherProps = props.filter(p => !trendingIds.has(String(p.id)));
+  const orderedProps = [...trendingProps, ...otherProps];
+
+  grid.innerHTML = orderedProps.map((p, idx) => cardHTML(p, idx === 0)).join('') +
     '<div class="grid-bottom-spacer" aria-hidden="true"></div>';
 
   // Animación de entrada (se agrega después de insertar en DOM)
@@ -1037,10 +1050,10 @@ function cardHTML(p, isFirst = false) {
   const statusClass = p.estado === 'ocupado' ? 'status-ocupado' : 'status-libre';
   const statusLabel = p.estado === 'ocupado' ? 'Ocupado' : 'Libre';
 
-  // Badge esquina superior derecha: top 3 de likes
-  const isTopLikes = (state._top3LikeIds || new Set()).has(String(p.id));
-  const topBadgeHtml = isTopLikes
-    ? '<span class="prop-corner-badge">Muy buscado</span>'
+  // Badge esquina superior derecha: "Muy interesante" basado en engagement score
+  const isTrending = (state._trendingIds || new Set()).has(String(p.id));
+  const topBadgeHtml = isTrending
+    ? '<span class="prop-corner-badge">Muy interesante</span>'
     : '';
 
   // Badge inline: "Nuevo" si tiene menos de 5 días desde su publicación
