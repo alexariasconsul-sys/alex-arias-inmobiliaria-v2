@@ -362,6 +362,45 @@
             <p style="color:#9ca3af;font-size:13px">Acumulando datos...</p>
           </div>
         </div>
+
+        <!-- Row 5: Reputación en el tiempo -->
+        <div class="adm-row" style="margin-top:16px">
+          <div class="adm-card" style="grid-column:span 2">
+            <div class="adm-card-title-row">
+              <h3 class="adm-card-title">⭐ Reputación en el tiempo</h3>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span class="rep-kpi-score" id="repAvgScore">—</span>
+                <span class="rep-kpi-trend" id="repTrend"></span>
+                <span style="font-size:12px;color:#9ca3af" id="repTotalCount"></span>
+              </div>
+            </div>
+            <div style="position:relative;height:180px;width:100%">
+              <canvas id="chartRatingHistory"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="adm-row" style="margin-top:16px">
+          <div class="adm-card">
+            <h3 class="adm-card-title">Distribución de estrellas</h3>
+            <div id="starsDistribution" style="display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
+          </div>
+          <div class="adm-card">
+            <h3 class="adm-card-title">Esta semana vs semana anterior</h3>
+            <div id="wowDisplay" class="wow-display">
+              <div class="wow-col">
+                <span class="wow-val" id="wowCurrent">—</span>
+                <span class="wow-label">Esta semana</span>
+              </div>
+              <div class="wow-arrow" id="wowArrow">→</div>
+              <div class="wow-col">
+                <span class="wow-val wow-val--muted" id="wowPrevious">—</span>
+                <span class="wow-label">Semana anterior</span>
+              </div>
+              <div class="wow-delta-badge" id="wowDeltaBadge"></div>
+            </div>
+            <p class="wow-desc" id="wowDesc"></p>
+          </div>
+        </div>
       </div>
 
       <!-- Tab: Inmuebles -->
@@ -2328,6 +2367,7 @@ async function loadStatistics() {
     loadLeadsStats(leadsData);
     loadConversionStats(conversionData);
     loadPatterns(searchesData, leadsData);
+    renderReviewsHistory();
   } catch (e) { console.error('Error loading stats:', e); }
 }
 
@@ -2640,26 +2680,55 @@ function renderAudienceTab(data) {
   // UTM table
   const utmBody = document.getElementById('utmTableBody');
   if (utmBody) {
-    const utmData = data.byUTM || {};
-    const sources = utmData.sources || [];
-    const mediums = utmData.mediums || [];
-    const campaigns = utmData.campaigns || [];
+    const utmRows = data.byUTM || [];
     const totalLeads = data.total || 0;
-    if (sources.length === 0) {
+    if (utmRows.length === 0) {
       utmBody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#9ca3af">Sin datos UTM aún. Agrega <code>?utm_source=instagram</code> a tus links de bio.</td></tr>';
     } else {
-      utmBody.innerHTML = sources.slice(0,10).map(([src, cnt]) => {
-        const med = (mediums[0] || ['—'])[0];
-        const camp = (campaigns[0] || ['—'])[0];
-        const pct = totalLeads > 0 ? Math.round(cnt/totalLeads*100) : 0;
+      utmBody.innerHTML = utmRows.map(row => {
+        const pct = totalLeads > 0 ? Math.round(row.count / totalLeads * 100) : 0;
         return `<tr>
-          <td><strong>${src}</strong></td>
-          <td>${med}</td>
-          <td>${camp}</td>
-          <td><strong>${cnt}</strong></td>
+          <td><strong>${row.source}</strong></td>
+          <td>${row.medium}</td>
+          <td>${row.campaign}</td>
+          <td><strong>${row.count}</strong></td>
           <td>${pct}%</td>
         </tr>`;
       }).join('');
+    }
+  }
+
+  // Week-over-week visual
+  const wow = data.weekOverWeek || {};
+  const wowCur = document.getElementById('wowCurrent');
+  const wowPrev = document.getElementById('wowPrevious');
+  const wowBadge = document.getElementById('wowDeltaBadge');
+  const wowArrow = document.getElementById('wowArrow');
+  const wowDesc = document.getElementById('wowDesc');
+  if (wowCur) wowCur.textContent = wow.current ?? '—';
+  if (wowPrev) wowPrev.textContent = wow.previous ?? '—';
+  if (wowArrow) {
+    const d = wow.delta ?? 0;
+    wowArrow.textContent = d > 0 ? '↗' : d < 0 ? '↘' : '→';
+    wowArrow.style.color = d > 0 ? '#059669' : d < 0 ? '#dc2626' : '#6b7280';
+  }
+  if (wowBadge && wow.pct != null) {
+    wowBadge.textContent = wow.pct;
+    const d = wow.delta ?? 0;
+    wowBadge.className = 'wow-delta-badge ' + (d > 0 ? 'wow-delta-badge--up' : d < 0 ? 'wow-delta-badge--down' : 'wow-delta-badge--flat');
+    wowBadge.style.display = 'inline-block';
+  }
+  if (wowDesc) {
+    const cur = wow.current ?? 0, prev = wow.previous ?? 0;
+    const d = wow.delta ?? 0;
+    if (cur === 0 && prev === 0) {
+      wowDesc.textContent = 'Aún no hay leads registrados.';
+    } else if (d > 0) {
+      wowDesc.textContent = `Esta semana tuviste ${d} lead${d !== 1 ? 's' : ''} más que la semana pasada.`;
+    } else if (d < 0) {
+      wowDesc.textContent = `Esta semana tuviste ${Math.abs(d)} lead${Math.abs(d) !== 1 ? 's' : ''} menos que la semana pasada.`;
+    } else {
+      wowDesc.textContent = 'El volumen de leads se mantuvo igual que la semana anterior.';
     }
   }
 
@@ -2697,6 +2766,86 @@ function renderAudienceTab(data) {
       ? insights.map(ins => `<div class="mkt-insight">${ins}</div>`).join('')
       : '<p style="color:#9ca3af;font-size:13px">Acumulando datos para generar insights...</p>';
   }
+}
+
+async function renderReviewsHistory() {
+  try {
+    const res = await fetch('/api/stats/reviews-history', { credentials: 'include' });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    // KPI header
+    const scoreEl = document.getElementById('repAvgScore');
+    const trendEl = document.getElementById('repTrend');
+    const countEl = document.getElementById('repTotalCount');
+    if (scoreEl) scoreEl.textContent = data.avgRating > 0 ? data.avgRating.toFixed(1) + ' ⭐' : '—';
+    if (countEl) countEl.textContent = data.totalReviews > 0 ? data.totalReviews + ' reseñas' : '';
+    if (trendEl && data.totalReviews > 0) {
+      const map = { up: { label: '↑ Subiendo', cls: 'rep-kpi-trend--up' },
+                    down: { label: '↓ Bajando', cls: 'rep-kpi-trend--down' },
+                    stable: { label: '→ Estable', cls: 'rep-kpi-trend--stable' } };
+      const t = map[data.trend] || map.stable;
+      trendEl.textContent = t.label;
+      trendEl.className = 'rep-kpi-trend ' + t.cls;
+    }
+
+    // Line chart
+    const canvas = document.getElementById('chartRatingHistory');
+    if (canvas && data.history && data.history.length > 0) {
+      _destroyChart(canvas.id);
+      const labels = data.history.map(h => {
+        const [yr, mo] = h.month.split('-');
+        return new Date(Number(yr), Number(mo) - 1).toLocaleDateString('es-CO', { month: 'short', year: '2-digit' });
+      });
+      _chartInst[canvas.id] = new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Promedio estrellas',
+            data: data.history.map(h => h.avg),
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245,158,11,.08)',
+            borderWidth: 2.5,
+            pointBackgroundColor: '#f59e0b',
+            pointRadius: 4,
+            tension: 0.35,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ` ${ctx.raw} ★ (${data.history[ctx.dataIndex]?.count || 0} reseñas)` } }
+          },
+          scales: {
+            x: { ticks: { font: { size: 10 } }, grid: { display: false } },
+            y: { min: 1, max: 5, ticks: { precision: 1, font: { size: 10 } }, grid: { color: '#f3f4f6' } }
+          }
+        }
+      });
+    } else if (canvas) {
+      canvas.closest('div').insertAdjacentHTML('afterend',
+        '<p style="text-align:center;color:#9ca3af;font-size:13px;padding:12px 0">Sin reseñas registradas aún</p>');
+    }
+
+    // Stars distribution
+    const starsEl = document.getElementById('starsDistribution');
+    if (starsEl && data.byStars) {
+      const maxStar = Math.max(...Object.values(data.byStars), 1);
+      starsEl.innerHTML = [5,4,3,2,1].map(s => {
+        const cnt = data.byStars[s] || 0;
+        const pct = Math.round(cnt / maxStar * 100);
+        return `<div class="stars-row">
+          <span class="stars-row-label">${s}★</span>
+          <div class="stars-row-bar-wrap"><div class="stars-row-bar-fill" style="width:${pct}%"></div></div>
+          <span class="stars-row-cnt">${cnt}</span>
+        </div>`;
+      }).join('');
+    }
+  } catch (e) { console.warn('renderReviewsHistory error:', e); }
 }
 
 async function renderPropPerformance() {
@@ -2938,6 +3087,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const tab = btn.getAttribute('data-tab');
       document.querySelector(`.adm-stats-tab-content[data-tab="${tab}"]`)?.classList.add('active');
       if (tab === 'inmuebles') renderPropPerformance();
+      if (tab === 'audiencia') renderReviewsHistory();
     });
   });
 

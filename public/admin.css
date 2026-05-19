@@ -2258,4 +2258,85 @@ body {
 }
 .kpi-delta--up   { background: rgba(16,185,129,.1); color: #059669; }
 .kpi-delta--down { background: rgba(239,68,68,.1);  color: #dc2626; }
+
+/* ── REPUTACIÓN / WEEK-OVER-WEEK ─────────────────────────── */
+.rep-kpi-score {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+.rep-kpi-trend {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.rep-kpi-trend--up     { background: rgba(16,185,129,.1); color: #059669; }
+.rep-kpi-trend--down   { background: rgba(239,68,68,.1);  color: #dc2626; }
+.rep-kpi-trend--stable { background: rgba(107,114,128,.1); color: #6b7280; }
+
+/* Stars distribution bar */
+.stars-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.stars-row-label { width: 28px; text-align: right; flex-shrink: 0; color: var(--muted); }
+.stars-row-bar-wrap { flex: 1; background: #f3f4f6; border-radius: 4px; height: 8px; overflow: hidden; }
+.stars-row-bar-fill { height: 100%; border-radius: 4px; background: #f59e0b; transition: width .5s ease; }
+.stars-row-cnt { width: 24px; text-align: right; color: var(--muted); flex-shrink: 0; }
+
+/* Week-over-week display */
+.wow-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px 8px 8px;
+  flex-wrap: wrap;
+}
+.wow-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.wow-val {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+.wow-val--muted { color: var(--muted); font-size: 28px; }
+.wow-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.wow-arrow {
+  font-size: 20px;
+  color: var(--muted);
+  line-height: 1;
+  margin-top: -16px;
+}
+.wow-delta-badge {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  align-self: center;
+}
+.wow-delta-badge--up   { background: rgba(16,185,129,.12); color: #059669; }
+.wow-delta-badge--down { background: rgba(239,68,68,.12);  color: #dc2626; }
+.wow-delta-badge--flat { background: rgba(107,114,128,.1); color: #6b7280; }
+.wow-desc {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  padding: 0 8px 12px;
+  line-height: 1.5;
+}
 .kpi-delta--flat { background: rgba(148,163,184,.1); color: #64748b; }

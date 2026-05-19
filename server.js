@@ -1183,24 +1183,23 @@ app.get('/api/stats/leads', requireAdmin, async (req, res) => {
       else byDevice.desktop++;
     });
 
-    // Atribución UTM
-    const utmSources = {}, utmMediums = {}, utmCampaigns = {};
+    // Atribución UTM — agrupada por combinación {source + medium + campaign}
+    const utmCombos = {};
     leads.forEach(l => {
-      if (l.utm_source && l.utm_source !== 'unknown' && l.utm_source !== '') {
-        utmSources[l.utm_source] = (utmSources[l.utm_source] || 0) + 1;
-      }
-      if (l.utm_medium && l.utm_medium !== 'unknown' && l.utm_medium !== '') {
-        utmMediums[l.utm_medium] = (utmMediums[l.utm_medium] || 0) + 1;
-      }
-      if (l.utm_campaign && l.utm_campaign !== 'unknown' && l.utm_campaign !== '') {
-        utmCampaigns[l.utm_campaign] = (utmCampaigns[l.utm_campaign] || 0) + 1;
-      }
+      const src = (l.utm_source || '').trim();
+      if (!src || src === 'unknown') return; // ignorar sin UTM
+      const med  = (l.utm_medium   || '').trim() || '(none)';
+      const camp = (l.utm_campaign || '').trim() || '(none)';
+      const key  = `${src}|||${med}|||${camp}`;
+      utmCombos[key] = (utmCombos[key] || 0) + 1;
     });
-    const byUTM = {
-      sources:   Object.entries(utmSources).sort((a,b) => b[1]-a[1]),
-      mediums:   Object.entries(utmMediums).sort((a,b) => b[1]-a[1]),
-      campaigns: Object.entries(utmCampaigns).sort((a,b) => b[1]-a[1])
-    };
+    const byUTM = Object.entries(utmCombos)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([key, count]) => {
+        const [source, medium, campaign] = key.split('|||');
+        return { source, medium, campaign, count };
+      });
 
     // Rangos de precio
     const priceRanges = { 'Hasta $2M': 0, '$2M-$3.5M': 0, '$3.5M-$5M': 0, '+$5M': 0 };
@@ -1399,6 +1398,56 @@ app.get('/api/stats/conversion', requireAdmin, async (req, res) => {
     });
   } catch (err) {
     console.error('Error getting conversion stats:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── HISTORIAL DE REPUTACIÓN (reseñas por mes) ───────────────
+app.get('/api/stats/reviews-history', requireAdmin, async (req, res) => {
+  try {
+    const reviews = await getReviewsDB().findAsync({ rating: { $exists: true } });
+
+    // Agrupar por mes y calcular promedio
+    const byMonth = {};
+    reviews.forEach(r => {
+      const raw = r.createdAt || r.ts || null;
+      if (!raw) return;
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) return;
+      const month = d.toISOString().slice(0, 7); // "2025-03"
+      if (!byMonth[month]) byMonth[month] = { sum: 0, count: 0 };
+      byMonth[month].sum   += Number(r.rating) || 0;
+      byMonth[month].count += 1;
+    });
+
+    const history = Object.entries(byMonth)
+      .sort()
+      .map(([month, { sum, count }]) => ({
+        month,
+        avg:   Math.round((sum / count) * 10) / 10,
+        count
+      }));
+
+    // Estadísticas globales
+    const totalReviews = reviews.length;
+    const avgRating    = totalReviews > 0
+      ? Math.round(reviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) / totalReviews * 10) / 10
+      : 0;
+
+    // Distribución por estrella
+    const byStars = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    reviews.forEach(r => { const s = Math.round(r.rating); if (s >= 1 && s <= 5) byStars[s]++; });
+
+    // Tendencia: diferencia entre primer y último mes
+    let trend = 'stable';
+    if (history.length >= 2) {
+      const diff = history[history.length - 1].avg - history[0].avg;
+      trend = diff > 0.2 ? 'up' : diff < -0.2 ? 'down' : 'stable';
+    }
+
+    res.json({ history, totalReviews, avgRating, byStars, trend });
+  } catch (err) {
+    console.error('Error getting reviews history:', err);
     res.status(500).json({ error: err.message });
   }
 });
