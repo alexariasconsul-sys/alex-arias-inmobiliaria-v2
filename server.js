@@ -2636,7 +2636,8 @@ ${itemParts.join('\n')}
 app.get('/api/feed/productos.csv', async (req, res) => {
   try {
     const db      = getDB();
-    const docs    = await db.findAsync({});
+    const allDocs = await db.findAsync({});
+    const docs    = allDocs.filter(p => p.estado !== 'ocupado');
     const baseUrl = process.env.SITE_URL || 'https://alexariasc.com';
     const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
 
