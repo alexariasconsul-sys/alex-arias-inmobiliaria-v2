@@ -597,14 +597,14 @@ async function loadProperties() {
       const eid       = _fbEventId('Search');
       fbq('track', 'Search', {
         search_string:  searchStr,
-        content_type:   'home_listing',
+        content_type:   'product',
         content_ids:    topIds,
         num_items:      state.properties.length,
         eventID:        eid
       });
       _sendCAPI('Search', {
         search_string: searchStr,
-        content_type:  'home_listing',
+        content_type:  'product',
         content_ids:   topIds,
         num_items:     state.properties.length
       }, eid);
@@ -1471,7 +1471,7 @@ function openCard(card) {
 
       const vcData = {
         content_ids:      contentIds,
-        content_type:     'home_listing',
+        content_type:     'product',
         content_name:     prop?.title   || '',
         content_category: [prop?.municipio, prop?.barrio].filter(Boolean).join(', '),
         value:            _propNumPrice(prop),
@@ -1481,7 +1481,7 @@ function openCard(card) {
       fbq('track', 'ViewContent', vcData);
       _sendCAPI('ViewContent', {
         content_ids:      contentIds,
-        content_type:     'home_listing',
+        content_type:     'product',
         content_name:     prop?.title || '',
         value:            _propNumPrice(prop),
         currency:         'COP'
@@ -1538,7 +1538,7 @@ function trackLead(source, propTitle, propId, propPrice) {
   // Evento Lead estándar — optimización de conversiones
   fbq('track', 'Lead', {
     content_ids:      ids,
-    content_type:     'home_listing',
+    content_type:     'product',
     content_name:     propTitle || 'Consulta general',
     content_category: 'inmobiliaria',
     value:            numPrice,
@@ -1559,7 +1559,7 @@ function trackLead(source, propTitle, propId, propPrice) {
   // CAPI duplicado server-side (blinda iOS 14+ / navegadores sin cookies)
   _sendCAPI('Lead', {
     content_ids:      ids,
-    content_type:     'home_listing',
+    content_type:     'product',
     content_name:     propTitle || 'Consulta general',
     value:            numPrice,
     currency:         'COP'
@@ -2001,7 +2001,7 @@ function setupLikeBtn(card) {
       const eid   = _fbEventId('AddToWishlist');
       fbq('track', 'AddToWishlist', {
         content_ids:  [id],
-        content_type: 'home_listing',
+        content_type: 'product',
         content_name: prop?.title || '',
         value:        price,
         currency:     'COP',
@@ -2009,7 +2009,7 @@ function setupLikeBtn(card) {
       });
       _sendCAPI('AddToWishlist', {
         content_ids:  [id],
-        content_type: 'home_listing',
+        content_type: 'product',
         content_name: prop?.title || '',
         value:        price,
         currency:     'COP'

@@ -2358,7 +2358,7 @@ app.post('/api/admin/test-event', requireAdmin, async (req, res) => {
         action_source:    'website',
         event_source_url: process.env.SITE_URL || 'https://alexariasc.com',
         user_data:        { client_ip_address: req.ip || '127.0.0.1', client_user_agent: req.headers['user-agent'] || 'test' },
-        custom_data:      { content_type: 'home_listing', content_ids: ['test_prop'], value: 3500000, currency: 'COP' }
+        custom_data:      { content_type: 'product', content_ids: ['test_prop'], value: 3500000, currency: 'COP' }
       }]
     };
     if (process.env.FB_TEST_EVENT_CODE) payload.test_event_code = process.env.FB_TEST_EVENT_CODE;
@@ -2720,17 +2720,15 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
     // Envuelve en comillas dobles y escapa comillas internas
     const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
 
-    // Columnas exactas según documentación oficial de Meta Home Listings
-    // price = "XXXXXX COP" (número + moneda en mismo campo)
-    // image = URL directa (campo obligatorio con ese nombre exacto)
+    // Columnas para catálogo de PRODUCTOS de Meta (usado porque home_listing
+    // no acepta direcciones colombianas). Los eventos Pixel usan content_type: 'product'.
+    // price = "XXXXXX COP" (número + espacio + moneda)
+    // image_link = URL directa (campo obligatorio con ese nombre exacto)
     const HEADERS = [
-      'home_listing_id', 'name', 'availability', 'description',
-      'image', 'additional_image_link',
-      'listing_type', 'price', 'url',
-      'address', 'city', 'region', 'country', 'postal_code',
-      'latitude', 'longitude',
-      'num_baths', 'num_rooms', 'area_size', 'area_size_unit',
-      'property_type'
+      'id', 'title', 'description',
+      'availability', 'condition', 'price',
+      'link', 'image_link', 'additional_image_link',
+      'brand', 'google_product_category'
     ];
 
     const rows = [HEADERS.join(',')];
@@ -2863,28 +2861,20 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
                       : `${streetPart}, ${municipio}, Antioquia, Colombia`;
         const price   = `${Number(rawPrice || 0).toFixed(2)} COP`; // Meta requiere 2 decimales
 
+        // Google product category 111 = "Inmuebles y propiedades"
+        const gpc = useRent ? '"111"' : '"111"';
         rows.push([
-          q(listingId),
-          q(p.title || 'Inmueble'),
-          q(availability),
-          q(desc),
-          q(metaMainImg),             // campo "image" (obligatorio, JPEG para Meta)
-          q(metaExtraImg),            // additional_image_link (opcional)
-          q(listingType),
-          q(price),                   // "3500000 COP"
-          q(`${baseUrl}/?id=${p._id}`),
-          q(address),
-          q(cityName),
-          q('Antioquia'),
-          'CO',
-          q(postalCode),
-          p.lat  || '',
-          p.lng  || '',
-          p.banos        || '',
-          p.habitaciones || '',
-          p.area         || '',
-          p.area ? 'square_meters' : '',
-          'apartment'
+          q(listingId),                            // id
+          q(p.title || 'Inmueble'),                // title
+          q(desc),                                 // description
+          q(p.estado === 'ocupado' ? 'out of stock' : 'in stock'), // availability
+          '"new"',                                 // condition
+          q(price),                                // price "3500000 COP"
+          q(`${baseUrl}/?id=${p._id}`),            // link
+          q(metaMainImg),                          // image_link
+          q(metaExtraImg),                         // additional_image_link
+          '"Alex Arias"',                          // brand
+          gpc                                      // google_product_category
         ].join(','));
       }
     }
