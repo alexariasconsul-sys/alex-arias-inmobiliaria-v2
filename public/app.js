@@ -36,6 +36,12 @@ const state = {
   pendingEditProp: null, // prop a editar cuando el modal aún está autenticando
 };
 
+// ─── Variables globales para funcionalidades externas ───────────
+// Inicializar explícitamente para evitar undefined errors
+window._snapMapSheet = null;      // función para snappear bottom sheet del mapa
+window._profileData = null;       // datos del perfil del usuario autenticado
+window._fbUserEmail = undefined;  // email para tracking con Facebook
+
 // ─── Lazy Loading Intersection Observer ────────────────────────
 // GIF transparente 1x1px — placeholder para evitar cuadros grises/rotos
 const BLANK_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
@@ -3239,6 +3245,10 @@ function getVisibleProperties() {
 
 function initMap() {
   if (state.leafletMap) return;
+  if (typeof L === 'undefined') {
+    console.error('Leaflet no está disponible');
+    return;
+  }
 
   const mapEl = document.getElementById('leafletMap');
   const map = L.map(mapEl, {
@@ -4797,6 +4807,10 @@ async function globalLogout() {
 
 // ─── SOCKET.IO ────────────────────────────────────────────────
 function setupSocket() {
+  if (typeof io === 'undefined') {
+    console.log('Socket.IO no disponible, modo sin tiempo real');
+    return;
+  }
   try {
     const socket = io();
 
