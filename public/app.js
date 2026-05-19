@@ -1149,7 +1149,7 @@ function cardHTML(p, isFirst = false) {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
               <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <span class="share-count" data-id="${p.id}">${p.shares || 0}</span>
+            <span class="share-count" data-id="${p.id}" data-tooltip="${p.shares || 0} ${(p.shares || 0) === 1 ? 'persona' : 'personas'} lo encontraron interesante">${p.shares || 0}</span>
           </button>
           <span class="tipo-badge tipo-badge--${isCombinado ? 'combinado' : (p.tipo === 'venta' ? 'venta' : 'arriendo')}">${isCombinado ? 'Arr · Venta' : (p.tipo === 'venta' ? 'Venta' : 'Arriendo')}</span>
           ${nuevoBadgeHtml}
