@@ -2728,7 +2728,7 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
       'id', 'title', 'description',
       'availability', 'condition', 'price',
       'link', 'image_link', 'additional_image_link',
-      'brand', 'google_product_category'
+      'brand', 'google_product_category', 'item_group_id'
     ];
 
     const rows = [HEADERS.join(',')];
@@ -2861,8 +2861,16 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
                       : `${streetPart}, ${municipio}, Antioquia, Colombia`;
         const price   = `${Number(rawPrice || 0).toFixed(2)} COP`; // Meta requiere 2 decimales
 
-        // Google product category 111 = "Inmuebles y propiedades"
-        const gpc = useRent ? '"111"' : '"111"';
+        // Google product category para inmuebles (formato texto requerido por Meta)
+        // Arriendo = 1584 (Rental Listings), Venta = 1583 (Real Estate Listings)
+        const gpc = useRent
+          ? '"Hogar y jardín > Mudanza y almacenamiento"'
+          : '"Hogar y jardín > Mudanza y almacenamiento"';
+
+        // item_group_id agrupa variantes del mismo inmueble (arriendo + venta)
+        // Para propiedades combinado esto vincula las dos entradas en Meta
+        const itemGroupId = p._id;
+
         rows.push([
           q(listingId),                            // id
           q(p.title || 'Inmueble'),                // title
@@ -2874,7 +2882,8 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
           q(metaMainImg),                          // image_link
           q(metaExtraImg),                         // additional_image_link
           '"Alex Arias"',                          // brand
-          gpc                                      // google_product_category
+          gpc,                                     // google_product_category
+          q(itemGroupId)                           // item_group_id
         ].join(','));
       }
     }
