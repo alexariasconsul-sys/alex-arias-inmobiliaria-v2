@@ -3203,13 +3203,15 @@ function verifyGoogleToken(idToken) {
 app.get('/api/reviews', async (req, res) => {
   try {
     const db = getReviewsDB();
-    const reviews = await db.findAsync({});
-    reviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const all = await db.findAsync({});
+    all.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // Strip private fields before sending to public clients
+    const reviews = all.map(({ email, googleId, photo, ...safe }) => safe);
     const total = reviews.length;
-    const avg = total ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / total) * 10) / 10 : 0;
+    const avg = total ? Math.round((all.reduce((s, r) => s + r.rating, 0) / total) * 10) / 10 : 0;
     const distribution = [5, 4, 3, 2, 1].map(n => ({
       stars: n,
-      count: reviews.filter(r => r.rating === n).length
+      count: all.filter(r => r.rating === n).length
     }));
     res.json({ reviews, stats: { avg, total, distribution } });
   } catch (err) { res.status(500).json({ error: err.message }); }

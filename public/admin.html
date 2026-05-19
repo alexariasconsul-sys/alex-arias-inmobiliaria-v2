@@ -2770,7 +2770,7 @@ function renderAudienceTab(data) {
 
 async function renderReviewsHistory() {
   try {
-    const res = await fetch('/api/stats/reviews-history', { credentials: 'include' });
+    const res = await fetch('/api/stats/reviews-history', { credentials: 'include', headers: authHeaders() });
     if (!res.ok) return;
     const data = await res.json();
 
@@ -2853,7 +2853,7 @@ async function renderPropPerformance() {
   const countEl = document.getElementById('propPerfCount');
   if (!tbody) return;
   try {
-    const res = await fetch('/api/stats/property-performance', { credentials: 'include' });
+    const res = await fetch('/api/stats/property-performance', { credentials: 'include', headers: authHeaders() });
     const data = await res.json();
     if (!Array.isArray(data) || data.length === 0) {
       tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#9ca3af">Sin datos</td></tr>';
@@ -3219,7 +3219,7 @@ async function loadPixelHealth() {
   const details = document.getElementById('pixelHealthDetails');
   if (!badge) return;
   try {
-    const r = await fetch('/api/pixel-health', { credentials: 'include' });
+    const r = await fetch('/api/pixel-health', { credentials: 'include', headers: authHeaders() });
     const d = await r.json();
     const capiOk = d.capi?.configured && d.capi?.valid;
     if (d.ok) {
@@ -3343,7 +3343,7 @@ document.getElementById('btnTestEvent')?.addEventListener('click', async () => {
 });
 
 // Auto-cargar cuando se activa el tab de marketing
-document.querySelectorAll('.adm-integ-tab-btn').forEach(btn => {
+document.querySelectorAll('.adm-integ-tab').forEach(btn => {
   btn.addEventListener('click', () => {
     if (btn.dataset.tab === 'marketing') {
       setTimeout(() => { loadPixelHealth(); loadPixelEvents(); }, 100);
