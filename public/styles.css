@@ -1630,7 +1630,7 @@ a { text-decoration: none; color: inherit; }
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(17, 24, 39, 0.25);
+  background: rgba(17, 24, 39, 0.12);
   color: #fff;
   padding: 8px 12px;
   border-radius: 8px;
@@ -1657,7 +1657,7 @@ a { text-decoration: none; color: inherit; }
   height: 0;
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
-  border-top: 5px solid rgba(17, 24, 39, 0.4);
+  border-top: 5px solid rgba(17, 24, 39, 0.2);
   z-index: 10000;
   pointer-events: none;
   animation: tooltipFadeIn 0.2s ease-out;
@@ -3736,7 +3736,7 @@ a { text-decoration: none; color: inherit; }
 .close-hint-tooltip {
   position: fixed;
   z-index: 9998;
-  background: rgba(17, 24, 39, 0.25);
+  background: rgba(17, 24, 39, 0.12);
   color: #fff;
   font-size: 12px;
   font-weight: 600;
@@ -3762,7 +3762,7 @@ a { text-decoration: none; color: inherit; }
   width: 0; height: 0;
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
-  border-top: 5px solid rgba(17, 24, 39, 0.4);
+  border-top: 5px solid rgba(17, 24, 39, 0.2);
 }
 .close-hint-tooltip.hint-out {
   animation: closeHintOut .28s ease-out forwards;
