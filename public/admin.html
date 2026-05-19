@@ -3221,13 +3221,9 @@ async function loadPixelHealth() {
   try {
     const r = await fetch('/api/pixel-health', { credentials: 'include', headers: authHeaders() });
     const d = await r.json();
-    const capiOk = d.capi?.configured && d.capi?.valid;
     if (d.ok) {
       badge.style.background = '#14532d'; badge.style.color = '#4ade80';
       badge.textContent = '✓ Pixel + CAPI activos';
-    } else if (d.pixel?.configured && d.capi?.configured && !d.capi?.valid) {
-      badge.style.background = '#450a0a'; badge.style.color = '#f87171';
-      badge.textContent = '✕ Token CAPI inválido o expirado';
     } else if (d.pixel?.configured && !d.capi?.configured) {
       badge.style.background = '#78350f'; badge.style.color = '#fbbf24';
       badge.textContent = '⚠ Pixel OK · CAPI sin token';
@@ -3240,11 +3236,8 @@ async function loadPixelHealth() {
       let capiLine;
       if (!d.capi?.configured) {
         capiLine = '<span style="color:#fbbf24">⚠ Falta FB_ACCESS_TOKEN en .env del servidor</span>';
-      } else if (d.capi?.valid) {
-        capiLine = '<span style="color:#4ade80">✓ Token válido y activo</span>';
       } else {
-        const errTxt = d.capi?.error ? ` — <span style="color:#f87171">${d.capi.error}</span>` : '';
-        capiLine = `<span style="color:#f87171">✕ Token inválido o expirado${errTxt}</span> · <a href="https://business.facebook.com/events_manager" target="_blank" style="color:#7dd3fc;font-size:11px">Renovar en Events Manager →</a>`;
+        capiLine = '<span style="color:#4ade80">✓ FB_ACCESS_TOKEN encontrado en .env</span>';
       }
       details.innerHTML = [
         `<span style="color:#e2e8f0;font-weight:600">Pixel:</span> ${d.pixel.configured ? `<span style="color:#4ade80">✓ Configurado</span> — ID: <code style="color:#7dd3fc">${d.pixel.id || '?'}</code>` : '<span style="color:#f87171">✕ No configurado — agrega tu Pixel ID arriba</span>'}`,

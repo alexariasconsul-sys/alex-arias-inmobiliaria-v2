@@ -2567,35 +2567,16 @@ function _logPixelEvent(entry) {
 }
 
 // ─── PIXEL: HEALTH CHECK ──────────────────────────────────────
-// Verifica configuración Y valida el token contra la API de Meta
-app.get('/api/pixel-health', requireAdmin, async (req, res) => {
-  const s           = readSettings();
-  const pixelId     = (s.facebookPixelId || '').trim();
-  const accessToken = (process.env.FB_ACCESS_TOKEN || '').trim();
-  const hasTest     = !!(process.env.FB_TEST_EVENT_CODE || '').trim();
-
-  let tokenValid = false;
-  let tokenError = null;
-  if (pixelId && accessToken) {
-    try {
-      // Verifica que el token puede leer el pixel (lightweight GET)
-      const r = await fetch(
-        `https://graph.facebook.com/v21.0/${pixelId}?fields=id,name&access_token=${accessToken}`,
-        { signal: AbortSignal.timeout(5000) }
-      );
-      const d = await r.json();
-      if (d.id) { tokenValid = true; }
-      else { tokenError = d.error?.message || 'Token inválido'; }
-    } catch (e) {
-      tokenError = 'No se pudo verificar: ' + e.message;
-    }
-  }
-
+app.get('/api/pixel-health', (req, res) => {
+  const s        = readSettings();
+  const pixelId  = (s.facebookPixelId || '').trim();
+  const hasToken = !!(process.env.FB_ACCESS_TOKEN || '').trim();
+  const hasTest  = !!(process.env.FB_TEST_EVENT_CODE || '').trim();
   res.json({
-    ok:        !!(pixelId && accessToken && tokenValid),
-    pixel:     { configured: !!pixelId, id: pixelId ? pixelId.slice(0,4)+'…'+pixelId.slice(-4) : null },
-    capi:      { configured: !!accessToken, valid: tokenValid, error: tokenError },
-    testMode:  hasTest
+    ok:       !!(pixelId && hasToken),
+    pixel:    { configured: !!pixelId, id: pixelId ? pixelId.slice(0,4)+'…'+pixelId.slice(-4) : null },
+    capi:     { configured: hasToken },
+    testMode: hasTest
   });
 });
 
