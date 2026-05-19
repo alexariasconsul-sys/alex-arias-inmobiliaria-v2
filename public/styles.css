@@ -1630,7 +1630,7 @@ a { text-decoration: none; color: inherit; }
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(17, 24, 39, 0.95);
+  background: rgba(17, 24, 39, 0.25);
   color: #fff;
   padding: 8px 12px;
   border-radius: 8px;
@@ -1641,6 +1641,8 @@ a { text-decoration: none; color: inherit; }
   pointer-events: none;
   margin-bottom: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(24px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   animation: tooltipFadeIn 0.2s ease-out;
 }
 
@@ -1655,7 +1657,7 @@ a { text-decoration: none; color: inherit; }
   height: 0;
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
-  border-top: 5px solid rgba(17, 24, 39, 0.95);
+  border-top: 5px solid rgba(17, 24, 39, 0.4);
   z-index: 10000;
   pointer-events: none;
   animation: tooltipFadeIn 0.2s ease-out;
@@ -2295,7 +2297,7 @@ a { text-decoration: none; color: inherit; }
   position: fixed;
   z-index: 9000;
   transform: translate(-50%, -100%);
-  background: rgba(17,24,39,.92);
+  background: rgba(17,24,39,.25);
   color: #fff;
   font-family: 'Inter', sans-serif;
   font-size: 12px;
@@ -2305,6 +2307,8 @@ a { text-decoration: none; color: inherit; }
   white-space: nowrap;
   pointer-events: none;
   box-shadow: 0 4px 14px rgba(0,0,0,.18);
+  backdrop-filter: blur(24px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Footer superpuesto en imagen: location + nombre + precio */
@@ -3732,7 +3736,7 @@ a { text-decoration: none; color: inherit; }
 .close-hint-tooltip {
   position: fixed;
   z-index: 9998;
-  background: #111827;
+  background: rgba(17, 24, 39, 0.25);
   color: #fff;
   font-size: 12px;
   font-weight: 600;
@@ -3746,6 +3750,8 @@ a { text-decoration: none; color: inherit; }
   display: flex;
   align-items: center;
   gap: 5px;
+  backdrop-filter: blur(24px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 .close-hint-tooltip::after {
   content: '';
@@ -3756,7 +3762,7 @@ a { text-decoration: none; color: inherit; }
   width: 0; height: 0;
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
-  border-top: 5px solid #111827;
+  border-top: 5px solid rgba(17, 24, 39, 0.4);
 }
 .close-hint-tooltip.hint-out {
   animation: closeHintOut .28s ease-out forwards;
