@@ -176,16 +176,116 @@
 
       <!-- Tab: Leads -->
       <div class="adm-stats-tab-content" data-tab="leads">
-        <div class="adm-row">
-          <div class="adm-kpi"><div class="adm-kpi-icon adm-kpi-icon--leads" style="background:#ec4899"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="2"/></svg></div><div class="adm-kpi-info"><span class="adm-kpi-val" id="kpiTotalLeads">—</span><span class="adm-kpi-label">Total Leads</span></div></div>
-          <div class="adm-kpi"><div class="adm-kpi-icon adm-kpi-icon--channel" style="background:#10b981"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M3 8l9-6 9 6v11a2 2 0 01-2 2h-2M3 8v11a2 2 0 002 2h2" stroke="currentColor" stroke-width="2"/><path d="M21 12v8a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3" stroke="currentColor" stroke-width="2"/></svg></div><div class="adm-kpi-info"><span class="adm-kpi-val" id="kpiWhatsappLeads">—</span><span class="adm-kpi-label">WhatsApp</span></div></div>
-          <div class="adm-kpi"><div class="adm-kpi-icon adm-kpi-icon--channel" style="background:#f59e0b"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M3 8l9-6 9 6v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" stroke-width="2"/><path d="M12 13v4M9 13v4M15 13v4" stroke="currentColor" stroke-width="2"/></svg></div><div class="adm-kpi-info"><span class="adm-kpi-val" id="kpiPhoneLeads">—</span><span class="adm-kpi-label">Llamadas</span></div></div>
+
+        <!-- KPIs mejorados -->
+        <div class="leads-kpi-row">
+          <div class="leads-kpi leads-kpi--primary">
+            <div class="leads-kpi-left">
+              <span class="leads-kpi-icon" style="background:linear-gradient(135deg,#ec4899,#f97316)">
+                <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+              </span>
+              <div>
+                <p class="leads-kpi-val" id="kpiTotalLeads">—</p>
+                <p class="leads-kpi-label">Total Leads</p>
+              </div>
+            </div>
+            <span class="leads-kpi-badge" id="kpiLeadsBadge" style="display:none"></span>
+          </div>
+          <div class="leads-kpi">
+            <div class="leads-kpi-left">
+              <span class="leads-kpi-icon" style="background:linear-gradient(135deg,#25D366,#10b981)">
+                <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+              </span>
+              <div>
+                <p class="leads-kpi-val" id="kpiWhatsappLeads">—</p>
+                <p class="leads-kpi-label">WhatsApp</p>
+              </div>
+            </div>
+            <span class="leads-kpi-pct" id="kpiWaPct">—%</span>
+          </div>
+          <div class="leads-kpi">
+            <div class="leads-kpi-left">
+              <span class="leads-kpi-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">
+                <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.02 1.18 2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92v2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+              </span>
+              <div>
+                <p class="leads-kpi-val" id="kpiPhoneLeads">—</p>
+                <p class="leads-kpi-label">Llamadas</p>
+              </div>
+            </div>
+            <span class="leads-kpi-pct" id="kpiCallPct">—%</span>
+          </div>
+          <div class="leads-kpi">
+            <div class="leads-kpi-left">
+              <span class="leads-kpi-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">
+                <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </span>
+              <div>
+                <p class="leads-kpi-val" id="kpiUniqueLeads">—</p>
+                <p class="leads-kpi-label">Prospectos únicos</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="adm-row">
-          <div class="adm-card"><h3 class="adm-card-title">Leads por día</h3><canvas id="chartLeadsByDay" style="height:200px"></canvas></div>
-          <div class="adm-card"><h3 class="adm-card-title">Leads por canal</h3><div class="adm-donut-wrap"><canvas id="chartLeadsByChannel" width="140" height="140"></canvas></div></div>
+
+        <!-- Gráfico + donut -->
+        <div class="adm-row" style="margin-top:16px">
+          <div class="adm-card" style="grid-column:span 2">
+            <div class="adm-card-title-row">
+              <h3 class="adm-card-title">Leads por día</h3>
+              <span class="adm-card-subtitle" id="leadsChartPeriod">Últimos 30 días</span>
+            </div>
+            <!-- WRAPPER con height fijo: así Chart.js lo usa correctamente -->
+            <div style="position:relative;height:200px;width:100%">
+              <canvas id="chartLeadsByDay"></canvas>
+            </div>
+          </div>
         </div>
-        <div class="adm-card adm-card--full"><h3 class="adm-card-title">Leads recientes</h3><div id="leadsTableWrap" style="overflow-x:auto"><table class="adm-table"><thead><tr><th>Propiedad</th><th>Canal</th><th>Origen</th><th>Fecha</th></tr></thead><tbody id="leadsTableBody"><tr><td colspan="4" style="text-align:center;padding:20px">Cargando...</td></tr></tbody></table></div></div>
+
+        <div class="adm-row" style="margin-top:16px">
+          <div class="adm-card">
+            <h3 class="adm-card-title">Canal de contacto</h3>
+            <div class="leads-donut-layout">
+              <div style="position:relative;width:140px;height:140px;flex-shrink:0">
+                <canvas id="chartLeadsByChannel" width="140" height="140"></canvas>
+                <div class="leads-donut-center" id="leadsDonutCenter">0</div>
+              </div>
+              <div class="leads-channel-legend" id="leadsChannelLegend">
+                <!-- inyectado por JS -->
+              </div>
+            </div>
+          </div>
+          <div class="adm-card">
+            <h3 class="adm-card-title">Inmuebles más consultados</h3>
+            <div id="leadsTopProps" class="leads-top-list">
+              <p style="color:#9ca3af;font-size:13px;padding:8px 0">Sin datos aún</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla mejorada -->
+        <div class="adm-card adm-card--full" style="margin-top:16px">
+          <div class="adm-card-title-row" style="padding:20px 20px 0">
+            <h3 class="adm-card-title" style="margin-bottom:0">Leads recientes</h3>
+            <span class="leads-table-count" id="leadsTableCount"></span>
+          </div>
+          <div id="leadsTableWrap" style="overflow-x:auto;margin-top:12px">
+            <table class="adm-table leads-table">
+              <thead>
+                <tr>
+                  <th>Inmueble</th>
+                  <th>Canal</th>
+                  <th>Origen</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody id="leadsTableBody">
+                <tr><td colspan="4" style="text-align:center;padding:20px;color:#9ca3af">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
 
       <!-- Tab: Conversión -->
@@ -2224,26 +2324,157 @@ function srchTimeAgo(ts) {
 
 function loadLeadsStats(data) {
   if (!data) return;
-  const el = document.getElementById('kpiTotalLeads'); if (el) el.textContent = data.total || '0';
-  const elWa = document.getElementById('kpiWhatsappLeads'); if (elWa) elWa.textContent = data.byChannel?.whatsapp || '0';
-  const elPhone = document.getElementById('kpiPhoneLeads'); if (elPhone) elPhone.textContent = data.byChannel?.call || '0';
 
+  const total = data.total || 0;
+  const waCount   = data.byChannel?.whatsapp || 0;
+  const callCount = data.byChannel?.call     || 0;
+
+  // ── KPIs ──────────────────────────────────────────────────
+  const elTotal = document.getElementById('kpiTotalLeads');
+  if (elTotal) elTotal.textContent = total;
+
+  const elWa = document.getElementById('kpiWhatsappLeads');
+  if (elWa) elWa.textContent = waCount;
+
+  const elPhone = document.getElementById('kpiPhoneLeads');
+  if (elPhone) elPhone.textContent = callCount;
+
+  // Porcentajes de canal
+  const elWaPct   = document.getElementById('kpiWaPct');
+  const elCallPct = document.getElementById('kpiCallPct');
+  if (total > 0) {
+    if (elWaPct)   elWaPct.textContent   = Math.round((waCount   / total) * 100) + '%';
+    if (elCallPct) elCallPct.textContent = Math.round((callCount / total) * 100) + '%';
+  } else {
+    if (elWaPct)   elWaPct.textContent   = '0%';
+    if (elCallPct) elCallPct.textContent = '0%';
+  }
+
+  // Prospectos únicos (distintos por propTitle)
+  const unique = new Set((data.recent || []).map(l => l.propTitle || l.propId || l.source)).size;
+  const elUniq = document.getElementById('kpiUniqueLeads');
+  if (elUniq) elUniq.textContent = unique || '—';
+
+  // Badge "esta semana"
+  const thisWeek = (data.byDay || []).slice(-7).reduce((s, [,v]) => s + v, 0);
+  const badge = document.getElementById('kpiLeadsBadge');
+  if (badge && thisWeek > 0) {
+    badge.textContent = '+' + thisWeek + ' esta semana';
+    badge.style.display = 'inline-flex';
+  }
+
+  // ── GRÁFICO LÍNEA ─────────────────────────────────────────
   const canvas = document.getElementById('chartLeadsByDay');
-  if (canvas) drawLineChart(canvas, data.byDay, 'Leads por día');
-  const canvasCh = document.getElementById('chartLeadsByChannel');
-  if (canvasCh) drawDonutChart(canvasCh, Object.entries(data.byChannel || {}), 'Leads por canal');
+  if (canvas) {
+    const byDay = data.byDay || [];
+    // Periodo visible
+    const periodEl = document.getElementById('leadsChartPeriod');
+    if (periodEl && byDay.length > 0) {
+      periodEl.textContent = byDay.length + ' días registrados';
+    }
+    drawLineChart(canvas, byDay, 'Leads');
+  }
 
-  // Tabla de leads recientes
+  // ── DONUT CANAL ───────────────────────────────────────────
+  const canvasCh = document.getElementById('chartLeadsByChannel');
+  const channelEntries = Object.entries(data.byChannel || {}).filter(([,v]) => v > 0);
+  if (canvasCh) drawDonutChart(canvasCh, channelEntries, 'Canal');
+
+  // Centro del donut
+  const donutCenter = document.getElementById('leadsDonutCenter');
+  if (donutCenter) donutCenter.textContent = total;
+
+  // Leyenda del donut
+  const legendEl = document.getElementById('leadsChannelLegend');
+  if (legendEl) {
+    const CHANNEL_LABELS = { whatsapp:'WhatsApp', call:'Llamada', form:'Formulario', email:'Email' };
+    const CHANNEL_COLORS = CHART_COLORS;
+    if (channelEntries.length === 0) {
+      legendEl.innerHTML = '<p style="color:#9ca3af;font-size:13px">Sin datos aún</p>';
+    } else {
+      legendEl.innerHTML = channelEntries.map(([ch, cnt], i) => {
+        const pct = total > 0 ? Math.round((cnt / total) * 100) : 0;
+        const label = CHANNEL_LABELS[ch] || ch;
+        return `<div class="leads-legend-item">
+          <span class="leads-legend-dot" style="background:${CHANNEL_COLORS[i % CHANNEL_COLORS.length]}"></span>
+          <span class="leads-legend-label">${label}</span>
+          <span class="leads-legend-cnt">${cnt}</span>
+          <div class="leads-legend-bar-wrap">
+            <div class="leads-legend-bar-fill" style="width:${pct}%;background:${CHANNEL_COLORS[i % CHANNEL_COLORS.length]}"></div>
+          </div>
+          <span class="leads-legend-pct">${pct}%</span>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // ── TOP INMUEBLES ─────────────────────────────────────────
+  const topEl = document.getElementById('leadsTopProps');
+  if (topEl) {
+    const counts = {};
+    (data.recent || []).forEach(l => {
+      const key = l.propTitle || l.propId || 'Sin título';
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    const sorted = Object.entries(counts).sort(([,a],[,b]) => b - a).slice(0, 5);
+    if (sorted.length === 0) {
+      topEl.innerHTML = '<p style="color:#9ca3af;font-size:13px;padding:8px 0">Sin datos aún</p>';
+    } else {
+      const max = sorted[0][1];
+      topEl.innerHTML = sorted.map(([title, cnt], i) => `
+        <div class="leads-top-item">
+          <span class="leads-top-rank">${i + 1}</span>
+          <div class="leads-top-info">
+            <p class="leads-top-title">${title.substring(0, 32)}${title.length > 32 ? '…' : ''}</p>
+            <div class="leads-top-bar-wrap">
+              <div class="leads-top-bar-fill" style="width:${Math.round((cnt/max)*100)}%"></div>
+            </div>
+          </div>
+          <span class="leads-top-cnt">${cnt}</span>
+        </div>`).join('');
+    }
+  }
+
+  // ── TABLA RECIENTES ───────────────────────────────────────
   const tbody = document.getElementById('leadsTableBody');
+  const recent = (data.recent || []).slice(0, 20);
+  const countEl = document.getElementById('leadsTableCount');
+  if (countEl) countEl.textContent = recent.length + ' registros';
+
+  const CHANNEL_ICON = { whatsapp:'💬', call:'📞', form:'📋', email:'✉️' };
+  const SOURCE_LABELS = {
+    instagram:'Instagram', facebook:'Facebook', google:'Google',
+    direct:'Directo', organic:'Orgánico', referral:'Referido'
+  };
+
   if (tbody) {
-    tbody.innerHTML = (data.recent || []).slice(0, 20).map(l => `
-      <tr>
-        <td>${l.propTitle?.substring(0, 30) || '—'}</td>
-        <td>${l.contactChannel || '—'}</td>
-        <td>${l.source || '—'}</td>
-        <td>${new Date(l.ts).toLocaleDateString('es-ES')}</td>
-      </tr>
-    `).join('') || '<tr><td colspan="4" style="text-align:center;color:#9ca3af">Sin datos</td></tr>';
+    tbody.innerHTML = recent.length > 0 ? recent.map(l => {
+      const ch = l.contactChannel || 'whatsapp';
+      const src = l.source || 'direct';
+      const date = l.ts ? new Date(l.ts) : null;
+      const dateStr = date
+        ? date.toLocaleDateString('es-CO', { day:'numeric', month:'short', year:'2-digit' })
+        : '—';
+      const timeStr = date
+        ? date.toLocaleTimeString('es-CO', { hour:'2-digit', minute:'2-digit' })
+        : '';
+      return `<tr>
+        <td>
+          <span class="leads-cell-title">${(l.propTitle || '—').substring(0, 28)}${(l.propTitle||'').length > 28 ? '…' : ''}</span>
+        </td>
+        <td>
+          <span class="leads-channel-tag leads-channel-tag--${ch}">
+            ${CHANNEL_ICON[ch] || '📌'} ${ch.charAt(0).toUpperCase() + ch.slice(1)}
+          </span>
+        </td>
+        <td><span class="leads-source-tag">${SOURCE_LABELS[src] || src}</span></td>
+        <td>
+          <span class="leads-date">${dateStr}</span>
+          ${timeStr ? `<span class="leads-time">${timeStr}</span>` : ''}
+        </td>
+      </tr>`;
+    }).join('')
+    : '<tr><td colspan="4" style="text-align:center;padding:24px;color:#9ca3af">Sin leads registrados aún</td></tr>';
   }
 }
 
