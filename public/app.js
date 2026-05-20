@@ -977,6 +977,7 @@ function renderGrid() {
 
   const trendingIds = new Set(
     [...state.properties]
+      .filter(p => p.estado !== 'ocupado') // ocupados nunca son "Muy interesante"
       .map(p => ({ id: String(p.id), score: engagementScore(p) }))
       .filter(p => p.score >= 60)
       .sort((a, b) => b.score - a.score)
@@ -1054,7 +1055,8 @@ function cardHTML(p, isFirst = false) {
   const statusLabel = p.estado === 'ocupado' ? 'Ocupado' : 'Libre';
 
   // Badge esquina superior derecha: "Muy interesante" basado en engagement score
-  const isTrending = (state._trendingIds || new Set()).has(String(p.id));
+  // Los ocupados nunca muestran este badge aunque tengan alto engagement
+  const isTrending = p.estado !== 'ocupado' && (state._trendingIds || new Set()).has(String(p.id));
   const topBadgeHtml = isTrending
     ? '<span class="prop-corner-badge">Muy interesante</span>'
     : '';
