@@ -4172,15 +4172,47 @@ a { text-decoration: none; color: inherit; }
   .top-bar-inner { height: 56px; }
   .app-shell { padding-top: var(--top-bar-h, 60px); }
   .brand-name { font-size: 13px; }
-  /* floating-bar ya es full-width desde 767px — sin override aquí */
-  .property-card.is-open, .property-card.is-open .property-card-inner { height: 740px; }
+
+  /* Card expandida: nunca más alta que el 93% del viewport
+     Evita que en iPhone SE (568px) la tarjeta se extienda fuera de pantalla */
+  .property-card.is-open,
+  .property-card.is-open .property-card-inner {
+    height: min(740px, 93dvh);
+    height: min(740px, 93vh); /* fallback para Safari < 15.4 */
+  }
+
+  /* Stat values más legibles en pantallas pequeñas */
+  .stat-item p { font-size: 18px; }
+  .stat-item span { font-size: 9px; }
+  /* Menos padding lateral para que los 3 valores no se apilen en 320px */
+  .stat-item.with-border { padding: 0 10px; }
 
   /* Mantener el margen y padding también en pantallas muy pequeñas */
-  .property-card.is-open {
-    margin-bottom: 32px;
-  }
-  .property-card.is-open .property-details-scroll {
-    padding-bottom: 20px;
+  .property-card.is-open { margin-bottom: 32px; }
+  .property-card.is-open .property-details-scroll { padding-bottom: 20px; }
+}
+
+/* Pantallas muy pequeñas (iPhone SE 1ª gen: 320×568px) */
+@media (max-width: 360px) {
+  /* Collapsed card ligeramente más compacta para que quepan más */
+  .property-media { height: 200px !important; }
+
+  /* Stats: eliminar padding lateral completamente — 3 items en 320px */
+  .stat-item.with-border { padding: 0 6px; }
+  .stat-item p { font-size: 17px; }
+
+  /* Título y precio en la cabecera: menos margen */
+  .property-title { font-size: 14px; }
+  .property-price { font-size: 15px; }
+
+  /* Chips de amenidades más pequeños */
+  .amenity-chip { font-size: 10px; padding: 3px 7px; }
+
+  /* Card expandida: ceder todo el alto disponible */
+  .property-card.is-open,
+  .property-card.is-open .property-card-inner {
+    height: min(700px, 91dvh);
+    height: min(700px, 91vh);
   }
 }
 
