@@ -1516,7 +1516,13 @@ app.get('/api/properties', async (req, res) => {
     };
 
     const sortFn = sortFns[orderBy] || sortFns['fecha-desc'];
-    docs.sort(sortFn);
+    // Ocupados siempre al final, independientemente del criterio de orden
+    docs.sort((a, b) => {
+      const aOcup = a.estado === 'ocupado' ? 1 : 0;
+      const bOcup = b.estado === 'ocupado' ? 1 : 0;
+      if (aOcup !== bOcup) return aOcup - bOcup;
+      return sortFn(a, b);
+    });
 
     res.json(mapDocs(docs));
   } catch (err) {
