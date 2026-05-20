@@ -637,6 +637,7 @@
                   <strong style="color:#e5e7eb">Catálogo de Facebook Ads</strong>
                   <span class="adm-service-subdesc">Conecta tus inmuebles como productos en Meta Business</span>
                 </div>
+                <div class="adm-pixel-status" id="admCatalogStatus"></div>
               </div>
 
               <p class="adm-integ-desc">Tu portafolio genera automáticamente un feed compatible con el <strong style="color:#c8d0dc">Catálogo de Productos</strong> de Meta. Úsalo para crear anuncios de retargeting con Advantage+ Catalog Ads.</p>
@@ -724,6 +725,7 @@
                   <strong style="color:#e5e7eb">Google Analytics 4</strong>
                   <span class="adm-service-subdesc">Analítica completa de tráfico, comportamiento y conversiones</span>
                 </div>
+                <div class="adm-pixel-status" id="admGa4Status"></div>
               </div>
               <p class="adm-integ-desc">Complementa Meta Pixel: GA4 ve <strong style="color:#c8d0dc">todo el tráfico</strong> (orgánico, Google, directo, referidos). Imprescindible para entender el SEO y el comportamiento real de los usuarios.</p>
               <div style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 6px">
@@ -750,6 +752,7 @@
                   <strong style="color:#e5e7eb">Google Search Console</strong>
                   <span class="adm-service-subdesc">SEO — con qué palabras te encuentran en Google</span>
                 </div>
+                <div class="adm-pixel-status" id="admGscStatus"></div>
               </div>
               <p class="adm-integ-desc">Muestra exactamente qué búsquedas generan tráfico, en qué posición apareces, cuántos clics recibes y si Google tiene errores al indexar el sitio. Gratis y esencial para SEO.</p>
               <div style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 6px">
@@ -2167,6 +2170,9 @@ function populateIntegSettings(s) {
   updateGtmStatusBadge(s.gtmId);
   updatePixelStatusBadge(s.facebookPixelId);
   updateClarityStatusBadge(s.customHeadCode);
+  updateCatalogStatusBadge(s.facebookPixelId);
+  updateGa4StatusBadge(s.gtmId);
+  updateGscStatusBadge(s.gtmId);
   // Feed URLs
   const base = window.location.origin;
   if (g('admFeedUrlCsv')) g('admFeedUrlCsv').textContent = `${base}/api/feed/productos.csv`;
@@ -2208,6 +2214,30 @@ function updateClarityStatusBadge(customCode) {
   if (!el) return;
   const active = customCode && customCode.includes('clarity.ms/tag/');
   el.innerHTML = active
+    ? '<span class="adm-pixel-active">● Activo</span>'
+    : '<span class="adm-pixel-inactive">○ Sin configurar</span>';
+}
+
+function updateCatalogStatusBadge(pixelId) {
+  const el = document.getElementById('admCatalogStatus');
+  if (!el) return;
+  el.innerHTML = (pixelId && pixelId.trim())
+    ? '<span class="adm-pixel-active">● Activo</span>'
+    : '<span class="adm-pixel-inactive">○ Sin configurar</span>';
+}
+
+function updateGa4StatusBadge(gtmId) {
+  const el = document.getElementById('admGa4Status');
+  if (!el) return;
+  el.innerHTML = (gtmId && gtmId.trim())
+    ? '<span class="adm-pixel-active">● Activo</span>'
+    : '<span class="adm-pixel-inactive">○ Sin configurar</span>';
+}
+
+function updateGscStatusBadge(gtmId) {
+  const el = document.getElementById('admGscStatus');
+  if (!el) return;
+  el.innerHTML = (gtmId && gtmId.trim())
     ? '<span class="adm-pixel-active">● Activo</span>'
     : '<span class="adm-pixel-inactive">○ Sin configurar</span>';
 }
@@ -2256,6 +2286,9 @@ document.getElementById('admBtnSaveMarketing')?.addEventListener('click', async 
     updateGtmStatusBadge(gtmId);
     updatePixelStatusBadge(pixelId);
     updateClarityStatusBadge(customCode);
+    updateCatalogStatusBadge(pixelId);
+    updateGa4StatusBadge(gtmId);
+    updateGscStatusBadge(gtmId);
     setIntegStatus('admPixelSaveStatus', '✓ Guardado', true);
   }
 });
