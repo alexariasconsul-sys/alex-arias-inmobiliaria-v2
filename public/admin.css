@@ -1624,6 +1624,8 @@ body {
 .srch-feed {
   display: flex;
   flex-direction: column;
+  max-height: 400px;
+  overflow-y: auto;
   /* sin gap: usamos border-bottom para separar filas */
 }
 .srch-loading, .srch-empty {
