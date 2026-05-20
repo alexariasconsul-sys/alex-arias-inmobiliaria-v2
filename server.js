@@ -2710,8 +2710,15 @@ fbq('track', 'PageView');
   }
 
   if (customCode) {
-    js += '\n// ── Código personalizado ─────────────────────────────────\n';
-    js += customCode + '\n';
+    // tracking.js es JS puro — eliminar etiquetas <script> wrapper si el usuario las pegó
+    const jsOnly = customCode
+      .replace(/<script[^>]*>/gi, '')
+      .replace(/<\/script>/gi, '')
+      .trim();
+    if (jsOnly) {
+      js += '\n// ── Código personalizado ─────────────────────────────────\n';
+      js += jsOnly + '\n';
+    }
   }
 
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
