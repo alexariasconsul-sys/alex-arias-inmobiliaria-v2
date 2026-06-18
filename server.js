@@ -550,7 +550,7 @@ app.get('/', async (req, res) => {
       numberOfItems: activeProps.length,
       itemListElement: activeProps.slice(0,12).map((p, i) => ({
         '@type':'ListItem', position: i+1,
-        url: `${baseUrl}/?id=${p._id}`,
+        url: `${baseUrl}/inmueble/${propSlug(p)}`,
         name: p.title || 'Propiedad'
       }))
     };
@@ -601,7 +601,7 @@ app.get('/', async (req, res) => {
           ogTitle   = `${prop.title} — ${prop.municipio||''}`;
           ogDesc    = metaDesc;
           ogType    = 'product';
-          ogUrl     = `${baseUrl}/?id=${propId}`;
+          ogUrl     = `${baseUrl}/inmueble/${propSlug(prop)}`;
           if (prop.images?.length) ogImage = `${baseUrl}/${prop.images[0].filename}`;
 
           // Breadcrumb: Inicio > Ciudad > Inmueble
@@ -1725,7 +1725,7 @@ Zona de servicio: Sabaneta · Envigado · Medellín (Área Metropolitana)
         p.cuarto_util   ? 'Cuarto útil'             : '',
       ].filter(Boolean).join(' · ');
 
-      txt += `- [${p.title}](${base}/?id=${p._id}): ${detalles}`;
+      txt += `- [${p.title}](${base}/inmueble/${propSlug(p)}): ${detalles}`;
       if (p.barrio || p.municipio) txt += ` — ${[p.barrio, p.municipio].filter(Boolean).join(', ')}`;
       txt += '\n';
     });
