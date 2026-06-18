@@ -72,7 +72,7 @@
     @media(max-width:767px){.app-shell{padding-bottom:calc(50px + env(safe-area-inset-bottom,0px))}}
   </style>
 
-  <link rel="stylesheet" href="styles.min.css?v=32" />
+  <link rel="stylesheet" href="styles.min.css?v=33" />
   <link rel="stylesheet" href="admin.min.css?v=9" />
 
   <!-- Leaflet CSS: Lazy load (media=print, onload para cambiar a all) -->
@@ -835,29 +835,35 @@
     <div class="floating-bar">
       <button type="button" class="float-icon active" id="btnViewGrid" aria-label="Ver lista">
         <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/></svg>
+        <span>Inicio</span>
       </button>
       <button type="button" class="float-icon" id="btnViewMap" aria-label="Ver mapa">
         <svg viewBox="0 0 24 24" fill="none"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 9m0 8V9m0 0L9 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-      <a href="/blog" class="float-icon" id="btnBlog" aria-label="Blog">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      </a>
-      <button type="button" class="float-icon" id="btnFavorites" aria-label="Mis guardados">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span class="fav-count-badge" id="favCountBadge" style="display:none">0</span>
-      </button>
-      <button type="button" class="float-icon" id="btnUpload" aria-label="Subir inmueble">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Mapa</span>
       </button>
       <button type="button" class="float-icon" id="btnReviews" aria-label="Reseñas">
         <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Reseñas</span>
         <span class="float-notif" id="reviewsRatingBadge" style="display:none"></span>
         <div class="reviews-nudge" id="reviewsNudge">
           ¿Nos calificas? ⭐
           <span class="reviews-nudge-arrow"></span>
         </div>
+      </button>
+      <a href="/blog" class="float-icon" id="btnBlog" aria-label="Blog">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Blog</span>
+      </a>
+      <button type="button" class="float-icon" id="btnFavorites" aria-label="Mis guardados">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Guardados</span>
+        <span class="fav-count-badge" id="favCountBadge" style="display:none">0</span>
+      </button>
+      <button type="button" class="float-icon" id="btnUpload" aria-label="Subir inmueble">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Publicar</span>
       </button>
     </div>
 
@@ -1707,6 +1713,6 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
 
   <!-- App.js: Minificado para producción -->
-  <script src="app.min.js?v=53"></script>
+  <script src="app.min.js?v=54"></script>
 </body>
 </html>

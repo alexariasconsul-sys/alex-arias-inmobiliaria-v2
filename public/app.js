@@ -414,7 +414,7 @@ function renderActiveFilterTags() {
 
   inner.innerHTML = tags.map((t, i) => `
     <button class="filter-tag" data-tag-idx="${i}">
-      ${t.label}<span class="filter-tag-x">✕</span>
+      ${escHtml(t.label)}<span class="filter-tag-x">✕</span>
     </button>`).join('') +
     `<button class="filter-tag-clear-all" id="clearAllTags">Limpiar todo</button>`;
 
@@ -446,6 +446,7 @@ function clearAllFilters() {
   state.search = ''; state.minPrecio = 0; state.maxPrecio = 0;
   state.minHab = 0; state.minBanos = 0;
   state.filterParqueadero = false; state.filterAmenidades = [];
+  state.filterEstado = ''; state.orderBy = '';
   syncUIFromState();
   pushFilterState();
   // Recalcular tamaño del mapa tras quitar la barra de filtros
@@ -521,7 +522,7 @@ function renderSavedSearches() {
     section.style.display = 'block';
     chipsEl.innerHTML = searches.map(s => `
       <div class="saved-search-chip" data-id="${s.id}">
-        <span class="saved-chip-label">${s.name}</span>
+        <span class="saved-chip-label">${escHtml(s.name)}</span>
         <button class="saved-search-chip-del" data-del="${s.id}" title="Eliminar">✕</button>
       </div>`).join('');
     chipsEl.querySelectorAll('.saved-search-chip').forEach(el => {
@@ -2992,7 +2993,10 @@ function setupFilters() {
     [waLinkEl, waBtnEl].forEach(el => {
       el.onclick = () => trackLead('perfil_whatsapp', 'Consulta por perfil');
     });
-    document.getElementById('profileCallBtn').href = `tel:+${phoneLink}`;
+    const callBtn = document.getElementById('profileCallBtn');
+    callBtn.href = `tel:+${phoneLink}`;
+    callBtn.onclick = () => logLead(null, 'Llamada directa', 0, 'call', 'perfil_llamada');
+    document.getElementById('profilePhoneLink').onclick = () => logLead(null, 'Llamada directa', 0, 'call', 'perfil_telefono');
     // Instagram
     const ig = p.instagram || '';
     if (ig) {

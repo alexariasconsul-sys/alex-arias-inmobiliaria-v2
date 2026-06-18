@@ -2875,50 +2875,55 @@ a { text-decoration: none; color: inherit; }
 
 /* ─── SEO FOOTER (ultraminimalista — visible para crawlers, imperceptible para usuarios) */
 .seo-footer {
-  background: #fff;
-  border-top: none;
-  padding: 12px clamp(20px, 5vw, 60px) 8px;
+  background: #0f172a;
+  border-top: 1px solid rgba(255,255,255,.07);
+  padding: 36px clamp(20px, 5vw, 60px) 28px;
   margin-top: 0;
 }
 .seo-footer-inner {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 6px 20px;
-  max-width: 900px;
-  margin: 0 auto 4px;
+  gap: 28px 24px;
+  max-width: 940px;
+  margin: 0 auto 24px;
 }
 .seo-footer-heading {
   display: block;
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: .04em;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
   text-transform: uppercase;
-  color: #ddd;
-  margin-bottom: 3px;
+  color: rgba(255,255,255,.35);
+  margin-bottom: 12px;
 }
 .seo-footer nav, .seo-footer address {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
   font-style: normal;
 }
 .seo-footer a, .seo-footer span {
-  font-size: 10px;
-  color: #ddd;
+  font-size: 13px;
+  color: rgba(255,255,255,.65);
   text-decoration: none;
-  line-height: 1.35;
+  line-height: 1.4;
+  transition: color .15s;
 }
-.seo-footer a:hover { color: #bbb; }
+.seo-footer a:hover { color: #fff; }
 .seo-footer-copy {
   text-align: center;
-  font-size: 9px;
-  color: #e5e5e5;
+  font-size: 11px;
+  color: rgba(255,255,255,.25);
   margin: 0;
-  padding-top: 4px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
 }
 @media (max-width: 767px) {
-  .seo-footer { padding: 10px 20px 6px; }
-  .seo-footer-inner { grid-template-columns: 1fr 1fr; gap: 4px 14px; }
+  .seo-footer { padding: 28px 20px calc(20px + env(safe-area-inset-bottom, 0px)); }
+  .seo-footer-inner { grid-template-columns: 1fr 1fr; gap: 20px 16px; }
 }
 
 /* ─── PHANTOM FOOTER (Buffer barrier para tarjetas - Desktop only) ─ */
@@ -4135,15 +4140,25 @@ a { text-decoration: none; color: inherit; }
     padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     gap: 0;
     justify-content: space-around;
-    box-shadow: 0 -1px 0 rgba(255,255,255,.13), 0 -12px 40px rgba(0,0,0,.18);
-    border-bottom: none;
+    background: #0f172a !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: none !important;
+    box-shadow: 0 -1px 0 rgba(255,255,255,.08), 0 -8px 32px rgba(0,0,0,.3);
   }
   .float-icon {
     flex: 1;
+    flex-direction: column;
+    gap: 3px;
     padding: 5px 4px;
     border-radius: 10px;
+    color: rgba(255,255,255,.45);
+    font-size: 10px;
+    font-weight: 500;
   }
+  .float-icon.active { color: var(--brand); background: transparent; }
   .float-icon svg { width: 20px; height: 20px; }
+  .float-icon::after { display: none; }
 
   /* Compensar el tab bar en la vista de grid */
   .app-shell { padding-bottom: calc(50px + env(safe-area-inset-bottom, 0px)); }
