@@ -234,6 +234,7 @@ function readURLParams() {
   if (p.get('ord')) state.orderBy = p.get('ord');
   // Guardar ?id= antes de que pushFilterState() sobrescriba la URL
   if (p.get('id')) state.autoOpenId = p.get('id');
+  if (window._autoOpenId) state.autoOpenId = window._autoOpenId;
   // Auto-abrir panel de reseñas
   if (p.get('reviews') === 'open') state.autoOpenReviews = true;
   // Auto-abrir vista mapa (viene desde el blog)
@@ -2153,6 +2154,13 @@ function updateFavBadge() {
 }
 
 // ─── SHARE ───────────────────────────────────────────────────
+function propSlugClient(prop) {
+  const sl = s => String(s || '').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  return [sl(prop.tipo || 'inmueble'), sl(prop.municipio || ''), prop.id].filter(Boolean).join('-');
+}
+
 const _shareTimers = new Map(); // evita doble conteo por clic rápido
 
 function setupShareBtn(card) {
@@ -2303,7 +2311,7 @@ function setupShareSheet() {
   document.getElementById('shareWhatsApp').addEventListener('click', () => {
     const prop = state.properties.find(p => String(p.id) === String(state.shareTargetId));
     if (!prop) return;
-    const url = `${window.location.origin}/?id=${prop.id}`;
+    const url = `${window.location.origin}/inmueble/${propSlugClient(prop)}`;
     const tipo = prop.tipo === 'arriendo' ? '🔑 Arriendo' : prop.tipo === 'venta' ? '🏷️ Venta' : prop.tipo === 'combinado' ? '🔑🏷️ Arriendo y Venta' : '';
     const precioLines = prop.tipo === 'combinado'
       ? [`🔑 Arriendo: ${formatPrice(prop.precioArriendo || prop.precio)}/mes`, `💰 Venta: ${formatPrice(prop.precioVenta)}`]
@@ -2327,13 +2335,19 @@ function setupShareSheet() {
   });
 
   document.getElementById('shareFacebook').addEventListener('click', () => {
-    const url = `${window.location.origin}${window.location.pathname}?id=${state.shareTargetId}`;
+    const prop = state.properties.find(p => String(p.id) === String(state.shareTargetId));
+    const url = prop
+      ? `${window.location.origin}/inmueble/${propSlugClient(prop)}`
+      : `${window.location.origin}/?id=${state.shareTargetId}`;
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
     hideShareSheet();
   });
 
   document.getElementById('copyLink').addEventListener('click', () => {
-    const url = `${window.location.origin}${window.location.pathname}?id=${state.shareTargetId}`;
+    const prop = state.properties.find(p => String(p.id) === String(state.shareTargetId));
+    const url = prop
+      ? `${window.location.origin}/inmueble/${propSlugClient(prop)}`
+      : `${window.location.origin}/?id=${state.shareTargetId}`;
     navigator.clipboard.writeText(url).then(() => {
       showToast('¡Enlace copiado!');
       hideShareSheet();

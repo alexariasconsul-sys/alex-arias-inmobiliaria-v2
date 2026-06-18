@@ -188,6 +188,15 @@ async function getTopReviews(limit = 5) {
   } catch { return []; }
 }
 
+// ── HELPER: generar slug legible para URLs de propiedad ──────────
+function propSlug(p) {
+  const slugify = s => String(s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  return [slugify(p.tipo || 'inmueble'), slugify(p.municipio || ''), p._id].filter(Boolean).join('-');
+}
+
 // ── HELPER: servir index.html con SSR completo ─────────────────
 async function serveIndex(req, res, overrides = {}) {
   try {
@@ -1452,6 +1461,67 @@ app.get('/api/stats/reviews-history', requireAdmin, async (req, res) => {
   }
 });
 
+// ─── PÁGINA INDIVIDUAL DE PROPIEDAD ─────────────────────────
+app.get('/inmueble/:slug', async (req, res) => {
+  try {
+    const slug = req.params.slug;
+    const id   = slug.slice(-16); // los últimos 16 chars son el _id de NeDB
+    const db   = getDB();
+    const prop = await db.findOneAsync({ _id: id });
+    if (!prop) return res.redirect('/');
+
+    const baseUrl = process.env.SITE_URL || 'https://alexariasc.com';
+    const fmtP = n => n ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n) : '';
+
+    const tipoLabel = { arriendo: 'en Arriendo', venta: 'en Venta', combinado: 'en Arriendo y Venta' }[prop.tipo] || '';
+    const hab       = prop.habitaciones ? `${prop.habitaciones} hab` : '';
+    const municipio = prop.municipio || '';
+    const barrio    = prop.barrio || '';
+    const zone      = [barrio, municipio].filter(Boolean).join(', ');
+
+    const priceStr = prop.tipo === 'combinado'
+      ? [prop.precioArriendo && `Arriendo ${fmtP(prop.precioArriendo)}/mes`, prop.precioVenta && `Venta ${fmtP(prop.precioVenta)}`].filter(Boolean).join(' · ')
+      : fmtP(prop.precio || prop.precioArriendo || prop.precioVenta);
+
+    const pageTitle = `${prop.title || 'Apartamento'} ${tipoLabel}${municipio ? ` en ${municipio}` : ''}${hab ? ` · ${hab}` : ''}${priceStr ? ` · ${priceStr}` : ''} | Alex Arias`;
+    const metaDesc  = `${prop.title || 'Apartamento'} ${tipoLabel}${zone ? ` en ${zone}` : ''}${hab ? ` · ${hab}` : ''}${priceStr ? ` · ${priceStr}` : ''}. ${(prop.descripcion || '').slice(0, 110).trim() || 'Asesoría inmobiliaria gratuita con Alex Arias — Sabaneta, Envigado y Medellín.'}`;
+
+    const ogImage = Array.isArray(prop.images) && prop.images.length
+      ? `${baseUrl}/${prop.images[0].filename}`
+      : `${baseUrl}/assets/logo/Logo.png`;
+
+    const canonicalUrl = `${baseUrl}/inmueble/${propSlug(prop)}`;
+    const settings = readSettings();
+
+    const propSchema = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'RealEstateListing',
+      name: prop.title || 'Apartamento',
+      description: metaDesc,
+      url: canonicalUrl,
+      image: ogImage,
+      ...(priceStr ? { offers: { '@type': 'Offer', price: prop.precio || prop.precioArriendo || prop.precioVenta || 0, priceCurrency: 'COP' } } : {}),
+      address: { '@type': 'PostalAddress', addressLocality: municipio, addressRegion: 'Antioquia', addressCountry: 'CO' },
+      broker: { '@type': 'RealEstateAgent', name: 'Alexander Arias', telephone: '+573122588521', url: baseUrl }
+    });
+
+    const extraSchema = `<script type="application/ld+json">${propSchema}</script>\n  <script>window._autoOpenId=${JSON.stringify(id)};</script>`;
+
+    const lcpImageUrl = Array.isArray(prop.images) && prop.images.length ? `/${prop.images[0].filename}` : null;
+
+    await serveIndex(req, res, {
+      pageTitle, metaDesc,
+      ogTitle: pageTitle, ogDesc: metaDesc,
+      ogImage, ogUrl: canonicalUrl, ogType: 'article',
+      extraSchema, lcpImageUrl,
+      pixelId: (settings.facebookPixelId || '').trim()
+    });
+  } catch (err) {
+    console.error('Error serving /inmueble:', err);
+    res.redirect('/');
+  }
+});
+
 // ─── RUTAS DE PÁGINAS ────────────────────────────────────────
 app.get('/privacidad', (req, res) => res.sendFile(path.join(__dirname, 'public', 'privacidad.html')));
 app.get('/blog', (req, res) => res.sendFile(path.join(__dirname, 'public', 'blog.html')));
@@ -1587,7 +1657,7 @@ app.get('/sitemap.xml', async (req, res) => {
 
     // Propiedades — con image sitemap
     docs.forEach(doc => {
-      xml += `  <url>\n    <loc>https://alexariasc.com/?id=${doc._id}</loc>\n    <lastmod>${getDate(doc)}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n`;
+      xml += `  <url>\n    <loc>https://alexariasc.com/inmueble/${propSlug(doc)}</loc>\n    <lastmod>${getDate(doc)}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n`;
       if (Array.isArray(doc.images) && doc.images.length) {
         const titleEsc = esc(`${doc.title||'Propiedad'}${doc.municipio ? ` en ${doc.municipio}` : ''}`);
         const captEsc  = esc(`${doc.tipo === 'arriendo' ? 'En arriendo' : doc.tipo === 'venta' ? 'En venta' : 'Inmueble'} — ${doc.title||''} · Alex Arias`);
@@ -2271,8 +2341,9 @@ function writeApiKeys(keys) { fs.writeFileSync(APIKEYS_PATH, JSON.stringify(keys
 
 function genApiKey() {
   const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const bytes = crypto.randomBytes(32);
   let r = 'sk_live_';
-  for (let i = 0; i < 32; i++) r += c[Math.floor(Math.random() * c.length)];
+  for (let i = 0; i < 32; i++) r += c[bytes[i] % c.length];
   return r;
 }
 
