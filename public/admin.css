@@ -1155,6 +1155,7 @@ body {
   white-space: nowrap;
 }
 .adm-btn-outline:hover { border-color: #d1d5db; background: #f9fafb; }
+.adm-btn-outline--active { border-color: var(--brand) !important; color: var(--brand) !important; background: #fff5f6 !important; }
 
 .adm-btn-danger {
   display: inline-flex;
