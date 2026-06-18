@@ -443,7 +443,10 @@
   margin: 0 auto;
   padding: 20px 0;
 }
-.blog-footer-bottom p { font-size: 12px; color: #6b7280; margin: 0; }
+.blog-footer-bottom p { font-size: 12px; color: #6b7280; margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
+.blog-zentia-link { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; color: #9ca3af; transition: opacity .15s; }
+.blog-zentia-link:hover { opacity: .7; }
+.blog-zentia-logo { height: 14px; width: auto; opacity: .5; }
 
 /* ══════════════════════════════════════════════════════════════
    POST INDIVIDUAL

@@ -54,6 +54,8 @@ img { display: block; width: 100%; height: 100%; }
 button, a { -webkit-tap-highlight-color: transparent; }
 a { text-decoration: none; color: inherit; }
 
+body { background: #0f172a; }
+
 .app-shell {
   min-height: 100vh;
   background: var(--bg);
@@ -2921,7 +2923,30 @@ a { text-decoration: none; color: inherit; }
   max-width: 940px;
   margin-left: auto;
   margin-right: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
+.footer-zentia-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: rgba(255,255,255,.25);
+  text-decoration: none;
+  font-size: 11px;
+  transition: opacity .15s;
+}
+.footer-zentia-link:hover { opacity: .7; }
+.footer-zentia-logo {
+  height: 16px;
+  width: auto;
+  opacity: .45;
+  filter: brightness(0) invert(1);
+  transition: opacity .15s;
+}
+.footer-zentia-link:hover .footer-zentia-logo { opacity: .7; }
 @media (max-width: 767px) {
   .seo-footer { padding: 28px 20px calc(80px + env(safe-area-inset-bottom, 0px)); }
   .seo-footer-inner { grid-template-columns: 1fr 1fr; gap: 20px 16px; }
