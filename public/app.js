@@ -955,10 +955,14 @@ function renderGrid() {
   const countEl = document.getElementById('resultsCount');
   let props = state.filtered;
 
-  // Mover ocupados al final: LIBRES primero, OCUPADOS después
-  const libres = props.filter(p => p.estado !== 'ocupado');
-  const ocupados = props.filter(p => p.estado === 'ocupado');
-  props = [...libres, ...ocupados];
+  // Admins ven ocupados al final; visitantes no los ven
+  if (state.isAdmin) {
+    const libres = props.filter(p => p.estado !== 'ocupado');
+    const ocupados = props.filter(p => p.estado === 'ocupado');
+    props = [...libres, ...ocupados];
+  } else {
+    props = props.filter(p => p.estado !== 'ocupado');
+  }
 
   countEl.textContent = props.length
     ? `${props.length} inmueble${props.length !== 1 ? 's' : ''}`
