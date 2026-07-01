@@ -730,7 +730,7 @@ app.get('/post.html', async (req, res) => {
     );
     // Rellenar canonical
     html = html.replace(
-      'id="canonicalUrl" href="/blog"',
+      'id="canonicalUrl" href="https://alexariasc.com/blog"',
       `id="canonicalUrl" href="${esc(ogUrl)}"`
     );
     // Rellenar OG tags
@@ -1934,7 +1934,9 @@ app.get('/api/properties/:id', async (req, res) => {
 app.get('/sitemap.xml', async (req, res) => {
   try {
     const db   = getDB();
-    const docs = await db.findAsync({});
+    // Los ocupados redirigen a "/" para visitantes no-admin — no tiene sentido
+    // pedirle a Google que los rastree (desperdicia crawl budget en un redirect).
+    const docs = await db.findAsync({ estado: { $ne: 'ocupado' } });
     const posts = await blogDB.findAsync({ status: 'published' });
     const today = new Date().toISOString().split('T')[0];
 
