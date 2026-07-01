@@ -5145,6 +5145,61 @@ function setupIntegracionesPanel() {
   });
 }
 
+// ─── WHATSAPP FLOTANTE (3 opciones) ────────────────────────────
+async function setupWaFloatWidget() {
+  const widget = document.getElementById('waFloatWidget');
+  const btn    = document.getElementById('waFloatBtn');
+  const menu   = document.getElementById('waFloatMenu');
+  if (!widget || !btn || !menu) return;
+
+  const waNum = await getWaNum();
+
+  const options = [
+    {
+      id: 'waOptArriendo',
+      source: 'wa_flotante_arriendo',
+      label: 'Consulta general - Arriendo',
+      msg: 'Hola Alex 👋\n\nEstoy interesado en *arrendar* un apartamento.\n\nVengo de tu sitio web y me gustaría que me ayudes a encontrar la opción ideal 🏠'
+    },
+    {
+      id: 'waOptCompra',
+      source: 'wa_flotante_compra',
+      label: 'Consulta general - Compra',
+      msg: 'Hola Alex 👋\n\nEstoy interesado en *comprar* un apartamento.\n\nVengo de tu sitio web y me gustaría recibir asesoría para encontrar la opción ideal 🏡'
+    },
+    {
+      id: 'waOptAdmin',
+      source: 'wa_flotante_administracion',
+      label: 'Consulta general - Administración de inmueble',
+      msg: 'Hola Alex 👋\n\nTengo un inmueble y me interesa que lo *administres* (arriendo o venta).\n\nVengo de tu sitio web y quiero conocer más sobre tus servicios de administración de propiedades 📋'
+    }
+  ];
+
+  options.forEach(opt => {
+    const el = document.getElementById(opt.id);
+    if (!el) return;
+    el.href = `https://wa.me/${waNum}?text=${encodeURIComponent(opt.msg)}`;
+    el.addEventListener('click', () => {
+      trackLead(opt.source, opt.label, null, 0);
+      closeWaFloat();
+    });
+  });
+
+  function openWaFloat()  { widget.classList.add('is-open');    btn.setAttribute('aria-expanded', 'true'); }
+  function closeWaFloat() { widget.classList.remove('is-open'); btn.setAttribute('aria-expanded', 'false'); }
+
+  btn.addEventListener('click', () => {
+    widget.classList.contains('is-open') ? closeWaFloat() : openWaFloat();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (widget.classList.contains('is-open') && !widget.contains(e.target)) closeWaFloat();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeWaFloat();
+  });
+}
+
 // ─── CHAT IA WIDGET ───────────────────────────────────────────
 let _chatMessages = [];
 let _chatOpen = false;
@@ -5306,6 +5361,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupIntegracionesPanel();
   setupAIChat();
   setupReviewsPanel();
+  setupWaFloatWidget();
 
   // Cargar perfil del consultor para que el número de WhatsApp esté disponible
   // antes de que el usuario abra el modal de contacto

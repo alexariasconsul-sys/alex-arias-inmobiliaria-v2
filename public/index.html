@@ -72,7 +72,7 @@
     @media(max-width:767px){.app-shell{padding-bottom:calc(50px + env(safe-area-inset-bottom,0px))}}
   </style>
 
-  <link rel="stylesheet" href="/styles.min.css?v=37" />
+  <link rel="stylesheet" href="/styles.min.css?v=38" />
   <link rel="stylesheet" href="/admin.min.css?v=9" />
 
   <!-- Leaflet CSS: Lazy load (media=print, onload para cambiar a all) -->
@@ -1590,6 +1590,43 @@
     </div>
   </div>
 
+  <!-- ═══ BOTÓN FLOTANTE WHATSAPP (3 opciones) ═══════════════════ -->
+  <div class="wa-float-widget" id="waFloatWidget">
+    <div class="wa-float-menu" id="waFloatMenu">
+      <a class="wa-float-option" id="waOptArriendo" target="_blank" rel="noopener">
+        <span class="wa-float-option-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="wa-float-option-text">
+          <strong>Quiero arrendar</strong>
+          <small>Busco apartamento en arriendo</small>
+        </span>
+      </a>
+      <a class="wa-float-option" id="waOptCompra" target="_blank" rel="noopener">
+        <span class="wa-float-option-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1h-4v-7H8v7H4a1 1 0 01-1-1V9.5z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="wa-float-option-text">
+          <strong>Quiero comprar</strong>
+          <small>Busco apartamento para comprar</small>
+        </span>
+      </a>
+      <a class="wa-float-option" id="waOptAdmin" target="_blank" rel="noopener">
+        <span class="wa-float-option-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3h6a1 1 0 011 1v1h1a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h1V4a1 1 0 011-1z" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12h6M9 16h6" stroke-linecap="round"/></svg>
+        </span>
+        <span class="wa-float-option-text">
+          <strong>Administra mi inmueble</strong>
+          <small>Quiero que lo arrienden o vendan</small>
+        </span>
+      </a>
+    </div>
+    <button class="wa-float-btn" id="waFloatBtn" aria-label="Contactar por WhatsApp" aria-expanded="false">
+      <svg class="wa-icon" viewBox="0 0 24 24" fill="currentColor" width="26" height="26"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      <svg class="wa-float-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="22" height="22"><path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+
   <!-- ═══ WIDGET CHAT IA ═══════════════════════════════════════ -->
   <div class="chat-widget" id="chatWidget" style="display:none">
     <button class="chat-fab" id="chatFab" aria-label="Abrir chat">
@@ -1714,6 +1751,6 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
 
   <!-- App.js: Minificado para producción -->
-  <script src="/app.min.js?v=62"></script>
+  <script src="/app.min.js?v=63"></script>
 </body>
 </html>

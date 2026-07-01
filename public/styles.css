@@ -4737,6 +4737,65 @@ body { background: #0f172a; }
 .integ-toggle input:checked + .integ-toggle-slider::before { transform: translateX(18px); }
 .integ-toggle-label { font-size: .8rem; color: #555; }
 
+/* ═══ WHATSAPP FLOTANTE (3 opciones) ═══════════════════════════ */
+.wa-float-widget { position: fixed; bottom: 80px; left: 20px; z-index: 900; }
+
+.wa-float-btn {
+  width: 56px; height: 56px; border-radius: 50%; background: #25D366; color: #fff;
+  border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 16px rgba(37,211,102,.45); transition: transform .2s, box-shadow .2s;
+  position: relative;
+  animation: waPulseRing 2.6s ease-out 1.2s 3;
+}
+.wa-float-btn:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(37,211,102,.55); }
+.wa-float-btn:active { transform: scale(.95); }
+.wa-float-btn .wa-icon,
+.wa-float-btn .wa-float-close-icon {
+  position: absolute; transition: opacity .2s ease, transform .28s cubic-bezier(.34,1.56,.64,1);
+}
+.wa-float-btn .wa-float-close-icon { opacity: 0; transform: rotate(-90deg) scale(.4); }
+.wa-float-widget.is-open .wa-float-btn { animation: none; }
+.wa-float-widget.is-open .wa-float-btn .wa-icon { opacity: 0; transform: rotate(90deg) scale(.4); }
+.wa-float-widget.is-open .wa-float-btn .wa-float-close-icon { opacity: 1; transform: rotate(0) scale(1); }
+
+@keyframes waPulseRing {
+  0%   { box-shadow: 0 4px 16px rgba(37,211,102,.45), 0 0 0 0 rgba(37,211,102,.55); }
+  70%  { box-shadow: 0 4px 16px rgba(37,211,102,.45), 0 0 0 14px rgba(37,211,102,0); }
+  100% { box-shadow: 0 4px 16px rgba(37,211,102,.45), 0 0 0 0 rgba(37,211,102,0); }
+}
+
+.wa-float-menu {
+  position: absolute; bottom: 68px; left: 0;
+  display: flex; flex-direction: column; gap: 10px;
+  opacity: 0; pointer-events: none; transform: translateY(14px) scale(.94);
+  transform-origin: bottom left;
+  transition: opacity .2s ease, transform .24s cubic-bezier(.34,1.56,.64,1);
+}
+.wa-float-widget.is-open .wa-float-menu { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
+
+.wa-float-option {
+  display: flex; align-items: center; gap: 12px;
+  background: #fff; border-radius: 999px; padding: 8px 20px 8px 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.16); white-space: nowrap;
+  text-decoration: none; color: var(--text);
+  transition: transform .15s, box-shadow .15s;
+}
+.wa-float-option:hover { transform: translateX(4px); box-shadow: 0 6px 20px rgba(0,0,0,.22); }
+.wa-float-option-icon {
+  width: 38px; height: 38px; border-radius: 50%; background: var(--brand-light);
+  color: var(--brand); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.wa-float-option-icon svg { width: 18px; height: 18px; }
+.wa-float-option-text { display: flex; flex-direction: column; line-height: 1.25; }
+.wa-float-option-text strong { font-size: 13px; font-weight: 800; }
+.wa-float-option-text small { font-size: 11px; color: var(--muted-2); font-weight: 600; }
+
+@media (max-width: 767px) {
+  .wa-float-widget { bottom: 70px; left: 12px; }
+  .wa-float-option { padding: 7px 16px 7px 7px; }
+  .wa-float-option-icon { width: 34px; height: 34px; }
+}
+
 /* ═══ CHAT IA WIDGET ════════════════════════════════════════════ */
 .chat-widget { position: fixed; bottom: 80px; right: 20px; z-index: 900; }
 .chat-fab {
