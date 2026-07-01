@@ -1139,7 +1139,19 @@ function cardHTML(p, isFirst = false) {
               <button class="status-btn ${statusClass}" data-id="${p.id}" data-estado="${p.estado}" type="button">
                 <span class="status-dot"></span>${statusLabel}
               </button>
-              ${topBadgeHtml}
+              <div class="media-overlay-top-right">
+                ${topBadgeHtml}
+                <button class="share-btn card-share-btn" data-id="${p.id}" type="button" aria-label="Compartir">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <button class="like-btn ${isLiked ? 'is-liked' : ''}" data-id="${p.id}" type="button" aria-label="Me gusta">
+                  <svg viewBox="0 0 24 24" fill="${isLiked ? '#ef4444' : 'none'}" stroke="${isLiked ? '#ef4444' : 'currentColor'}" stroke-width="1.8">
+                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                  </svg>
+                </button>
+              </div>
             </div>
             <div class="media-overlay-bottom">
               <div class="media-location">
@@ -1156,25 +1168,18 @@ function cardHTML(p, isFirst = false) {
         </div>
 
         <div class="card-actions-bar">
-          <button class="like-btn ${isLiked ? 'is-liked' : ''}" data-id="${p.id}" type="button" aria-label="Me gusta">
-            <svg viewBox="0 0 24 24" fill="${isLiked ? '#ef4444' : 'none'}" stroke="${isLiked ? '#ef4444' : 'currentColor'}" stroke-width="1.8">
-              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
-            </svg>
-            <span class="like-count">${p.likes || 0}</span>
-          </button>
-          <div class="views-btn" aria-label="Vistas">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span class="views-count" data-id="${p.id}">${p.views || 0}</span>
+          <div class="card-stat-item" aria-label="Habitaciones">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 20v-7a3 3 0 013-3h14a3 3 0 013 3v7M2 20v-3M22 20v-3M2 14h20M6 10V7a2 2 0 012-2h2a2 2 0 012 2v3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>${p.habitaciones || 0}</span>
           </div>
-          <button class="share-btn card-share-btn" data-id="${p.id}" type="button" aria-label="Compartir">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span class="share-count" data-id="${p.id}" data-tooltip="${p.shares || 0} ${(p.shares || 0) === 1 ? 'persona' : 'personas'} lo encontraron interesante">${p.shares || 0}</span>
-          </button>
+          <div class="card-stat-item" aria-label="Baños">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18v3a4 4 0 01-4 4H7a4 4 0 01-4-4v-3z" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 12V7a2 2 0 012-2h1" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 21v1M17 21v1" stroke-linecap="round"/></svg>
+            <span>${p.banos || 0}</span>
+          </div>
+          <div class="card-stat-item" aria-label="Área">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 14v6h6M20 10V4h-6M4 20l6-6M20 4l-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>${p.area || 0} m²</span>
+          </div>
           <span class="tipo-badge tipo-badge--${isCombinado ? 'combinado' : (p.tipo === 'venta' ? 'venta' : 'arriendo')}">${isCombinado ? 'Arr · Venta' : (p.tipo === 'venta' ? 'Venta' : 'Arriendo')}</span>
           ${nuevoBadgeHtml}
           <button class="expand-toggle" type="button" aria-expanded="false" aria-label="Ver detalles">
@@ -2224,11 +2229,18 @@ function updateShareCount(id, count) {
 
 let _cachedWaNum = null; // caché del número WhatsApp del consultor
 
+// Normaliza a formato internacional wa.me (Colombia: antepone 57 si faltan los 10 dígitos)
+function normalizeWaNumber(raw) {
+  let digits = String(raw || '').replace(/\D/g, '');
+  if (digits.length === 10) digits = `57${digits}`;
+  return digits || '573122588521';
+}
+
 async function getWaNum() {
   if (_cachedWaNum) return _cachedWaNum;
   try {
     const p = await fetch('/api/profile').then(r => r.json());
-    _cachedWaNum = (p.whatsapp || '573122588521').replace(/\D/g, '');
+    _cachedWaNum = normalizeWaNumber(p.whatsapp);
     return _cachedWaNum;
   } catch {
     return '573122588521';
@@ -3001,7 +3013,7 @@ function setupFilters() {
     document.getElementById('profileEmailText').textContent = p.email || '—';
     document.getElementById('profileEmailLink').href = `mailto:${p.email || ''}`;
     // WhatsApp
-    const waNum = p.whatsapp || '';
+    const waNum = normalizeWaNumber(p.whatsapp);
     const waMsg = encodeURIComponent(p.whatsapp_msg || '');
     const waLinkEl  = document.getElementById('profileWaLink');
     const waBtnEl   = document.getElementById('profileWaBtn');
@@ -3191,9 +3203,9 @@ function mapCardHTML(prop) {
   const statCls  = prop.estado === 'ocupado' ? 'ocupado' : 'libre';
   const statLbl  = prop.estado === 'ocupado' ? 'Ocupado' : 'Libre';
 
-  const hab = prop.habitaciones ? `<span class="map-card-stat"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>${prop.habitaciones} hab</span>` : '';
-  const ban = prop.banos        ? `<span class="map-card-stat"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12h16v4a4 4 0 01-4 4H8a4 4 0 01-4-4v-4zm0 0V6a2 2 0 012-2h2a2 2 0 012 2v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>${prop.banos} baños</span>` : '';
-  const m2  = prop.area         ? `<span class="map-card-stat"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/></svg>${prop.area} m²</span>` : '';
+  const hab = prop.habitaciones ? `<span class="map-card-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 20v-7a3 3 0 013-3h14a3 3 0 013 3v7M2 20v-3M22 20v-3M2 14h20M6 10V7a2 2 0 012-2h2a2 2 0 012 2v3" stroke-linecap="round" stroke-linejoin="round"/></svg>${prop.habitaciones} hab</span>` : '';
+  const ban = prop.banos        ? `<span class="map-card-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18v3a4 4 0 01-4 4H7a4 4 0 01-4-4v-3z" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 12V7a2 2 0 012-2h1" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 21v1M17 21v1" stroke-linecap="round"/></svg>${prop.banos} baños</span>` : '';
+  const m2  = prop.area         ? `<span class="map-card-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 14v6h6M20 10V4h-6M4 20l6-6M20 4l-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>${prop.area} m²</span>` : '';
 
   const waText = encodeURIComponent(`Hola Alex, me interesa: ${prop.title} - ${price}`);
 
@@ -3241,11 +3253,6 @@ function renderMapSidebar(props) {
   if (!list) return;
 
   if (count) count.textContent = `${props.length} inmueble${props.length !== 1 ? 's' : ''} en esta zona`;
-  // Actualizar también el FAB
-  const fab = document.getElementById('mapListFab');
-  const fabCount = document.getElementById('mapListFabCount');
-  if (fabCount) fabCount.textContent = `${props.length} ${props.length !== 1 ? 'propiedades' : 'propiedad'}`;
-  if (fab && window.innerWidth <= 768) fab.style.display = 'flex';
 
   if (!props.length) {
     list.innerHTML = '<p style="padding:24px 12px;color:#aaa;font-size:13px;text-align:center;grid-column:1/-1">Sin inmuebles en esta área</p>';
@@ -3593,12 +3600,10 @@ function updateMapMarkers() {
 
   // Crear nuevo cluster group
   state.markerClusterGroup = L.markerClusterGroup({
-    maxClusterRadius: (zoom) => {
-      if (zoom >= 16) return 5;   // nivel calle: solo agrupa coordenadas idénticas (mismo edificio)
-      if (zoom >= 14) return 25;  // nivel barrio: radio pequeño
-      if (zoom >= 12) return 40;  // nivel zona: radio moderado
-      return 60;                  // ciudad: radio normal
-    },
+    // Radio fijo y chico: solo agrupa pines que están prácticamente en el
+    // mismo punto (mismo edificio/dirección), no propiedades cercanas pero
+    // distintas — el usuario prefiere ver cada pin por separado.
+    maxClusterRadius: 8,
     disableClusteringAtZoom: 19, // nunca se alcanza en práctica — spiderfy maneja mismo edificio
     spiderfyOnMaxZoom: true,     // abre en abanico cuando no puede separar más
     showCoverageOnHover: false,   // no mostrar el polígono azul al hover
@@ -3759,7 +3764,6 @@ function initBottomSheet() {
   const sidebar = document.getElementById('mapSidebar');
   const header  = document.getElementById('mapSheetHandle');
   const list    = document.getElementById('mapCardsList');
-  const fab     = document.getElementById('mapListFab');
   if (!sidebar || !header || sidebar._sheetInit) return;
   sidebar._sheetInit = true;
 
@@ -3774,15 +3778,12 @@ function initBottomSheet() {
     if (snap === 'hidden') {
       sidebar.classList.add('sheet-hidden');
       sidebar.style.height = SHEET_H.hidden + 'px';
-      if (fab) fab.style.display = 'flex';
     } else if (snap === 'peek') {
       sidebar.classList.add('sheet-peek');
       sidebar.style.height = SHEET_H.peek + 'px';
-      if (fab) fab.style.display = 'none';
     } else {
       sidebar.classList.add('sheet-expanded');
       sidebar.style.height = SHEET_H.expanded + 'px';
-      if (fab) fab.style.display = 'none';
     }
 
     // PAUSAR Leaflet cuando el sheet está expandido (no se ve el mapa)
@@ -3804,13 +3805,8 @@ function initBottomSheet() {
     // de tamaño. Llamarlo en cada snap causaba lag innecesario.
   }
 
-  // Estado inicial: hidden
-  snapTo('hidden', false);
-
-  // ── Botón FAB "Ver lista" ─────────────────────────────────
-  if (fab) {
-    fab.addEventListener('click', () => snapTo('peek'));
-  }
+  // Estado inicial: peek — deja ver que hay una lista sin tapar todo el mapa
+  snapTo('peek', false);
 
   // ── TAP en handle: toggle hidden ↔ peek ↔ expanded ───────
   let _tapMoved = false;

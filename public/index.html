@@ -72,7 +72,7 @@
     @media(max-width:767px){.app-shell{padding-bottom:calc(50px + env(safe-area-inset-bottom,0px))}}
   </style>
 
-  <link rel="stylesheet" href="/styles.min.css?v=33" />
+  <link rel="stylesheet" href="/styles.min.css?v=37" />
   <link rel="stylesheet" href="/admin.min.css?v=9" />
 
   <!-- Leaflet CSS: Lazy load (media=print, onload para cambiar a all) -->
@@ -813,11 +813,6 @@
         </div>
         <div class="map-cards-list" id="mapCardsList"></div>
       </div>
-      <!-- Botón flotante "Ver lista" — aparece cuando sheet está colapsado -->
-      <button class="map-list-fab" id="mapListFab" style="display:none">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        <span id="mapListFabCount">Ver lista</span>
-      </button>
       <!-- Mapa -->
       <div class="map-pane" id="mapPane">
         <div id="leafletMap"></div>
@@ -1719,6 +1714,6 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
 
   <!-- App.js: Minificado para producción -->
-  <script src="/app.min.js?v=56"></script>
+  <script src="/app.min.js?v=62"></script>
 </body>
 </html>

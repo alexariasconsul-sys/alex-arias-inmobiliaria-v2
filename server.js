@@ -1461,7 +1461,366 @@ app.get('/api/stats/reviews-history', requireAdmin, async (req, res) => {
   }
 });
 
-// ─── PÁGINA INDIVIDUAL DE PROPIEDAD ─────────────────────────
+// ─── PÁGINA INDIVIDUAL DE PROPIEDAD (ficha completa, estilo Airbnb) ──
+function encodeImgPath(filepath) {
+  if (!filepath) return '';
+  return filepath.split('/').map(s => encodeURIComponent(s)).join('/');
+}
+
+function timeAgoEs(dateStr) {
+  if (!dateStr) return '';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  if (isNaN(diff) || diff < 0) return '';
+  const hrs = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  const weeks = Math.floor(days / 7);
+  const months = Math.floor(days / 30);
+  if (hrs < 24) return hrs <= 1 ? 'hace unas horas' : `hace ${hrs} horas`;
+  if (days < 7) return `hace ${days} ${days === 1 ? 'día' : 'días'}`;
+  if (weeks < 5) return `hace ${weeks} ${weeks === 1 ? 'semana' : 'semanas'}`;
+  return `hace ${months} ${months === 1 ? 'mes' : 'meses'}`;
+}
+
+function buildPropertyWhatsAppMessageServer(prop, priceStr, canonicalUrl) {
+  const lines = ['Hola Alex 👋', '', 'Estoy interesado en esta propiedad:', ''];
+  lines.push(`🏠 *${prop.title || 'Apartamento'}*`);
+  const loc = [prop.barrio, prop.municipio].filter(Boolean).join(', ');
+  if (loc) lines.push(`📍 ${loc}`);
+  if (prop.direccion) lines.push(`🏢 ${prop.direccion}${prop.piso ? ` · Piso ${prop.piso}` : ''}`);
+  if (priceStr) lines.push(`💰 ${priceStr}`);
+  const specs = [];
+  if (prop.area) specs.push(`📐 ${prop.area} m²`);
+  if (prop.habitaciones) specs.push(`🛏️ ${prop.habitaciones} hab`);
+  if (prop.banos) specs.push(`🚿 ${prop.banos} baños`);
+  if (specs.length) lines.push(specs.join('  ·  '));
+  lines.push('', '¿Puedes brindarme más información? 🙏', '', `🔗 Ver propiedad: ${canonicalUrl}`);
+  return lines.join('\n');
+}
+
+const PDP_ICONS = {
+  bed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 20v-7a3 3 0 013-3h14a3 3 0 013 3v7M2 20v-3M22 20v-3M2 14h20M6 10V7a2 2 0 012-2h2a2 2 0 012 2v3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  bath: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18v3a4 4 0 01-4 4H7a4 4 0 01-4-4v-3z" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 12V7a2 2 0 012-2h1" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 21v1M17 21v1" stroke-linecap="round"/></svg>',
+  ruler: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 14v6h6M20 10V4h-6M4 20l6-6M20 4l-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor" stroke="none"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  heart: (filled) => `<svg viewBox="0 0 24 24" fill="${filled ? '#E71433' : 'none'}" stroke="${filled ? '#E71433' : 'currentColor'}" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>`,
+  share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+  whatsapp: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/></svg>',
+  chevronLeft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  chevronRight: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+};
+
+async function renderPropertyPage(req, res, prop) {
+  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const baseUrl = process.env.SITE_URL || 'https://alexariasc.com';
+  const fmtP = n => n ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n) : '';
+  const id = prop._id;
+  const db = getDB();
+
+  const tipoLabel = { arriendo: 'en Arriendo', venta: 'en Venta', combinado: 'en Arriendo y Venta' }[prop.tipo] || '';
+  const hab = prop.habitaciones ? `${prop.habitaciones} hab` : '';
+  const municipio = prop.municipio || '';
+  const barrio = prop.barrio || '';
+  const zone = [barrio, municipio].filter(Boolean).join(', ');
+  const isCombinado = prop.tipo === 'combinado';
+
+  const priceStr = isCombinado
+    ? [prop.precioArriendo && `Arriendo ${fmtP(prop.precioArriendo)}/mes`, prop.precioVenta && `Venta ${fmtP(prop.precioVenta)}`].filter(Boolean).join(' · ')
+    : fmtP(prop.precio || prop.precioArriendo || prop.precioVenta);
+
+  const pageTitle = `${prop.title || 'Apartamento'} ${tipoLabel}${municipio ? ` en ${municipio}` : ''}${hab ? ` · ${hab}` : ''}${priceStr ? ` · ${priceStr}` : ''} | Alex Arias`;
+  const metaDesc = `${prop.title || 'Apartamento'} ${tipoLabel}${zone ? ` en ${zone}` : ''}${hab ? ` · ${hab}` : ''}${priceStr ? ` · ${priceStr}` : ''}. ${(prop.descripcion || '').slice(0, 110).trim() || 'Asesoría inmobiliaria gratuita con Alex Arias — Sabaneta, Envigado y Medellín.'}`;
+
+  const imgs = (Array.isArray(prop.images) ? prop.images : []).map(im => `/${encodeImgPath(im.filename)}`);
+  const ogImage = imgs[0] ? `${baseUrl}${imgs[0]}` : `${baseUrl}/assets/logo/Logo.png`;
+  const canonicalUrl = `${baseUrl}/inmueble/${propSlug(prop)}`;
+  const settings = readSettings();
+  const profile = readProfile();
+  let waNum = (profile.whatsapp || '573122588521').replace(/\D/g, '');
+  if (waNum.length === 10) waNum = `57${waNum}`; // número colombiano sin indicativo de país
+  const waMsg = buildPropertyWhatsAppMessageServer(prop, priceStr, canonicalUrl);
+  const waLink = `https://wa.me/${waNum}?text=${encodeURIComponent(waMsg)}`;
+
+  const propSchema = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'RealEstateListing',
+    name: prop.title || 'Apartamento',
+    description: metaDesc,
+    url: canonicalUrl,
+    image: imgs.length ? imgs.map(i => `${baseUrl}${i}`) : [ogImage],
+    numberOfRooms: prop.habitaciones || undefined,
+    numberOfBathroomsTotal: prop.banos || undefined,
+    floorSize: prop.area ? { '@type': 'QuantitativeValue', value: prop.area, unitCode: 'MTK' } : undefined,
+    ...(priceStr ? { offers: { '@type': 'Offer', price: prop.precio || prop.precioArriendo || prop.precioVenta || 0, priceCurrency: 'COP', availability: prop.estado === 'ocupado' ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock' } } : {}),
+    address: { '@type': 'PostalAddress', streetAddress: prop.direccion || undefined, addressLocality: municipio, addressRegion: 'Antioquia', addressCountry: 'CO' },
+    ...(prop.lat && prop.lng ? { geo: { '@type': 'GeoCoordinates', latitude: prop.lat, longitude: prop.lng } } : {}),
+    broker: { '@type': 'RealEstateAgent', name: profile.name || 'Alexander Arias', telephone: waNum, url: baseUrl }
+  });
+
+  const breadcrumbSchema = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: baseUrl },
+      { '@type': 'ListItem', position: 2, name: municipio || 'Inmuebles', item: municipio ? `${baseUrl}/${(municipio||'').toLowerCase().replace('í','i').replace('é','e')}` : baseUrl },
+      { '@type': 'ListItem', position: 3, name: prop.title || 'Apartamento', item: canonicalUrl }
+    ]
+  });
+
+  // ── Galería ──
+  const galleryItems = imgs.slice(0, 5);
+  const galleryHTML = galleryItems.length
+    ? galleryItems.map((src, i) => `
+      <div class="pdp-gallery-item ${i === 0 ? 'pdp-gallery-item--main' : ''}" data-pdp-open-gallery="${i}">
+        <img src="${esc(src)}" alt="${esc(prop.title)}, ${esc(zone)} - foto ${i + 1}" ${i === 0 ? 'fetchpriority="high" decoding="async"' : 'loading="lazy" decoding="async"'} />
+      </div>`).join('')
+    : `<div class="pdp-gallery-item pdp-gallery-item--main"><div class="pdp-gallery-empty"><svg viewBox="0 0 64 64" fill="none" width="44" height="44"><path d="M8 28L32 8l24 20v28H8V28z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Sin fotografía</span></div></div>`;
+
+  // ── Stats ──
+  const statsHTML = [
+    prop.habitaciones ? `<div class="pdp-stat"><div class="pdp-stat-icon">${PDP_ICONS.bed}</div><div><div class="pdp-stat-value">${prop.habitaciones}</div><div class="pdp-stat-label">Habitaciones</div></div></div>` : '',
+    prop.banos ? `<div class="pdp-stat"><div class="pdp-stat-icon">${PDP_ICONS.bath}</div><div><div class="pdp-stat-value">${prop.banos}</div><div class="pdp-stat-label">Baños</div></div></div>` : '',
+    prop.area ? `<div class="pdp-stat"><div class="pdp-stat-icon">${PDP_ICONS.ruler}</div><div><div class="pdp-stat-value">${prop.area} m²</div><div class="pdp-stat-label">Área privada</div></div></div>` : ''
+  ].filter(Boolean).join('');
+
+  // ── Amenidades ──
+  const stripEmoji = s => s.replace(/\p{Extended_Pictographic}/gu, '').replace(/\s+/g, ' ').trim();
+  let amenidadesArr = [];
+  try { amenidadesArr = Array.isArray(prop.amenidades) ? prop.amenidades : JSON.parse(prop.amenidades || '[]'); } catch { amenidadesArr = []; }
+  const extraFeats = [];
+  if (prop.parqueadero && !amenidadesArr.some(a => /parqueadero/i.test(a))) extraFeats.push('Parqueadero');
+  if (prop.cuarto_util && !amenidadesArr.some(a => /cuarto\s*[uú]til/i.test(a))) extraFeats.push('Cuarto útil');
+  if (prop.estudio && !amenidadesArr.some(a => /^estudio$/i.test(a))) extraFeats.push('Estudio');
+  const allAmenidades = [...extraFeats, ...amenidadesArr].map(stripEmoji).filter(Boolean).sort((a, b) => a.localeCompare(b, 'es'));
+  const amenitiesHTML = allAmenidades.map(a => `<div class="pdp-amenity">${PDP_ICONS.check}<span>${esc(a)}</span></div>`).join('');
+
+  // ── Descripción ──
+  const descText = (prop.descripcion || '').trim();
+  const descLong = descText.length > 260;
+
+  // ── Mapa ──
+  const lat = prop.lat || 6.15, lng = prop.lng || -75.62;
+  const d = 0.006;
+  const mapSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - d}%2C${lat - d}%2C${lng + d}%2C${lat + d}&layer=mapnik&marker=${lat}%2C${lng}`;
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  const addressLine = [prop.direccion, prop.piso ? `Piso ${prop.piso}` : '', prop.sector].filter(Boolean).join(' · ') || zone;
+
+  // ── Propiedades similares ──
+  let similar = await db.findAsync({ municipio: prop.municipio, _id: { $ne: id }, estado: { $ne: 'ocupado' } });
+  if (similar.length < 4) {
+    const more = await db.findAsync({ _id: { $ne: id }, estado: { $ne: 'ocupado' }, tipo: prop.tipo });
+    const seen = new Set(similar.map(s => s._id));
+    more.forEach(m => { if (!seen.has(m._id) && m._id !== id) { similar.push(m); seen.add(m._id); } });
+  }
+  similar.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  similar = similar.slice(0, 4);
+
+  const similarHTML = similar.map(sp => {
+    const spImg = Array.isArray(sp.images) && sp.images.length ? `/${encodeImgPath(sp.images[0].filename)}` : '/assets/logo/Logo.png';
+    const spPrice = sp.tipo === 'combinado' ? fmtP(sp.precioArriendo || sp.precio) : fmtP(sp.precio || sp.precioArriendo || sp.precioVenta);
+    return `
+    <a class="pdp-similar-card" href="/inmueble/${propSlug(sp)}">
+      <img src="${esc(spImg)}" alt="${esc(sp.title)}" loading="lazy" decoding="async" />
+      <div class="pdp-similar-body">
+        <div class="pdp-similar-loc">${esc(sp.municipio || '')}</div>
+        <div class="pdp-similar-name">${esc(sp.title || 'Apartamento')}</div>
+        <div class="pdp-similar-price">${spPrice}${sp.tipo !== 'venta' ? '<span style="font-weight:600;color:var(--muted-2)">/mes</span>' : ''}</div>
+        <div class="pdp-similar-stats">${sp.habitaciones ? `${sp.habitaciones} hab` : ''}${sp.banos ? ` · ${sp.banos} baños` : ''}${sp.area ? ` · ${sp.area} m²` : ''}</div>
+      </div>
+    </a>`;
+  }).join('');
+
+  const avatarUrl = profile.avatar ? `/${profile.avatar}` : `/assets/logo/Logo.png`;
+  const pixelId = (settings.facebookPixelId || '1997851838283373').trim();
+  const numPrice = prop.precio || prop.precioArriendo || prop.precioVenta || 0;
+
+  const pixelBlock = pixelId ? `
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '${esc(pixelId)}');
+    fbq('track', 'PageView');
+    fbq('track', 'ViewContent', {
+      content_ids: [${JSON.stringify(id)}],
+      content_type: 'product',
+      content_name: ${JSON.stringify(prop.title || '')},
+      value: ${numPrice},
+      currency: 'COP'
+    });
+  </script>` : '';
+
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>${esc(pageTitle)}</title>
+  <meta name="description" content="${esc(metaDesc)}" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="${esc(canonicalUrl)}" />
+
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="Alex Arias · Consultor Inmobiliario" />
+  <meta property="og:title" content="${esc(pageTitle)}" />
+  <meta property="og:description" content="${esc(metaDesc)}" />
+  <meta property="og:image" content="${esc(ogImage)}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="900" />
+  <meta property="og:url" content="${esc(canonicalUrl)}" />
+  <meta property="og:locale" content="es_CO" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${esc(pageTitle)}" />
+  <meta name="twitter:description" content="${esc(metaDesc)}" />
+  <meta name="twitter:image" content="${esc(ogImage)}" />
+  <meta name="theme-color" content="#ffffff" />
+
+  <link rel="icon" type="image/png" href="/assets/logo/favicon.png" />
+  <link rel="preload" href="${esc(imgs[0] || '')}" as="image" fetchpriority="high" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" /></noscript>
+
+  <script type="application/ld+json">${propSchema}</script>
+  <script type="application/ld+json">${breadcrumbSchema}</script>
+
+  <link rel="stylesheet" href="/property.css?v=1" />
+</head>
+<body>
+  <header class="pdp-topbar">
+    <div class="pdp-topbar-inner">
+      <a class="pdp-brand" href="/">
+        <img src="/assets/logo/Logo.png" alt="Alex Arias" />
+        <div class="pdp-brand-text">
+          <span class="pdp-brand-name">Alex Arias</span>
+          <span class="pdp-brand-sub">Consultor Inmobiliario</span>
+        </div>
+      </a>
+      <a class="pdp-back" href="/">${PDP_ICONS.back}<span>Ver todo el catálogo</span></a>
+    </div>
+  </header>
+
+  <main class="pdp-main">
+    <div class="pdp-titlebar">
+      <h1 class="pdp-h1">${esc(prop.title || 'Apartamento')}</h1>
+      <div class="pdp-titlebar-row">
+        <span class="pdp-location">${PDP_ICONS.pin}${esc(zone)}${isCombinado ? ' · Arriendo y Venta' : (prop.tipo === 'venta' ? ' · Venta' : ' · Arriendo')}</span>
+        <div class="pdp-titlebar-actions">
+          <button class="pdp-icon-btn" data-pdp-share>${PDP_ICONS.share}<span class="pdp-btn-label">Compartir</span></button>
+          <button class="pdp-icon-btn" data-pdp-like>${PDP_ICONS.heart(false)}<span class="pdp-btn-label">Guardar</span></button>
+        </div>
+      </div>
+    </div>
+
+    <section class="pdp-gallery">
+      <span class="pdp-status-pill ${prop.estado === 'ocupado' ? 'ocupado' : 'libre'}"><span class="pdp-status-dot"></span>${prop.estado === 'ocupado' ? 'Ocupado' : 'Libre'}</span>
+      ${galleryHTML}
+      ${imgs.length ? `<button class="pdp-gallery-viewall" data-pdp-open-gallery="0">${PDP_ICONS.grid}Ver las ${imgs.length} fotos</button>` : ''}
+    </section>
+
+    <div class="pdp-body">
+      <div class="pdp-main-col">
+        ${statsHTML ? `<div class="pdp-stats">${statsHTML}</div>` : ''}
+
+        ${descText ? `<div class="pdp-section">
+          <h2 class="pdp-section-title">Descripción</h2>
+          <p class="pdp-desc ${descLong ? 'is-clamped' : ''}" id="pdpDescText">${esc(descText)}</p>
+          ${descLong ? `<button class="pdp-desc-toggle" id="pdpDescToggle">Ver más</button>` : ''}
+        </div>` : ''}
+
+        ${amenitiesHTML ? `<div class="pdp-section">
+          <h2 class="pdp-section-title">Características</h2>
+          <div class="pdp-amenities-grid">${amenitiesHTML}</div>
+        </div>` : ''}
+
+        <div class="pdp-section">
+          <h2 class="pdp-section-title">Ubicación</h2>
+          <iframe class="pdp-map-frame" src="${esc(mapSrc)}" loading="lazy" title="Ubicación del inmueble"></iframe>
+          <p class="pdp-map-address">${esc(addressLine)}</p>
+          <a class="pdp-map-link" href="${esc(directionsUrl)}" target="_blank" rel="noopener">Cómo llegar ${PDP_ICONS.chevronRight}</a>
+        </div>
+
+        <div class="pdp-agent-inline">
+          <img class="pdp-agent-avatar" src="${esc(avatarUrl)}" alt="${esc(profile.name || 'Alex Arias')}" onerror="this.onerror=null;this.src='/assets/logo/Logo.png'" />
+          <div>
+            <div class="pdp-agent-name">${esc(profile.name || 'Alexander Arias')}</div>
+            <div class="pdp-agent-role">${esc(profile.role || 'Consultor Inmobiliario')}${timeAgoEs(prop.created_at) ? ` · Publicado ${timeAgoEs(prop.created_at)}` : ''}</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="pdp-sidebar">
+        <div class="pdp-price-card">
+          <div class="pdp-price-row">
+            <span class="pdp-price">${priceStr || 'Consultar precio'}</span>
+            ${!isCombinado && prop.tipo !== 'venta' && priceStr ? '<span class="pdp-price-sub">/mes</span>' : ''}
+          </div>
+          <a class="pdp-cta-wa" href="${esc(waLink)}" target="_blank" rel="noopener">${PDP_ICONS.whatsapp}Contactar por WhatsApp</a>
+          <div class="pdp-cta-secondary-row">
+            <button class="pdp-cta-secondary" data-pdp-share>${PDP_ICONS.share}Compartir</button>
+            <button class="pdp-cta-secondary" data-pdp-like>${PDP_ICONS.heart(false)}Guardar</button>
+          </div>
+          <div class="pdp-agent-card">
+            <img class="pdp-agent-avatar" style="width:44px;height:44px" src="${esc(avatarUrl)}" alt="${esc(profile.name || 'Alex Arias')}" onerror="this.onerror=null;this.src='/assets/logo/Logo.png'" />
+            <div>
+              <div class="pdp-agent-name" style="font-size:13.5px">${esc(profile.name || 'Alexander Arias')}</div>
+              <div class="pdp-agent-role">${esc(profile.role || 'Consultor Inmobiliario')}</div>
+            </div>
+          </div>
+          <p class="pdp-trust-note">Asesoría gratuita para arrendatarios y compradores</p>
+        </div>
+      </aside>
+    </div>
+
+    ${similarHTML ? `<section class="pdp-similar">
+      <h2 class="pdp-similar-title">Propiedades similares</h2>
+      <div class="pdp-similar-row">${similarHTML}</div>
+    </section>` : ''}
+  </main>
+
+  <div class="pdp-mobile-bar">
+    <div class="pdp-mobile-price">${priceStr || 'Consultar'}${!isCombinado && prop.tipo !== 'venta' && priceStr ? '<small>por mes</small>' : ''}</div>
+    <a class="pdp-mobile-cta" href="${esc(waLink)}" target="_blank" rel="noopener">${PDP_ICONS.whatsapp}Contactar</a>
+  </div>
+
+  <footer class="pdp-footer">
+    <div class="pdp-footer-inner">
+      <span class="pdp-footer-brand">Alex Arias · Consultor Inmobiliario</span>
+      <nav class="pdp-footer-links">
+        <a href="/">Catálogo completo</a>
+        <a href="https://wa.me/${esc(waNum)}" target="_blank" rel="noopener">WhatsApp</a>
+        <a href="/blog">Blog Inmobiliario</a>
+        <a href="/privacidad">Privacidad</a>
+      </nav>
+    </div>
+    <p class="pdp-footer-copy">© ${new Date().getFullYear()} Alexander Arias · Sabaneta, Envigado y Medellín</p>
+  </footer>
+
+  <div class="pdp-lightbox" id="pdpLightbox">
+    <button class="pdp-lightbox-close" id="pdpLightboxClose">${PDP_ICONS.close}</button>
+    <button class="pdp-lightbox-prev" id="pdpLightboxPrev">${PDP_ICONS.chevronLeft}</button>
+    <img id="pdpLightboxImg" src="" alt="" />
+    <button class="pdp-lightbox-next" id="pdpLightboxNext">${PDP_ICONS.chevronRight}</button>
+    <div class="pdp-lightbox-count" id="pdpLightboxCount"></div>
+  </div>
+  ${pixelBlock}
+  <script>window.__PROP__ = ${JSON.stringify({ id, title: prop.title || '', images: imgs })};</script>
+  <script src="/property.js?v=1" defer></script>
+</body>
+</html>`;
+
+  res.send(html);
+}
+
 app.get('/inmueble/:slug', async (req, res) => {
   try {
     const slug = req.params.slug;
@@ -1470,52 +1829,10 @@ app.get('/inmueble/:slug', async (req, res) => {
     const prop = await db.findOneAsync({ _id: id });
     if (!prop) return res.redirect('/');
 
-    const baseUrl = process.env.SITE_URL || 'https://alexariasc.com';
-    const fmtP = n => n ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n) : '';
+    const isAdmin = !!(req.isAuthenticated && req.isAuthenticated());
+    if (prop.estado === 'ocupado' && !isAdmin) return res.redirect('/');
 
-    const tipoLabel = { arriendo: 'en Arriendo', venta: 'en Venta', combinado: 'en Arriendo y Venta' }[prop.tipo] || '';
-    const hab       = prop.habitaciones ? `${prop.habitaciones} hab` : '';
-    const municipio = prop.municipio || '';
-    const barrio    = prop.barrio || '';
-    const zone      = [barrio, municipio].filter(Boolean).join(', ');
-
-    const priceStr = prop.tipo === 'combinado'
-      ? [prop.precioArriendo && `Arriendo ${fmtP(prop.precioArriendo)}/mes`, prop.precioVenta && `Venta ${fmtP(prop.precioVenta)}`].filter(Boolean).join(' · ')
-      : fmtP(prop.precio || prop.precioArriendo || prop.precioVenta);
-
-    const pageTitle = `${prop.title || 'Apartamento'} ${tipoLabel}${municipio ? ` en ${municipio}` : ''}${hab ? ` · ${hab}` : ''}${priceStr ? ` · ${priceStr}` : ''} | Alex Arias`;
-    const metaDesc  = `${prop.title || 'Apartamento'} ${tipoLabel}${zone ? ` en ${zone}` : ''}${hab ? ` · ${hab}` : ''}${priceStr ? ` · ${priceStr}` : ''}. ${(prop.descripcion || '').slice(0, 110).trim() || 'Asesoría inmobiliaria gratuita con Alex Arias — Sabaneta, Envigado y Medellín.'}`;
-
-    const ogImage = Array.isArray(prop.images) && prop.images.length
-      ? `${baseUrl}/${prop.images[0].filename}`
-      : `${baseUrl}/assets/logo/Logo.png`;
-
-    const canonicalUrl = `${baseUrl}/inmueble/${propSlug(prop)}`;
-    const settings = readSettings();
-
-    const propSchema = JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'RealEstateListing',
-      name: prop.title || 'Apartamento',
-      description: metaDesc,
-      url: canonicalUrl,
-      image: ogImage,
-      ...(priceStr ? { offers: { '@type': 'Offer', price: prop.precio || prop.precioArriendo || prop.precioVenta || 0, priceCurrency: 'COP' } } : {}),
-      address: { '@type': 'PostalAddress', addressLocality: municipio, addressRegion: 'Antioquia', addressCountry: 'CO' },
-      broker: { '@type': 'RealEstateAgent', name: 'Alexander Arias', telephone: '+573122588521', url: baseUrl }
-    });
-
-    const extraSchema = `<script type="application/ld+json">${propSchema}</script>\n  <script>window._autoOpenId=${JSON.stringify(id)};</script>`;
-
-    const lcpImageUrl = Array.isArray(prop.images) && prop.images.length ? `/${prop.images[0].filename}` : null;
-
-    await serveIndex(req, res, {
-      pageTitle, metaDesc,
-      ogTitle: pageTitle, ogDesc: metaDesc,
-      ogImage, ogUrl: canonicalUrl, ogType: 'article',
-      extraSchema, lcpImageUrl,
-      pixelId: (settings.facebookPixelId || '').trim()
-    });
+    await renderPropertyPage(req, res, prop);
   } catch (err) {
     console.error('Error serving /inmueble:', err);
     res.redirect('/');
