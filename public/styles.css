@@ -4749,13 +4749,13 @@ body { background: #0f172a; }
 }
 .wa-float-btn:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(37,211,102,.55); }
 .wa-float-btn:active { transform: scale(.95); }
-.wa-float-btn .wa-icon,
+.wa-float-btn .wa-fab-icon,
 .wa-float-btn .wa-float-close-icon {
   position: absolute; transition: opacity .2s ease, transform .28s cubic-bezier(.34,1.56,.64,1);
 }
 .wa-float-btn .wa-float-close-icon { opacity: 0; transform: rotate(-90deg) scale(.4); }
 .wa-float-widget.is-open .wa-float-btn { animation: none; }
-.wa-float-widget.is-open .wa-float-btn .wa-icon { opacity: 0; transform: rotate(90deg) scale(.4); }
+.wa-float-widget.is-open .wa-float-btn .wa-fab-icon { opacity: 0; transform: rotate(90deg) scale(.4); }
 .wa-float-widget.is-open .wa-float-btn .wa-float-close-icon { opacity: 1; transform: rotate(0) scale(1); }
 
 @keyframes waPulseRing {
