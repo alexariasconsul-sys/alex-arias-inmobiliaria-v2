@@ -72,7 +72,7 @@
     @media(max-width:767px){.app-shell{padding-bottom:calc(50px + env(safe-area-inset-bottom,0px))}}
   </style>
 
-  <link rel="stylesheet" href="/styles.min.css?v=39" />
+  <link rel="stylesheet" href="/styles.min.css?v=40" />
   <link rel="stylesheet" href="/admin.min.css?v=9" />
 
   <!-- Leaflet CSS: Lazy load (media=print, onload para cambiar a all) -->
@@ -379,6 +379,10 @@
       </div>
       <div class="results-bar">
         <div class="results-count" id="resultsCount"></div>
+        <button type="button" class="hide-occupied-pill admin-only-el" id="btnHideOccupiedHome" style="display:none" title="Ocultar/mostrar inmuebles ocupados">
+          <svg viewBox="0 0 24 24" fill="none" width="13" height="13" id="iconHideOccupiedHome"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span id="lblHideOccupiedHome">Ocultar ocupados</span>
+        </button>
         <div class="viewers-pill" id="viewersPill" style="display:none">
           <span class="viewers-dot"></span>
           <span class="viewers-count" id="viewersCount">0</span>
@@ -1751,6 +1755,6 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
 
   <!-- App.js: Minificado para producción -->
-  <script src="/app.min.js?v=63"></script>
+  <script src="/app.min.js?v=64"></script>
 </body>
 </html>

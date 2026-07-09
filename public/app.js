@@ -21,6 +21,7 @@ const state = {
   filterEstado: '',      // '' | 'libre' | 'ocupado'
   orderBy: '',           // '' | 'vistas-desc' | 'vistas-asc' | 'likes-desc' | 'precio-asc' | 'precio-desc' | 'fecha-desc' | 'fecha-asc'
   isAdmin: false,
+  hideOccupiedAdmin: true, // admin: oculta ocupados en inicio/mapa hasta que los muestre a propósito
   adminPassword: '',
   likedIds: new Set(),
   shareTargetId: null,
@@ -955,8 +956,8 @@ function renderGrid() {
   const countEl = document.getElementById('resultsCount');
   let props = state.filtered;
 
-  // Admins ven ocupados al final; visitantes no los ven
-  if (state.isAdmin) {
+  // Admins pueden ver ocupados al final (toggle); visitantes nunca los ven
+  if (state.isAdmin && !state.hideOccupiedAdmin) {
     const libres = props.filter(p => p.estado !== 'ocupado');
     const ocupados = props.filter(p => p.estado === 'ocupado');
     props = [...libres, ...ocupados];
@@ -3320,12 +3321,13 @@ function deactivateAllMarkers() {
 }
 
 function getVisibleProperties() {
-  if (!state.leafletMap) return state.filtered;
+  const mapProps = getMapProps();
+  if (!state.leafletMap) return mapProps;
   const bounds = state.leafletMap.getBounds();
-  const withCoords = state.filtered.filter(p => p.lat && p.lng);
-  if (!withCoords.length) return state.filtered;
+  const withCoords = mapProps.filter(p => p.lat && p.lng);
+  if (!withCoords.length) return mapProps;
   const visible = withCoords.filter(p => bounds.contains([p.lat, p.lng]));
-  return visible.length ? visible : state.filtered.filter(p => p.lat && p.lng);
+  return visible.length ? visible : withCoords;
 }
 
 function initMap() {
@@ -3488,8 +3490,9 @@ function showMapOverlay(prop, markerEl) {
   document.querySelectorAll('.property-card.is-open').forEach(c => closeCard(c));
   closeMapOverlay();
 
-  // Encontrar el índice de esta propiedad en la lista filtrada
-  const propIdx = state.filtered.findIndex(p => p.id === prop.id);
+  // Encontrar el índice de esta propiedad en la lista filtrada (elegibles para mapa)
+  const mapProps = getMapProps();
+  const propIdx = mapProps.findIndex(p => p.id === prop.id);
   if (propIdx < 0) return; // no encontrada, algo raro
   _currentOverlayPropIdx = propIdx;
 
@@ -3498,7 +3501,7 @@ function showMapOverlay(prop, markerEl) {
   div.innerHTML = _getOverlayCardHTML(prop);
 
   // Actualizar contador
-  const totalProps = state.filtered.length;
+  const totalProps = mapProps.length;
   div.querySelector('#overlayCounter').textContent = `${propIdx + 1} de ${totalProps}`;
 
   // Posicionar sobre el marcador
@@ -3558,10 +3561,10 @@ function showMapOverlay(prop, markerEl) {
     if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
       if (diffX > 0) {
         // Swipe derecha → anterior
-        if (propIdx > 0) showMapOverlay(state.filtered[propIdx - 1], null);
+        if (propIdx > 0) showMapOverlay(mapProps[propIdx - 1], null);
       } else {
         // Swipe izquierda → siguiente
-        if (propIdx < totalProps - 1) showMapOverlay(state.filtered[propIdx + 1], null);
+        if (propIdx < totalProps - 1) showMapOverlay(mapProps[propIdx + 1], null);
       }
     }
   }, false);
@@ -3585,6 +3588,14 @@ function _showPinTooltip(markerEl, title) {
 
 function _hidePinTooltip() {
   if (_pinTooltipEl) { _pinTooltipEl.remove(); _pinTooltipEl = null; }
+}
+
+// Propiedades elegibles para el mapa: visitantes nunca ven ocupados;
+// admins solo si desactivan el toggle "Ocultar ocupados"
+function getMapProps() {
+  return (state.isAdmin && !state.hideOccupiedAdmin)
+    ? state.filtered
+    : state.filtered.filter(p => p.estado !== 'ocupado');
 }
 
 function updateMapMarkers() {
@@ -3633,7 +3644,9 @@ function updateMapMarkers() {
   state.leafletMap.off('click', closeMapOverlay);
   state.leafletMap.on('click', closeMapOverlay);
 
-  state.filtered.forEach(prop => {
+  const mapProps = getMapProps();
+
+  mapProps.forEach(prop => {
     if (!prop.lat || !prop.lng) return;
 
     const isOccupied = prop.estado === 'ocupado';
@@ -4846,6 +4859,9 @@ function refreshAdminUI() {
   // Botón "Pedir reseña" — solo visible para admin
   const shareReviewsBtn = document.getElementById('shareReviewsLink');
   if (shareReviewsBtn) shareReviewsBtn.style.display = state.isAdmin ? 'inline-flex' : 'none';
+  // Toggle "Ocultar ocupados" en inicio/mapa — solo visible para admin
+  const hideOccBtn = document.getElementById('btnHideOccupiedHome');
+  if (hideOccBtn) { hideOccBtn.style.display = state.isAdmin ? 'flex' : 'none'; updateHideOccupiedBtn(); }
   // "Salir" solo visible cuando está logueado
   if (logoutBtn) logoutBtn.style.display = state.isAdmin ? 'inline-flex' : 'none';
   // El botón siempre visible: cuando admin → "Editar perfil", cuando no → "Admin" (login)
@@ -4949,6 +4965,26 @@ function setupFloatingBar() {
   document.getElementById('btnViewMap').addEventListener('click', () => switchView('map'));
   document.getElementById('btnFavorites')?.addEventListener('click', toggleFavoritesFilter);
   document.getElementById('btnUpload').addEventListener('click', () => openUploadModal());
+  document.getElementById('btnHideOccupiedHome')?.addEventListener('click', toggleHideOccupiedHome);
+}
+
+// ─── TOGGLE OCUPADOS (inicio + mapa) — solo admin ─────────────
+function toggleHideOccupiedHome() {
+  state.hideOccupiedAdmin = !state.hideOccupiedAdmin;
+  updateHideOccupiedBtn();
+  renderGrid();
+  if (state.leafletMap) {
+    updateMapMarkers();
+    renderMapSidebar(getVisibleProperties());
+  }
+}
+
+function updateHideOccupiedBtn() {
+  const btn = document.getElementById('btnHideOccupiedHome');
+  const lbl = document.getElementById('lblHideOccupiedHome');
+  if (!btn || !lbl) return;
+  btn.classList.toggle('active', !state.hideOccupiedAdmin);
+  lbl.textContent = state.hideOccupiedAdmin ? 'Mostrar ocupados' : 'Ocultar ocupados';
 }
 
 
