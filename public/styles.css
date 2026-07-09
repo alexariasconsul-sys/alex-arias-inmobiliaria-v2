@@ -2781,13 +2781,11 @@ body { background: #0f172a; }
   display: flex;
   align-items: center;
   gap: 16px;
-  background: rgba(12, 12, 14, 0.35);
+  background: #fff;
   padding: 12px 20px;
   border-radius: 999px;
-  box-shadow: 0 4px 6px rgba(0,0,0,.10), 0 14px 40px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.12);
-  backdrop-filter: blur(24px) saturate(1.6);
-  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  box-shadow: 0 4px 6px rgba(0,0,0,.06), 0 14px 32px rgba(0,0,0,.12);
+  border: 1px solid #e5e7eb;
   transition: opacity .22s ease, transform .22s cubic-bezier(.4,0,.2,1);
 }
 
@@ -2802,7 +2800,7 @@ body { background: #0f172a; }
   position: relative;
   border: none;
   background: transparent;
-  color: rgba(255,255,255,.82);
+  color: #4b5563;
   cursor: pointer;
   padding: 8px;
   display: flex; align-items: center; justify-content: center;
@@ -2812,8 +2810,8 @@ body { background: #0f172a; }
 .float-icon svg { width: 20px; height: 20px; }
 .float-icon > span { display: none; }
 .float-icon:hover {
-  color: #fff;
-  background: rgba(255,255,255,.1);
+  color: #111827;
+  background: #f3f4f6;
 }
 .float-icon.active {
   color: var(--brand);
@@ -2832,7 +2830,7 @@ body { background: #0f172a; }
 .floating-bar-divider {
   width: 1px;
   height: 22px;
-  background: rgba(255,255,255,.16);
+  background: #e5e7eb;
   margin: 0 2px;
 }
 
@@ -3019,7 +3017,6 @@ body { background: #0f172a; }
   justify-content: center;
   pointer-events: none;
   line-height: 1;
-  border: 1.5px solid #111;
 }
 .fav-count-badge {
   position: absolute;
@@ -3038,7 +3035,6 @@ body { background: #0f172a; }
   justify-content: center;
   pointer-events: none;
   line-height: 1;
-  border: 1.5px solid #111;
   animation: favBadgeIn .25s cubic-bezier(.34,1.56,.64,1) both;
 }
 @keyframes favBadgeIn {
