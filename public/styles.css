@@ -1444,12 +1444,9 @@ body { background: #0f172a; }
 /* img-loaded se mantiene para compatibilidad con JS existente (no rompe nada) */
 .property-slide img.img-loaded { opacity: 1; }
 
-/* Slider dots */
+/* Slider dots — ocultos: se mezclaban visualmente con el título de la tarjeta */
 .slider-dots {
-  position: absolute;
-  left: 50%; bottom: 12px;
-  transform: translateX(-50%);
-  display: flex; gap: 5px; z-index: 3;
+  display: none;
 }
 .slider-dot {
   width: 6px; height: 6px;
