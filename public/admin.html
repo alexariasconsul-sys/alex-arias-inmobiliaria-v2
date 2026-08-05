@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="/admin.css" />
+  <link rel="stylesheet" href="/admin.css?v=3" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -1215,107 +1215,117 @@
   <div class="adm-panel-body">
     <input type="hidden" id="blogEditSlug" />
 
-    <!-- Título y excerpt -->
-    <div class="adm-form-section">
-      <div class="adm-form-group"><label>Título *</label><input type="text" id="bfTitle" class="adm-input adm-input--lg" placeholder="Título del artículo…" /></div>
-      <div class="adm-form-group"><label>Resumen</label><textarea id="bfExcerpt" class="adm-textarea" rows="2" placeholder="Resumen breve para listados y Google…"></textarea></div>
-    </div>
+    <div class="adm-blog-form-cols">
+      <!-- Columna principal -->
+      <div class="adm-blog-form-main">
 
-    <!-- Contenido -->
-    <div class="adm-form-section">
-      <p class="adm-form-section-title">Contenido</p>
-      <div class="adm-editor-toolbar" id="bfToolbar">
-        <button type="button" data-cmd="bold"><b>B</b></button>
-        <button type="button" data-cmd="italic"><i>I</i></button>
-        <button type="button" data-cmd="underline"><u>U</u></button>
-        <span class="adm-etb-sep"></span>
-        <button type="button" data-cmd="h2">H2</button>
-        <button type="button" data-cmd="h3">H3</button>
-        <button type="button" data-cmd="quote">❝</button>
-        <span class="adm-etb-sep"></span>
-        <button type="button" data-cmd="ul">• Lista</button>
-        <button type="button" data-cmd="ol">1. Lista</button>
-        <span class="adm-etb-sep"></span>
-        <button type="button" data-cmd="link">🔗 Enlace</button>
-        <button type="button" data-cmd="img">🖼 Imagen</button>
-        <button type="button" data-cmd="hr">— Línea</button>
-      </div>
-      <div id="bfContent" class="adm-editor-content" contenteditable="true" data-placeholder="Escribe el contenido aquí…"></div>
-    </div>
-
-    <!-- Imagen portada -->
-    <div class="adm-form-section">
-      <p class="adm-form-section-title">Imagen de portada</p>
-      <div class="adm-cover-upload" id="bfCoverArea">
-        <input type="file" id="bfCover" accept="image/jpeg,image/png,image/webp" style="display:none" />
-        <div id="bfCoverPreview" style="display:none;position:relative">
-          <img id="bfCoverImg" src="" alt="" style="width:100%;height:160px;object-fit:cover;border-radius:8px;display:block;" />
-          <button type="button" class="adm-cover-remove" id="bfCoverRemove">✕</button>
+        <!-- Título y excerpt -->
+        <div class="adm-form-section">
+          <div class="adm-form-group"><label>Título *</label><input type="text" id="bfTitle" class="adm-input adm-input--lg" placeholder="Título del artículo…" /></div>
+          <div class="adm-form-group"><label>Resumen</label><textarea id="bfExcerpt" class="adm-textarea" rows="2" placeholder="Resumen breve para listados y Google…"></textarea></div>
         </div>
-        <div id="bfCoverEmpty" class="adm-cover-empty">
-          <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="1.5"/><polyline points="21 15 16 10 5 21" stroke="currentColor" stroke-width="1.5"/></svg>
-          <span>Click para seleccionar imagen</span>
+
+        <!-- Contenido -->
+        <div class="adm-form-section">
+          <p class="adm-form-section-title">Contenido</p>
+          <div class="adm-editor-toolbar" id="bfToolbar">
+            <button type="button" data-cmd="bold"><b>B</b></button>
+            <button type="button" data-cmd="italic"><i>I</i></button>
+            <button type="button" data-cmd="underline"><u>U</u></button>
+            <span class="adm-etb-sep"></span>
+            <button type="button" data-cmd="h2">H2</button>
+            <button type="button" data-cmd="h3">H3</button>
+            <button type="button" data-cmd="quote">❝</button>
+            <span class="adm-etb-sep"></span>
+            <button type="button" data-cmd="ul">• Lista</button>
+            <button type="button" data-cmd="ol">1. Lista</button>
+            <span class="adm-etb-sep"></span>
+            <button type="button" data-cmd="link">🔗 Enlace</button>
+            <button type="button" data-cmd="img">🖼 Imagen</button>
+            <button type="button" data-cmd="hr">— Línea</button>
+          </div>
+          <div id="bfContent" class="adm-editor-content" contenteditable="true" data-placeholder="Escribe el contenido aquí…"></div>
         </div>
       </div>
-      <input type="hidden" id="bfCoverExisting" />
-    </div>
 
-    <!-- Meta -->
-    <div class="adm-form-section">
-      <p class="adm-form-section-title">Clasificación y estado</p>
-      <div class="adm-form-row">
-        <div class="adm-form-group"><label>Categoría</label><input type="text" id="bfCategory" class="adm-input" placeholder="Consejos, Mercado…" list="bfCatList"/><datalist id="bfCatList"><option value="Consejos"/><option value="Mercado"/><option value="Noticias"/><option value="Guías"/><option value="Inversión"/><option value="Legal"/></datalist></div>
-        <div class="adm-form-group"><label>Etiquetas</label><input type="text" id="bfTags" class="adm-input" placeholder="tag1, tag2" /></div>
-      </div>
-      <div class="adm-form-group"><label>Estado de publicación</label>
-        <div class="adm-status-btns">
-          <button type="button" class="adm-status-btn active" data-val="draft">Borrador</button>
-          <button type="button" class="adm-status-btn" data-val="published">Publicado</button>
+      <!-- Columna lateral -->
+      <div class="adm-blog-form-side">
+
+        <!-- Imagen portada -->
+        <div class="adm-form-section">
+          <p class="adm-form-section-title">Imagen de portada</p>
+          <div class="adm-cover-upload" id="bfCoverArea">
+            <input type="file" id="bfCover" accept="image/jpeg,image/png,image/webp" style="display:none" />
+            <div id="bfCoverPreview" style="display:none;position:relative">
+              <img id="bfCoverImg" src="" alt="" style="width:100%;height:160px;object-fit:cover;border-radius:8px;display:block;" />
+              <button type="button" class="adm-cover-remove" id="bfCoverRemove">✕</button>
+            </div>
+            <div id="bfCoverEmpty" class="adm-cover-empty">
+              <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="1.5"/><polyline points="21 15 16 10 5 21" stroke="currentColor" stroke-width="1.5"/></svg>
+              <span>Click para seleccionar imagen</span>
+            </div>
+          </div>
+          <input type="hidden" id="bfCoverExisting" />
         </div>
-        <input type="hidden" id="bfStatus" value="draft" />
-      </div>
-    </div>
 
-    <!-- SEO -->
-    <div class="adm-form-section">
-      <p class="adm-form-section-title">SEO <span class="adm-badge-seo">Google · IA</span></p>
-      <div class="adm-form-group">
-        <label>Palabra clave objetivo</label>
-        <input type="text" id="bfFocusKeyword" class="adm-input" placeholder="Ej: arriendo apartamento sabaneta" />
-        <span class="adm-field-hint">La frase por la que quieres posicionar este artículo en Google.</span>
-      </div>
-      <div class="adm-form-group">
-        <label>Meta título <span id="bfMetaTitleCount" style="font-weight:400;color:#9ca3af">0/60</span></label>
-        <input type="text" id="bfMetaTitle" class="adm-input" placeholder="Título para Google (máx 60)" maxlength="60" />
-      </div>
-      <div class="adm-form-group">
-        <label>Meta descripción <span id="bfMetaDescCount" style="font-weight:400;color:#9ca3af">0/155</span></label>
-        <textarea id="bfMetaDesc" class="adm-textarea" rows="2" placeholder="Descripción para Google (máx 155)" maxlength="155"></textarea>
-      </div>
-      <div class="adm-form-group"><label>Palabras clave</label><input type="text" id="bfMetaKeys" class="adm-input" placeholder="inmuebles medellín, arriendo sabaneta" /></div>
-      <!-- Preview Google -->
-      <div class="adm-seo-preview">
-        <p class="adm-seo-label">Vista previa en Google</p>
-        <div class="adm-seo-box">
-          <div class="adm-seo-url">alexarias.com › blog › <span id="bfPrevSlug">slug</span></div>
-          <div class="adm-seo-title" id="bfPrevTitle">Título del artículo</div>
-          <div class="adm-seo-desc" id="bfPrevDesc">Descripción del artículo…</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Semáforo SEO -->
-    <div class="adm-form-section">
-      <p class="adm-form-section-title">Semáforo SEO</p>
-      <div class="adm-seo-semaphore" id="bfSeoSemaphore">
-        <div class="adm-seo-semaphore-head">
-          <div class="adm-seo-semaphore-dot" id="bfSeoDot"></div>
-          <div class="adm-seo-semaphore-text">
-            <div class="adm-seo-semaphore-score" id="bfSeoScoreLabel">0/100</div>
-            <div class="adm-seo-semaphore-status" id="bfSeoStatusLabel">Completa el artículo para analizar</div>
+        <!-- Meta -->
+        <div class="adm-form-section">
+          <p class="adm-form-section-title">Clasificación y estado</p>
+          <div class="adm-form-row">
+            <div class="adm-form-group"><label>Categoría</label><input type="text" id="bfCategory" class="adm-input" placeholder="Consejos, Mercado…" list="bfCatList"/><datalist id="bfCatList"><option value="Consejos"/><option value="Mercado"/><option value="Noticias"/><option value="Guías"/><option value="Inversión"/><option value="Legal"/></datalist></div>
+            <div class="adm-form-group"><label>Etiquetas</label><input type="text" id="bfTags" class="adm-input" placeholder="tag1, tag2" /></div>
+          </div>
+          <div class="adm-form-group"><label>Estado de publicación</label>
+            <div class="adm-status-btns">
+              <button type="button" class="adm-status-btn active" data-val="draft">Borrador</button>
+              <button type="button" class="adm-status-btn" data-val="published">Publicado</button>
+            </div>
+            <input type="hidden" id="bfStatus" value="draft" />
           </div>
         </div>
-        <ul class="adm-seo-checklist" id="bfSeoChecklist"></ul>
+
+        <!-- SEO -->
+        <div class="adm-form-section">
+          <p class="adm-form-section-title">SEO <span class="adm-badge-seo">Google · IA</span></p>
+          <div class="adm-form-group">
+            <label>Palabra clave objetivo</label>
+            <input type="text" id="bfFocusKeyword" class="adm-input" placeholder="Ej: arriendo apartamento sabaneta" />
+            <span class="adm-field-hint">La frase por la que quieres posicionar este artículo en Google.</span>
+          </div>
+          <div class="adm-form-group">
+            <label>Meta título <span id="bfMetaTitleCount" style="font-weight:400;color:#9ca3af">0/60</span></label>
+            <input type="text" id="bfMetaTitle" class="adm-input" placeholder="Título para Google (máx 60)" maxlength="60" />
+          </div>
+          <div class="adm-form-group">
+            <label>Meta descripción <span id="bfMetaDescCount" style="font-weight:400;color:#9ca3af">0/155</span></label>
+            <textarea id="bfMetaDesc" class="adm-textarea" rows="2" placeholder="Descripción para Google (máx 155)" maxlength="155"></textarea>
+          </div>
+          <div class="adm-form-group"><label>Palabras clave</label><input type="text" id="bfMetaKeys" class="adm-input" placeholder="inmuebles medellín, arriendo sabaneta" /></div>
+          <!-- Preview Google -->
+          <div class="adm-seo-preview">
+            <p class="adm-seo-label">Vista previa en Google</p>
+            <div class="adm-seo-box">
+              <div class="adm-seo-url">alexarias.com › blog › <span id="bfPrevSlug">slug</span></div>
+              <div class="adm-seo-title" id="bfPrevTitle">Título del artículo</div>
+              <div class="adm-seo-desc" id="bfPrevDesc">Descripción del artículo…</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Semáforo SEO -->
+        <div class="adm-form-section">
+          <p class="adm-form-section-title">Semáforo SEO</p>
+          <div class="adm-seo-semaphore" id="bfSeoSemaphore">
+            <div class="adm-seo-semaphore-head">
+              <div class="adm-seo-semaphore-dot" id="bfSeoDot"></div>
+              <div class="adm-seo-semaphore-text">
+                <div class="adm-seo-semaphore-score" id="bfSeoScoreLabel">0/100</div>
+                <div class="adm-seo-semaphore-status" id="bfSeoStatusLabel">Completa el artículo para analizar</div>
+              </div>
+            </div>
+            <ul class="adm-seo-checklist" id="bfSeoChecklist"></ul>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -2086,8 +2096,8 @@ function renderBlogTable(posts) {
     <td>${p.category||'—'}</td>
     <td><span class="adm-badge adm-badge--${p.status}">${p.status==='published'?'Publicado':'Borrador'}</span></td>
     <td>
-      <span class="adm-tbl-seo" title="${seoResult.checks.filter(c => c.status !== 'good').map(c => c.label).join(' · ') || 'Todo en orden'}">
-        <span class="adm-tbl-seo-dot adm-tbl-seo-dot--${seoResult.status}"></span>${seoResult.score}
+      <span class="adm-tbl-seo adm-tbl-seo--${seoResult.status}" title="${seoResult.checks.filter(c => c.status !== 'good').map(c => c.label).join(' · ') || 'Todo en orden'}">
+        <span class="adm-tbl-seo-dot"></span>${seoResult.score}%
       </span>
     </td>
     <td>${fmtDate(p.published_at||p.created_at)}</td>

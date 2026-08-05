@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css" />
-  <link rel="stylesheet" href="/blog.css" />
+  <link rel="stylesheet" href="/styles.css?v=2" />
+  <link rel="stylesheet" href="/blog.css?v=2" />
 </head>
 <body class="blog-body admin-blog-body">
 
@@ -533,8 +533,8 @@
           <td class="col-hide-mobile"><span class="at-cat">${p.category || '—'}</span></td>
           <td><span class="at-status at-status--${p.status}">${p.status === 'published' ? 'Publicado' : 'Borrador'}</span></td>
           <td>
-            <span class="at-seo" title="${seoResult.checks.filter(c => c.status !== 'good').map(c => c.label).join(' · ') || 'Todo en orden'}">
-              <span class="at-seo-dot at-seo-dot--${seoResult.status}"></span>${seoResult.score}
+            <span class="at-seo at-seo--${seoResult.status}" title="${seoResult.checks.filter(c => c.status !== 'good').map(c => c.label).join(' · ') || 'Todo en orden'}">
+              <span class="at-seo-dot"></span>${seoResult.score}%
             </span>
           </td>
           <td class="at-date col-hide-mobile">${dateStr}</td>
