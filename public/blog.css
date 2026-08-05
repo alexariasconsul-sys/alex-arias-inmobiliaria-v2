@@ -1292,6 +1292,45 @@
 .confirm-card h3 { font-size: 18px; font-weight: 700; margin: 0 0 8px; }
 .confirm-card p  { font-size: 14px; color: #6b7280; margin: 0 0 20px; }
 .confirm-actions { display: flex; gap: 10px; justify-content: center; }
+
+/* ─── PEGAR HTML ─────────────────────────────────────────── */
+.html-paste-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 400;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.html-paste-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 560px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+.html-paste-card h3 { font-size: 16px; font-weight: 700; margin: 0 0 6px; }
+.html-paste-card p  { font-size: 13px; color: #6b7280; margin: 0 0 14px; line-height: 1.4; }
+.html-paste-card textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 12px 14px;
+  border: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,.1), 0 0 0 1px rgba(0,0,0,.06);
+  border-radius: 10px;
+  font-family: 'SF Mono', Consolas, 'Courier New', monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #111;
+  resize: vertical;
+  outline: none;
+  transition: box-shadow .15s;
+}
+.html-paste-card textarea:focus { box-shadow: 0 1px 3px rgba(0,0,0,.1), 0 0 0 1.5px var(--brand); }
+.html-paste-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
 .btn-danger {
   padding: 10px 20px;
   border-radius: 10px;

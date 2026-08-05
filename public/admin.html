@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="/admin.css?v=3" />
+  <link rel="stylesheet" href="/admin.css?v=4" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -1243,6 +1243,8 @@
             <button type="button" data-cmd="link">🔗 Enlace</button>
             <button type="button" data-cmd="img">🖼 Imagen</button>
             <button type="button" data-cmd="hr">— Línea</button>
+            <span class="adm-etb-sep"></span>
+            <button type="button" data-cmd="html">&lt;/&gt; HTML</button>
           </div>
           <div id="bfContent" class="adm-editor-content" contenteditable="true" data-placeholder="Escribe el contenido aquí…"></div>
         </div>
@@ -1349,6 +1351,19 @@
     <div class="adm-confirm-actions">
       <button class="adm-btn-outline" id="confirmCancel">Cancelar</button>
       <button class="adm-btn-danger" id="confirmOk">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PEGAR HTML ══════════════════════════════════════════════ -->
+<div class="html-paste-overlay" id="htmlPasteOverlay" style="display:none">
+  <div class="html-paste-card">
+    <h3>Pegar código HTML</h3>
+    <p>Pega o escribe HTML — se inserta tal cual en el contenido, en el punto donde estaba el cursor.</p>
+    <textarea id="htmlPasteInput" placeholder="&lt;h2&gt;Un subtítulo&lt;/h2&gt;&#10;&lt;p&gt;Un párrafo con &lt;strong&gt;texto en negrita&lt;/strong&gt;…&lt;/p&gt;"></textarea>
+    <div class="html-paste-actions">
+      <button class="adm-btn-outline" id="htmlPasteCancel">Cancelar</button>
+      <button class="adm-btn-primary" id="htmlPasteInsert">Insertar</button>
     </div>
   </div>
 </div>
@@ -2204,12 +2219,45 @@ document.getElementById('bfToolbar').addEventListener('mousedown', e => {
     ol: () => document.execCommand('insertOrderedList'),
     hr: () => document.execCommand('insertHorizontalRule'),
     link: () => { const u = prompt('URL:','https://'); if (u) document.execCommand('createLink', false, u); },
-    img: () => { const u = prompt('URL imagen:','https://'); if (u) document.execCommand('insertImage', false, u); }
+    img: () => { const u = prompt('URL imagen:','https://'); if (u) document.execCommand('insertImage', false, u); },
+    html: () => openHtmlPasteModal('bfContent')
   };
   cmds[btn.dataset.cmd]?.();
   renderBfSeoWidget();
 });
 document.getElementById('bfContent').addEventListener('input', renderBfSeoWidget);
+
+// ─── PEGAR HTML ─────────────────────────────────────────
+let htmlPasteRange = null;
+let htmlPasteTargetId = 'bfContent';
+function openHtmlPasteModal(targetId) {
+  htmlPasteTargetId = targetId;
+  const target = document.getElementById(targetId);
+  const sel = window.getSelection();
+  htmlPasteRange = (sel.rangeCount > 0 && target.contains(sel.anchorNode)) ? sel.getRangeAt(0).cloneRange() : null;
+  document.getElementById('htmlPasteInput').value = '';
+  document.getElementById('htmlPasteOverlay').style.display = 'flex';
+  document.getElementById('htmlPasteInput').focus();
+}
+function closeHtmlPasteModal() {
+  document.getElementById('htmlPasteOverlay').style.display = 'none';
+}
+document.getElementById('htmlPasteCancel').addEventListener('click', closeHtmlPasteModal);
+document.getElementById('htmlPasteOverlay').addEventListener('click', e => {
+  if (e.target.id === 'htmlPasteOverlay') closeHtmlPasteModal();
+});
+document.getElementById('htmlPasteInsert').addEventListener('click', () => {
+  const html = document.getElementById('htmlPasteInput').value.trim();
+  closeHtmlPasteModal();
+  if (!html) return;
+  const target = document.getElementById(htmlPasteTargetId);
+  target.focus();
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  if (htmlPasteRange) sel.addRange(htmlPasteRange);
+  document.execCommand('insertHTML', false, html);
+  if (htmlPasteTargetId === 'bfContent') renderBfSeoWidget();
+});
 
 // SEO preview
 function slugify(s) { return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-'); }

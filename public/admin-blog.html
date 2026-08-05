@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css?v=2" />
-  <link rel="stylesheet" href="/blog.css?v=2" />
+  <link rel="stylesheet" href="/blog.css?v=3" />
 </head>
 <body class="blog-body admin-blog-body">
 
@@ -142,6 +142,8 @@
                   <button type="button" data-cmd="img" title="Imagen por URL">🖼</button>
                   <span class="etb-sep"></span>
                   <button type="button" data-cmd="hr" title="Línea separadora">—</button>
+                  <span class="etb-sep"></span>
+                  <button type="button" data-cmd="html" title="Pegar código HTML">&lt;/&gt;</button>
                 </div>
                 <div id="eContent" class="editor-content" contenteditable="true" spellcheck="true" data-placeholder="Escribe el contenido del artículo aquí. Puedes usar los botones de formato de arriba o escribir directamente…"></div>
               </div>
@@ -282,6 +284,19 @@
       <div class="confirm-actions">
         <button class="btn-secondary" id="confirmCancel">Cancelar</button>
         <button class="btn-danger" id="confirmDelete">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PEGAR HTML ══════════════════════════════════════════ -->
+  <div class="html-paste-overlay" id="htmlPasteOverlay" style="display:none">
+    <div class="html-paste-card">
+      <h3>Pegar código HTML</h3>
+      <p>Pega o escribe HTML — se inserta tal cual en el contenido, en el punto donde estaba el cursor.</p>
+      <textarea id="htmlPasteInput" placeholder="&lt;h2&gt;Un subtítulo&lt;/h2&gt;&#10;&lt;p&gt;Un párrafo con &lt;strong&gt;texto en negrita&lt;/strong&gt;…&lt;/p&gt;"></textarea>
+      <div class="html-paste-actions">
+        <button class="btn-secondary" id="htmlPasteCancel">Cancelar</button>
+        <button class="btn-primary" id="htmlPasteInsert">Insertar</button>
       </div>
     </div>
   </div>
@@ -686,12 +701,45 @@
       img: () => {
         const url = prompt('URL de la imagen:', 'https://');
         if (url) document.execCommand('insertImage', false, url);
-      }
+      },
+      html: () => openHtmlPasteModal('eContent')
     };
     cmds[cmd]?.();
     renderSeoWidget();
   });
   document.getElementById('eContent').addEventListener('input', renderSeoWidget);
+
+  // ─── PEGAR HTML ─────────────────────────────────────────
+  let htmlPasteRange = null;
+  let htmlPasteTargetId = 'eContent';
+  function openHtmlPasteModal(targetId) {
+    htmlPasteTargetId = targetId;
+    const target = document.getElementById(targetId);
+    const sel = window.getSelection();
+    htmlPasteRange = (sel.rangeCount > 0 && target.contains(sel.anchorNode)) ? sel.getRangeAt(0).cloneRange() : null;
+    document.getElementById('htmlPasteInput').value = '';
+    document.getElementById('htmlPasteOverlay').style.display = 'flex';
+    document.getElementById('htmlPasteInput').focus();
+  }
+  function closeHtmlPasteModal() {
+    document.getElementById('htmlPasteOverlay').style.display = 'none';
+  }
+  document.getElementById('htmlPasteCancel').addEventListener('click', closeHtmlPasteModal);
+  document.getElementById('htmlPasteOverlay').addEventListener('click', e => {
+    if (e.target.id === 'htmlPasteOverlay') closeHtmlPasteModal();
+  });
+  document.getElementById('htmlPasteInsert').addEventListener('click', () => {
+    const html = document.getElementById('htmlPasteInput').value.trim();
+    closeHtmlPasteModal();
+    if (!html) return;
+    const target = document.getElementById(htmlPasteTargetId);
+    target.focus();
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    if (htmlPasteRange) sel.addRange(htmlPasteRange);
+    document.execCommand('insertHTML', false, html);
+    if (htmlPasteTargetId === 'eContent') renderSeoWidget();
+  });
 
   // ─── SEO PREVIEW ───────────────────────────────────────
   function slugify(s) {
