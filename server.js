@@ -660,8 +660,17 @@ app.get('/', async (req, res) => {
     html = html.replace(/id="metaDesc" name="description" content="([^"]*)"/,    `id="metaDesc" name="description" content="${esc(metaDesc)}"`);
     html = html.replace('id="canonicalUrl" rel="canonical" href="https://alexariasc.com/"', `id="canonicalUrl" rel="canonical" href="${esc(ogUrl)}"`);
 
-    // LCP: precargar imagen de la primera propiedad antes de que corra el JS
-    const rootFirstProp = [...activeProps].sort((a,b) => (new Date(b.created_at)||0)-(new Date(a.created_at)||0))[0];
+    // LCP: precargar imagen de la primera propiedad antes de que corra el JS.
+    // Debe replicar el mismo criterio de orden que usa el cliente en app.js
+    // (trending "Muy interesante" primero, luego la más reciente) — si no
+    // coinciden, el navegador precarga una imagen que no es la que realmente
+    // se pinta primero, y el LCP real no se beneficia del preload.
+    const engagementScore = p => (p.likes||0)*2 + (p.views||0)*0.5 + (p.shares||0)*3;
+    const trendingFirst = activeProps
+      .map(p => ({ p, score: engagementScore(p) }))
+      .filter(x => x.score >= 60)
+      .sort((a,b) => b.score - a.score)[0]?.p;
+    const rootFirstProp = trendingFirst || [...activeProps].sort((a,b) => (new Date(b.created_at)||0)-(new Date(a.created_at)||0))[0];
     const rootLcpImg    = rootFirstProp?.images?.length ? `/${rootFirstProp.images[0].filename}` : null;
     const rootLcpTag    = rootLcpImg ? `\n  <link rel="preload" as="image" href="${rootLcpImg}" fetchpriority="high" />` : '';
     html = html.replace('</head>', rootLcpTag + injected + '\n</head>');

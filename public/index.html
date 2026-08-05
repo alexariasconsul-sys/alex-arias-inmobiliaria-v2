@@ -73,7 +73,9 @@
   </style>
 
   <link rel="stylesheet" href="/styles.min.css?v=48" />
-  <link rel="stylesheet" href="/admin.min.css?v=9" />
+  <!-- admin.min.css: solo lo necesita el admin logueado, no bloquear el render de todos los visitantes -->
+  <link rel="stylesheet" href="/admin.min.css?v=9" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="/admin.min.css?v=9" /></noscript>
 
   <!-- Leaflet CSS: Lazy load (media=print, onload para cambiar a all) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" media="print" onload="this.media='all'" />
