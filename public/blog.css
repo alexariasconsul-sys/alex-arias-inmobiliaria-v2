@@ -980,6 +980,20 @@
 .at-status--published { background: #dcfce7; color: #16a34a; }
 .at-status--draft     { background: #f3f4f6; color: #6b7280; }
 .at-date, .at-views { font-size: 13px; color: #6b7280; }
+
+.at-seo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #374151;
+  cursor: default;
+}
+.at-seo-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.at-seo-dot--green  { background: var(--green); box-shadow: 0 0 0 3px var(--green-bg); }
+.at-seo-dot--yellow { background: #d97706; box-shadow: 0 0 0 3px #fef3c7; }
+.at-seo-dot--red    { background: var(--red); box-shadow: 0 0 0 3px var(--red-bg); }
 .at-actions { display: flex; align-items: center; gap: 6px; }
 .at-btn {
   display: inline-flex;
@@ -1195,6 +1209,41 @@
 .seo-preview-title { font-size: 14px; color: #1a0dab; font-weight: 600; line-height: 1.3; margin-bottom: 3px; }
 .seo-preview-desc  { font-size: 12px; color: #545454; line-height: 1.4; }
 
+/* ─── SEMÁFORO SEO ───────────────────────────────────────── */
+.seo-semaphore {
+  background: #fff;
+  border: 1.5px solid #e9ecef;
+  border-radius: 10px;
+  padding: 14px;
+}
+.seo-semaphore-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.seo-semaphore-dot {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background .2s;
+}
+.seo-semaphore-dot--red    { background: var(--red);    box-shadow: 0 0 0 5px var(--red-bg); }
+.seo-semaphore-dot--yellow { background: #d97706;       box-shadow: 0 0 0 5px #fef3c7; }
+.seo-semaphore-dot--green  { background: var(--green);  box-shadow: 0 0 0 5px var(--green-bg); }
+.seo-semaphore-score  { font-size: 16px; font-weight: 800; color: #111; line-height: 1.2; }
+.seo-semaphore-status { font-size: 12px; color: #6b7280; line-height: 1.3; margin-top: 2px; }
+
+.seo-checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.seo-check { display: flex; align-items: flex-start; gap: 9px; }
+.seo-check-icon {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.seo-check--good .seo-check-icon { background: var(--green); }
+.seo-check--ok   .seo-check-icon { background: #d97706; }
+.seo-check--bad  .seo-check-icon { background: var(--red); }
+.seo-check-text { display: flex; flex-direction: column; font-size: 12px; line-height: 1.4; }
+.seo-check-text strong { font-size: 12.5px; font-weight: 600; color: #111; }
+.seo-check-text span { color: #6b7280; }
+
 /* ─── EDITOR FOOTER ──────────────────────────────────────── */
 .admin-editor-footer {
   display: flex;
@@ -1273,12 +1322,7 @@
   .post-cta-actions { width: 100%; }
   .post-cta-wa, .post-cta-ver { flex: 1; justify-content: center; text-align: center; }
   .admin-table { font-size: 12px; }
-  .admin-table th:nth-child(3),
-  .admin-table th:nth-child(4),
-  .admin-table th:nth-child(5),
-  .admin-table td:nth-child(3),
-  .admin-table td:nth-child(4),
-  .admin-table td:nth-child(5) { display: none; }
+  .admin-table .col-hide-mobile { display: none; }
 }
 
 /* ─── BARRA INFERIOR (mobile) — igual al inicio ──────────── */

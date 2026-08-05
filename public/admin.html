@@ -470,7 +470,7 @@
       <div class="adm-card adm-card--full">
         <div class="adm-table-wrap">
           <table class="adm-table">
-            <thead><tr><th>Artículo</th><th>Categoría</th><th>Estado</th><th>Fecha</th><th>Vistas</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>Artículo</th><th>Categoría</th><th>Estado</th><th>SEO</th><th>Fecha</th><th>Vistas</th><th>Acciones</th></tr></thead>
             <tbody id="blogTableBody"></tbody>
           </table>
           <div class="adm-table-empty" id="blogTableEmpty" style="display:none">No hay artículos aún</div>
@@ -1280,6 +1280,11 @@
     <div class="adm-form-section">
       <p class="adm-form-section-title">SEO <span class="adm-badge-seo">Google · IA</span></p>
       <div class="adm-form-group">
+        <label>Palabra clave objetivo</label>
+        <input type="text" id="bfFocusKeyword" class="adm-input" placeholder="Ej: arriendo apartamento sabaneta" />
+        <span class="adm-field-hint">La frase por la que quieres posicionar este artículo en Google.</span>
+      </div>
+      <div class="adm-form-group">
         <label>Meta título <span id="bfMetaTitleCount" style="font-weight:400;color:#9ca3af">0/60</span></label>
         <input type="text" id="bfMetaTitle" class="adm-input" placeholder="Título para Google (máx 60)" maxlength="60" />
       </div>
@@ -1296,6 +1301,21 @@
           <div class="adm-seo-title" id="bfPrevTitle">Título del artículo</div>
           <div class="adm-seo-desc" id="bfPrevDesc">Descripción del artículo…</div>
         </div>
+      </div>
+    </div>
+
+    <!-- Semáforo SEO -->
+    <div class="adm-form-section">
+      <p class="adm-form-section-title">Semáforo SEO</p>
+      <div class="adm-seo-semaphore" id="bfSeoSemaphore">
+        <div class="adm-seo-semaphore-head">
+          <div class="adm-seo-semaphore-dot" id="bfSeoDot"></div>
+          <div class="adm-seo-semaphore-text">
+            <div class="adm-seo-semaphore-score" id="bfSeoScoreLabel">0/100</div>
+            <div class="adm-seo-semaphore-status" id="bfSeoStatusLabel">Completa el artículo para analizar</div>
+          </div>
+        </div>
+        <ul class="adm-seo-checklist" id="bfSeoChecklist"></ul>
       </div>
     </div>
   </div>
@@ -1893,6 +1913,157 @@ function parsePropText(txt) {
   }
 }
 
+// ── BLOG · ANALIZADOR SEO (semáforo) ────────────────────────
+function seoNormalizeTxt(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+function seoStripHtml(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html || '';
+  return div.textContent || div.innerText || '';
+}
+function seoCountWords(text) {
+  return (text.trim().match(/\S+/g) || []).length;
+}
+function seoFirstChunkText(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html || '';
+  const el = div.querySelector('p, h2, h3, li');
+  if (el && el.textContent.trim()) return el.textContent;
+  return (div.textContent || '').slice(0, 220);
+}
+function seoKeywordDensity(plainText, keyword) {
+  const words = seoNormalizeTxt(plainText).match(/[a-z0-9áéíóúñ]+/gi) || [];
+  const kwWords = seoNormalizeTxt(keyword).split(/\s+/).filter(Boolean);
+  if (!words.length || !kwWords.length) return 0;
+  const joined = ' ' + seoNormalizeTxt(words.join(' ')) + ' ';
+  const phrase = ' ' + kwWords.join(' ') + ' ';
+  let count = 0, idx = 0;
+  while ((idx = joined.indexOf(phrase, idx)) !== -1) { count++; idx += phrase.length; }
+  return (count / words.length) * 100;
+}
+function seoChk(id, label, status, message, points) {
+  return { id, label, status, message, points };
+}
+/**
+ * Analiza un post como lo haría un plugin tipo Yoast: cada check suma
+ * puntos según coincidencia con la palabra clave objetivo, longitudes
+ * ideales y estructura del contenido. Ver también admin-blog.html.
+ */
+function analyzeSeo(post) {
+  const title = post.title || '';
+  const slug = post.slug || slugify(title);
+  const excerpt = post.excerpt || '';
+  const contentHtml = post.content || '';
+  const seo = post.seo || {};
+  const metaTitle = seo.metaTitle || title;
+  const metaDesc = seo.metaDescription || excerpt;
+  const focusKeyword = (seo.focusKeyword || '').trim();
+  const cover = post.cover || '';
+
+  const plainText = seoStripHtml(contentHtml);
+  const wordCount = seoCountWords(plainText);
+  const kwNorm = seoNormalizeTxt(focusKeyword);
+  const hasKw = !!kwNorm;
+  const checks = [];
+
+  checks.push(hasKw
+    ? seoChk('kw-set', 'Palabra clave objetivo', 'good', 'Definiste una palabra clave para este artículo.', 5)
+    : seoChk('kw-set', 'Palabra clave objetivo', 'bad', 'Agrega una palabra clave objetivo para activar el análisis.', 0));
+
+  if (!hasKw) checks.push(seoChk('kw-title', 'Palabra clave en el título SEO', 'bad', 'Define una palabra clave primero.', 0));
+  else if (seoNormalizeTxt(metaTitle).includes(kwNorm)) checks.push(seoChk('kw-title', 'Palabra clave en el título SEO', 'good', 'Aparece en el título SEO.', 10));
+  else checks.push(seoChk('kw-title', 'Palabra clave en el título SEO', 'bad', 'No aparece en el título SEO.', 0));
+
+  const tl = metaTitle.length;
+  if (!tl) checks.push(seoChk('title-len', 'Longitud del título SEO', 'bad', 'Falta el título SEO.', 0));
+  else if (tl >= 30 && tl <= 60) checks.push(seoChk('title-len', `Longitud del título SEO (${tl} car.)`, 'good', 'Longitud ideal para Google.', 8));
+  else checks.push(seoChk('title-len', `Longitud del título SEO (${tl} car.)`, 'ok', tl < 30 ? 'Un poco corto, agrega más contexto.' : 'Muy largo, Google podría recortarlo.', 4));
+
+  if (!hasKw) checks.push(seoChk('kw-desc', 'Palabra clave en la meta descripción', 'bad', 'Define una palabra clave primero.', 0));
+  else if (seoNormalizeTxt(metaDesc).includes(kwNorm)) checks.push(seoChk('kw-desc', 'Palabra clave en la meta descripción', 'good', 'Aparece en la meta descripción.', 8));
+  else checks.push(seoChk('kw-desc', 'Palabra clave en la meta descripción', 'bad', 'No aparece en la meta descripción.', 0));
+
+  const dl = metaDesc.length;
+  if (!dl) checks.push(seoChk('desc-len', 'Longitud de la meta descripción', 'bad', 'Falta la meta descripción.', 0));
+  else if (dl >= 120 && dl <= 155) checks.push(seoChk('desc-len', `Longitud de la meta descripción (${dl} car.)`, 'good', 'Longitud ideal para Google.', 8));
+  else checks.push(seoChk('desc-len', `Longitud de la meta descripción (${dl} car.)`, 'ok', dl < 120 ? 'Corta, aprovecha más espacio.' : 'Muy larga, Google podría recortarla.', 4));
+
+  if (!hasKw) checks.push(seoChk('kw-slug', 'Palabra clave en la URL', 'bad', 'Define una palabra clave primero.', 0));
+  else if (seoNormalizeTxt(slug.replace(/-/g, ' ')).includes(kwNorm)) checks.push(seoChk('kw-slug', 'Palabra clave en la URL', 'good', 'Aparece en el slug del artículo.', 8));
+  else checks.push(seoChk('kw-slug', 'Palabra clave en la URL', 'bad', 'No aparece en el slug del artículo.', 0));
+
+  const intro = seoFirstChunkText(contentHtml);
+  if (!hasKw) checks.push(seoChk('kw-intro', 'Palabra clave en la introducción', 'bad', 'Define una palabra clave primero.', 0));
+  else if (seoNormalizeTxt(intro).includes(kwNorm)) checks.push(seoChk('kw-intro', 'Palabra clave en la introducción', 'good', 'Aparece en el primer párrafo.', 8));
+  else checks.push(seoChk('kw-intro', 'Palabra clave en la introducción', 'bad', 'Menciónala en el primer párrafo.', 0));
+
+  if (!hasKw || !wordCount) checks.push(seoChk('kw-density', 'Densidad de palabra clave', 'bad', 'Escribe contenido y define una palabra clave.', 0));
+  else {
+    const density = seoKeywordDensity(plainText, focusKeyword);
+    if (density === 0) checks.push(seoChk('kw-density', 'Densidad de palabra clave (0%)', 'bad', 'La palabra clave no aparece en el contenido.', 0));
+    else if (density > 3) checks.push(seoChk('kw-density', `Densidad de palabra clave (${density.toFixed(1)}%)`, 'ok', 'Muy alta, evita el "keyword stuffing".', 5));
+    else if (density < 0.5) checks.push(seoChk('kw-density', `Densidad de palabra clave (${density.toFixed(1)}%)`, 'ok', 'Baja, úsala un poco más en el texto.', 5));
+    else checks.push(seoChk('kw-density', `Densidad de palabra clave (${density.toFixed(1)}%)`, 'good', 'Densidad saludable (0.5%–3%).', 10));
+  }
+
+  if (wordCount >= 600) checks.push(seoChk('content-len', `Longitud del contenido (${wordCount} palabras)`, 'good', 'Extensión ideal para posicionar temas competidos.', 12));
+  else if (wordCount >= 300) checks.push(seoChk('content-len', `Longitud del contenido (${wordCount} palabras)`, 'ok', 'Aceptable. Apunta a 600+ palabras si puedes.', 8));
+  else checks.push(seoChk('content-len', `Longitud del contenido (${wordCount} palabras)`, 'bad', 'Muy corto. Google prefiere 300+ palabras.', 0));
+
+  const hasHeadings = /<h2|<h3/i.test(contentHtml);
+  checks.push(hasHeadings
+    ? seoChk('headings', 'Subtítulos (H2/H3)', 'good', 'El artículo usa subtítulos para organizar el contenido.', 6)
+    : seoChk('headings', 'Subtítulos (H2/H3)', 'bad', 'Agrega subtítulos H2/H3 para estructurar el artículo.', 0));
+
+  const imgTags = contentHtml.match(/<img[^>]*>/gi) || [];
+  const imgsWithoutAlt = imgTags.filter(t => !/alt\s*=\s*"[^"]+"/i.test(t)).length;
+  if (!cover && imgTags.length === 0) checks.push(seoChk('img-alt', 'Imagen de portada', 'bad', 'Agrega una imagen de portada para redes sociales y Google.', 0));
+  else if (imgsWithoutAlt > 0) checks.push(seoChk('img-alt', 'Imágenes con texto alternativo', 'ok', `${imgsWithoutAlt} imagen(es) sin texto alternativo (alt).`, 3));
+  else checks.push(seoChk('img-alt', 'Imágenes con texto alternativo', 'good', 'Portada e imágenes con alt correctamente configuradas.', 6));
+
+  const hasInternalLink = /<a\s+[^>]*href\s*=\s*["'](\/(?!\/)[^"']*|https?:\/\/(?:www\.)?alexariasc\.com[^"']*)["']/i.test(contentHtml);
+  checks.push(hasInternalLink
+    ? seoChk('internal-links', 'Enlaces internos', 'good', 'Enlaza a otras páginas del sitio.', 6)
+    : seoChk('internal-links', 'Enlaces internos', 'bad', 'Agrega al menos un enlace interno (a otra propiedad o artículo).', 0));
+
+  const hasExternalLink = /<a\s+[^>]*href\s*=\s*["']https?:\/\/(?!(?:www\.)?alexariasc\.com)[^"']*["']/i.test(contentHtml);
+  checks.push(hasExternalLink
+    ? seoChk('external-links', 'Enlaces externos', 'good', 'Enlaza a fuentes externas relevantes.', 5)
+    : seoChk('external-links', 'Enlaces externos', 'ok', 'Opcional: citar una fuente externa da más credibilidad.', 2));
+
+  const score = Math.min(100, checks.reduce((s, c) => s + c.points, 0));
+  const status = score >= 80 ? 'green' : score >= 50 ? 'yellow' : 'red';
+  const label = status === 'green' ? '¡Excelente SEO!' : status === 'yellow' ? 'SEO aceptable, se puede mejorar' : 'SEO débil, necesita trabajo';
+  return { score, status, label, checks };
+}
+function bfCollectPost() {
+  return {
+    title: document.getElementById('bfTitle').value,
+    slug: slugify(document.getElementById('bfTitle').value || ''),
+    excerpt: document.getElementById('bfExcerpt').value,
+    content: document.getElementById('bfContent').innerHTML,
+    cover: document.getElementById('bfCoverExisting').value || (bfCoverFile ? 'x' : ''),
+    seo: {
+      metaTitle: document.getElementById('bfMetaTitle').value,
+      metaDescription: document.getElementById('bfMetaDesc').value,
+      focusKeyword: document.getElementById('bfFocusKeyword').value
+    }
+  };
+}
+function renderBfSeoWidget() {
+  const result = analyzeSeo(bfCollectPost());
+  document.getElementById('bfSeoDot').className = `adm-seo-semaphore-dot adm-seo-semaphore-dot--${result.status}`;
+  document.getElementById('bfSeoScoreLabel').textContent = `${result.score}/100`;
+  document.getElementById('bfSeoStatusLabel').textContent = result.label;
+  document.getElementById('bfSeoChecklist').innerHTML = result.checks.map(c => `
+    <li class="adm-seo-check adm-seo-check--${c.status}">
+      <span class="adm-seo-check-icon"></span>
+      <div class="adm-seo-check-text"><strong>${c.label}</strong><span>${c.message}</span></div>
+    </li>
+  `).join('');
+}
+
 // ── BLOG ─────────────────────────────────────────────────────
 let allBlogPosts = [], bfCoverFile = null;
 async function loadBlogPosts() {
@@ -1910,10 +2081,15 @@ function renderBlogTable(posts) {
   const tbody = document.getElementById('blogTableBody');
   if (!posts.length) { tbody.innerHTML = ''; document.getElementById('blogTableEmpty').style.display = 'block'; return; }
   document.getElementById('blogTableEmpty').style.display = 'none';
-  tbody.innerHTML = posts.map(p => `<tr>
+  tbody.innerHTML = posts.map(p => { const seoResult = analyzeSeo(p); return `<tr>
     <td><span class="adm-tbl-title">${p.title}</span><br><span class="adm-tbl-sub">${p.slug}</span></td>
     <td>${p.category||'—'}</td>
     <td><span class="adm-badge adm-badge--${p.status}">${p.status==='published'?'Publicado':'Borrador'}</span></td>
+    <td>
+      <span class="adm-tbl-seo" title="${seoResult.checks.filter(c => c.status !== 'good').map(c => c.label).join(' · ') || 'Todo en orden'}">
+        <span class="adm-tbl-seo-dot adm-tbl-seo-dot--${seoResult.status}"></span>${seoResult.score}
+      </span>
+    </td>
     <td>${fmtDate(p.published_at||p.created_at)}</td>
     <td>${fmtNum(p.views||0)}</td>
     <td><div class="adm-tbl-actions">
@@ -1921,7 +2097,7 @@ function renderBlogTable(posts) {
       <button class="adm-tbl-btn adm-tbl-btn--edit" data-slug="${p.slug}" title="Editar"><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
       <button class="adm-tbl-btn adm-tbl-btn--del" data-slug="${p.slug}" data-title="${(p.title||'').replace(/"/g,'')}" title="Eliminar"><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     </div></td>
-  </tr>`).join('');
+  </tr>`; }).join('');
   tbody.querySelectorAll('.adm-tbl-btn--edit').forEach(btn => btn.addEventListener('click', () => {
     const p = allBlogPosts.find(x => x.slug === btn.dataset.slug);
     if (p) openBlogPanel(p);
@@ -1951,9 +2127,11 @@ function openBlogPanel(post = null) {
   document.getElementById('bfMetaTitle').value     = post?.seo?.metaTitle || '';
   document.getElementById('bfMetaDesc').value      = post?.seo?.metaDescription || '';
   document.getElementById('bfMetaKeys').value      = post?.seo?.metaKeywords || '';
+  document.getElementById('bfFocusKeyword').value  = post?.seo?.focusKeyword || '';
   document.getElementById('bfCoverExisting').value = post?.cover || '';
   setBlogStatus(post?.status || 'draft');
   updateSeoPreview();
+  renderBfSeoWidget();
   if (post?.cover) {
     document.getElementById('bfCoverImg').src = '/' + post.cover;
     document.getElementById('bfCoverPreview').style.display = 'block';
@@ -1989,6 +2167,7 @@ document.getElementById('bfCover').addEventListener('change', e => {
   document.getElementById('bfCoverImg').src = URL.createObjectURL(f);
   document.getElementById('bfCoverPreview').style.display = 'block';
   document.getElementById('bfCoverEmpty').style.display = 'none';
+  renderBfSeoWidget();
 });
 document.getElementById('bfCoverRemove').addEventListener('click', e => {
   e.stopPropagation(); bfCoverFile = null;
@@ -1996,6 +2175,7 @@ document.getElementById('bfCoverRemove').addEventListener('click', e => {
   document.getElementById('bfCoverPreview').style.display = 'none';
   document.getElementById('bfCoverEmpty').style.display = 'flex';
   document.getElementById('bfCover').value = '';
+  renderBfSeoWidget();
 });
 
 // Toolbar blog
@@ -2017,7 +2197,9 @@ document.getElementById('bfToolbar').addEventListener('mousedown', e => {
     img: () => { const u = prompt('URL imagen:','https://'); if (u) document.execCommand('insertImage', false, u); }
   };
   cmds[btn.dataset.cmd]?.();
+  renderBfSeoWidget();
 });
+document.getElementById('bfContent').addEventListener('input', renderBfSeoWidget);
 
 // SEO preview
 function slugify(s) { return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-'); }
@@ -2031,6 +2213,7 @@ function updateSeoPreview() {
 ['bfTitle','bfMetaTitle','bfMetaDesc','bfExcerpt'].forEach(id => document.getElementById(id).addEventListener('input', updateSeoPreview));
 document.getElementById('bfMetaTitle').addEventListener('input', function() { document.getElementById('bfMetaTitleCount').textContent = `${this.value.length}/60`; });
 document.getElementById('bfMetaDesc').addEventListener('input', function()  { document.getElementById('bfMetaDescCount').textContent  = `${this.value.length}/155`; });
+['bfTitle','bfFocusKeyword','bfMetaTitle','bfMetaDesc'].forEach(id => document.getElementById(id).addEventListener('input', renderBfSeoWidget));
 
 // Guardar blog
 document.getElementById('blogSaveDraft').addEventListener('click', () => saveBlogPost('draft'));
@@ -2049,6 +2232,7 @@ async function saveBlogPost(statusOverride) {
   fd.append('metaTitle',       document.getElementById('bfMetaTitle').value);
   fd.append('metaDescription', document.getElementById('bfMetaDesc').value);
   fd.append('metaKeywords',    document.getElementById('bfMetaKeys').value);
+  fd.append('focusKeyword',    document.getElementById('bfFocusKeyword').value);
   if (bfCoverFile) fd.append('cover', bfCoverFile);
   else fd.append('cover', document.getElementById('bfCoverExisting').value || '');
 

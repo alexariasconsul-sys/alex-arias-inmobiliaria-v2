@@ -1136,6 +1136,56 @@ body {
 .adm-seo-title { font-size: 17px; font-weight: 400; color: #1a0dab; margin-bottom: 3px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .adm-seo-desc  { font-size: 13px; color: #545454; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
+/* ─── SEMÁFORO SEO ────────────────────────────────────────── */
+.adm-seo-semaphore {
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: #fff;
+}
+.adm-seo-semaphore-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.adm-seo-semaphore-dot {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background .2s;
+}
+.adm-seo-semaphore-dot--red    { background: var(--red);    box-shadow: 0 0 0 5px var(--red-bg); }
+.adm-seo-semaphore-dot--yellow { background: #d97706;       box-shadow: 0 0 0 5px #fef3c7; }
+.adm-seo-semaphore-dot--green  { background: var(--green);  box-shadow: 0 0 0 5px var(--green-bg); }
+.adm-seo-semaphore-score  { font-size: 16px; font-weight: 800; color: var(--text); line-height: 1.2; }
+.adm-seo-semaphore-status { font-size: 12px; color: var(--muted); line-height: 1.3; margin-top: 2px; }
+
+.adm-seo-checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.adm-seo-check { display: flex; align-items: flex-start; gap: 9px; }
+.adm-seo-check-icon {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.adm-seo-check--good .adm-seo-check-icon { background: var(--green); }
+.adm-seo-check--ok   .adm-seo-check-icon { background: #d97706; }
+.adm-seo-check--bad  .adm-seo-check-icon { background: var(--red); }
+.adm-seo-check-text { display: flex; flex-direction: column; font-size: 12px; line-height: 1.4; }
+.adm-seo-check-text strong { font-size: 12.5px; font-weight: 600; color: var(--text); }
+.adm-seo-check-text span { color: var(--muted); }
+
+/* ─── SEO EN TABLA DE BLOG ────────────────────────────────── */
+.adm-tbl-seo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: default;
+}
+.adm-tbl-seo-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.adm-tbl-seo-dot--green  { background: var(--green); box-shadow: 0 0 0 3px var(--green-bg); }
+.adm-tbl-seo-dot--yellow { background: #d97706; box-shadow: 0 0 0 3px #fef3c7; }
+.adm-tbl-seo-dot--red    { background: var(--red); box-shadow: 0 0 0 3px var(--red-bg); }
+
 /* ─── BOTONES SECUNDARIOS ─────────────────────────────────── */
 .adm-btn-outline {
   display: inline-flex;

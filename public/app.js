@@ -1059,7 +1059,7 @@ function cardHTML(p, isFirst = false) {
   const isCombinado = p.tipo === 'combinado';
   const price = isCombinado ? formatPrice(p.precioArriendo || p.precio) : formatPrice(p.precio);
   const statusClass = p.estado === 'ocupado' ? 'status-ocupado' : 'status-libre';
-  const statusLabel = p.estado === 'ocupado' ? 'Ocupado' : 'Libre';
+  const statusLabel = p.estado === 'ocupado' ? 'Ocupado' : 'Disponible';
 
   // Badge esquina superior derecha: "Muy interesante" basado en engagement score
   // Los ocupados nunca muestran este badge aunque tengan alto engagement
@@ -1096,15 +1096,15 @@ function cardHTML(p, isFirst = false) {
     : `<div class="property-slide is-active"><div class="no-photo-placeholder"><svg viewBox="0 0 64 64" fill="none" width="44" height="44"><path d="M8 28L32 8l24 20v28H8V28z" fill="rgba(148,163,184,.25)" stroke="rgba(148,163,184,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 56V38h16v18" stroke="rgba(148,163,184,.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Sin fotografía</span></div></div>`;
 
   const stripEmoji = s => s.replace(/\p{Extended_Pictographic}/gu, '').replace(/\s+/g, ' ').trim();
-  const amenidadesHTML = [...amenidades]
-    .sort((a, b) => stripEmoji(a).localeCompare(stripEmoji(b), 'es'))
+  const AMENITY_PREVIEW = 8;
+  const amenidadesSorted = [...amenidades].sort((a, b) => stripEmoji(a).localeCompare(stripEmoji(b), 'es'));
+  const amenidadesPreviewHTML = amenidadesSorted.slice(0, AMENITY_PREVIEW)
     .map(a => `<span class="amenity-chip">${stripEmoji(a)}</span>`)
     .join('');
-
-  const stats = [];
-  if (p.area) stats.push(`<div class="stat-item"><p>${p.area}</p><span>m²</span></div>`);
-  if (p.habitaciones) stats.push(`<div class="stat-item ${p.area ? 'with-border' : ''}"><p>${p.habitaciones}</p><span>Hab</span></div>`);
-  if (p.banos) stats.push(`<div class="stat-item with-border"><p>${p.banos}</p><span>Baños</span></div>`);
+  const amenidadesExtra = amenidadesSorted.slice(AMENITY_PREVIEW);
+  const amenidadesExtraHTML = amenidadesExtra
+    .map(a => `<span class="amenity-chip amenity-chip--extra" hidden>${stripEmoji(a)}</span>`)
+    .join('');
 
   const adminActions = state.isAdmin ? `
     <div class="admin-actions">
@@ -1210,18 +1210,18 @@ function cardHTML(p, isFirst = false) {
               </div>
             </div>` : ''}
 
-            ${stats.length ? `<div class="property-stats">${stats.join('')}</div>` : ''}
-
             ${amenidades.length ? `
             <div class="property-amenities">
               <p class="section-label">Características</p>
-              <div class="amenities-list">${amenidadesHTML}</div>
+              <div class="amenities-list">${amenidadesPreviewHTML}${amenidadesExtraHTML}</div>
+              ${amenidadesExtra.length ? `<button class="amenities-toggle" type="button" data-expanded="0">+${amenidadesExtra.length} más</button>` : ''}
             </div>` : ''}
 
             ${p.descripcion ? (() => {
               const MAX = 130;
               const long = p.descripcion.length > MAX;
               return `<div class="property-description">
+                <p class="section-label">Descripción</p>
                 <p>${long
                   ? `<span class="desc-truncated">${p.descripcion.slice(0, MAX)}…</span><span class="desc-full" hidden>${p.descripcion}</span>`
                   : p.descripcion}
@@ -1229,31 +1229,30 @@ function cardHTML(p, isFirst = false) {
                 ${long ? `<button class="desc-toggle" type="button">Ver más</button>` : ''}
               </div>`;
             })() : ''}
-
-            <div class="detail-actions">
-              <button class="share-btn" data-id="${p.id}" type="button">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Compartir
-              </button>
-              <button class="contact-btn" type="button"
-                data-contact-id="${p.id}"
-                data-contact-title="${(p.title||'').replace(/"/g,'&quot;')}"
-                data-contact-price="${price}"
-                data-contact-img="${images[0] ? '/' + encodeImgPath(images[0].filename) : ''}"
-                data-contact-address="${[p.direccion, p.piso ? `Piso ${p.piso}` : '', p.sector].filter(Boolean).join(', ').replace(/"/g,'&quot;')}"
-                data-contact-municipio="${(p.municipio||'').replace(/"/g,'&quot;')}"
-                data-contact-barrio="${(p.barrio||'').replace(/"/g,'&quot;')}"
-                data-contact-area="${p.area||''}"
-                data-contact-beds="${p.habitaciones||''}"
-                data-contact-baths="${p.banos||''}"
-                data-contact-amenities="${JSON.stringify(amenidades.slice(0,8)).replace(/"/g,'&quot;')}">
-                <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                Contactar
-              </button>
-            </div>
             ${adminActions}
+          </div>
+          <div class="detail-actions">
+            <button class="share-btn" data-id="${p.id}" type="button">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Compartir
+            </button>
+            <button class="contact-btn" type="button"
+              data-contact-id="${p.id}"
+              data-contact-title="${(p.title||'').replace(/"/g,'&quot;')}"
+              data-contact-price="${price}"
+              data-contact-img="${images[0] ? '/' + encodeImgPath(images[0].filename) : ''}"
+              data-contact-address="${[p.direccion, p.piso ? `Piso ${p.piso}` : '', p.sector].filter(Boolean).join(', ').replace(/"/g,'&quot;')}"
+              data-contact-municipio="${(p.municipio||'').replace(/"/g,'&quot;')}"
+              data-contact-barrio="${(p.barrio||'').replace(/"/g,'&quot;')}"
+              data-contact-area="${p.area||''}"
+              data-contact-beds="${p.habitaciones||''}"
+              data-contact-baths="${p.banos||''}"
+              data-contact-amenities="${JSON.stringify(amenidades.slice(0,8)).replace(/"/g,'&quot;')}">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Contactar
+            </button>
           </div>
         </div>
       </div>
@@ -2393,7 +2392,7 @@ function setupAdminActions(card) {
       });
       btn.dataset.estado = newEstado;
       btn.className = `status-btn status-${newEstado}`;
-      btn.innerHTML = `<span class="status-dot"></span>${newEstado === 'libre' ? 'Libre' : 'Ocupado'}`;
+      btn.innerHTML = `<span class="status-dot"></span>${newEstado === 'libre' ? 'Disponible' : 'Ocupado'}`;
       showToast(`Estado cambiado a: ${newEstado}`);
     } catch (err) {
       showToast('Error al cambiar estado');
@@ -2543,6 +2542,17 @@ function setupFilters() {
     truncated.hidden = !expanded;
     full.hidden      =  expanded;
     e.target.textContent = expanded ? 'Ver más' : 'Ver menos';
+  });
+
+  // Mostrar / ocultar amenidades extra ("+N más")
+  document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('amenities-toggle')) return;
+    const wrap   = e.target.closest('.property-amenities');
+    const extras = wrap.querySelectorAll('.amenity-chip--extra');
+    const expanded = e.target.dataset.expanded === '1';
+    extras.forEach(chip => { chip.hidden = expanded; });
+    e.target.dataset.expanded = expanded ? '0' : '1';
+    e.target.textContent = expanded ? `+${extras.length} más` : 'Ver menos';
   });
 
   // Baños pills — usar event delegation
@@ -3202,7 +3212,7 @@ function mapCardHTML(prop) {
   const tipoLbl  = isCombinadoMap ? 'Arr · Venta' : (prop.tipo === 'venta' ? 'Venta' : 'Arriendo');
   const tipoClass= isCombinadoMap ? 'combinado'   : (prop.tipo === 'venta' ? 'venta' : 'arriendo');
   const statCls  = prop.estado === 'ocupado' ? 'ocupado' : 'libre';
-  const statLbl  = prop.estado === 'ocupado' ? 'Ocupado' : 'Libre';
+  const statLbl  = prop.estado === 'ocupado' ? 'Ocupado' : 'Disponible';
 
   const hab = prop.habitaciones ? `<span class="map-card-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 20v-7a3 3 0 013-3h14a3 3 0 013 3v7M2 20v-3M22 20v-3M2 14h20M6 10V7a2 2 0 012-2h2a2 2 0 012 2v3" stroke-linecap="round" stroke-linejoin="round"/></svg>${prop.habitaciones} hab</span>` : '';
   const ban = prop.banos        ? `<span class="map-card-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18v3a4 4 0 01-4 4H7a4 4 0 01-4-4v-3z" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 12V7a2 2 0 012-2h1" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 21v1M17 21v1" stroke-linecap="round"/></svg>${prop.banos} baños</span>` : '';
@@ -3423,7 +3433,7 @@ function _getOverlayCardHTML(prop) {
   const tipoLbl    = isComb ? 'ARR · VENTA' : (prop.tipo === 'venta' ? 'VENTA' : 'ARRIENDO');
   const tipoClass  = isComb ? 'combinado'   : (prop.tipo === 'venta' ? 'venta' : 'arriendo');
   const isOccupied = prop.estado === 'ocupado';
-  const statusLbl  = isOccupied ? 'OCUPADO' : 'LIBRE';
+  const statusLbl  = isOccupied ? 'OCUPADO' : 'DISPONIBLE';
   const loc        = [prop.municipio, prop.barrio].filter(Boolean).join(' · ');
   const stats      = [
     prop.habitaciones ? `${prop.habitaciones} hab` : '',
@@ -6019,6 +6029,10 @@ const _hintedCards = new Set();
 let _hintObserver = null;
 
 function setupHintAnimations(grid) {
+  // En escritorio, compartir/me gusta quedan ocultos hasta hover (ver CSS) —
+  // el hint de descubrimiento ya no aplica porque hover los revela directamente.
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
   // Desconectar el observer anterior si existe (evita listeners duplicados)
   if (_hintObserver) _hintObserver.disconnect();
 

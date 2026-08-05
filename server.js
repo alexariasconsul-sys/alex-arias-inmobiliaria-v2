@@ -1722,7 +1722,7 @@ async function renderPropertyPage(req, res, prop) {
     </div>
 
     <section class="pdp-gallery">
-      <span class="pdp-status-pill ${prop.estado === 'ocupado' ? 'ocupado' : 'libre'}"><span class="pdp-status-dot"></span>${prop.estado === 'ocupado' ? 'Ocupado' : 'Libre'}</span>
+      <span class="pdp-status-pill ${prop.estado === 'ocupado' ? 'ocupado' : 'libre'}"><span class="pdp-status-dot"></span>${prop.estado === 'ocupado' ? 'Ocupado' : 'Disponible'}</span>
       ${galleryHTML}
       ${imgs.length ? `<button class="pdp-gallery-viewall" data-pdp-open-gallery="0">${PDP_ICONS.grid}Ver las ${imgs.length} fotos</button>` : ''}
     </section>
@@ -2503,6 +2503,10 @@ app.get('/api/blog/:slug', async (req, res) => {
   try {
     const doc = await blogDB.findOneAsync({ slug: req.params.slug });
     if (!doc) return res.status(404).json({ error: 'No encontrado' });
+    // Los borradores solo son visibles para el admin — evita que Google
+    // indexe o que cualquiera con el slug lea contenido sin publicar.
+    const isAdmin = req.headers['x-admin-password'] === ADMIN_PASSWORD;
+    if (doc.status !== 'published' && !isAdmin) return res.status(404).json({ error: 'No encontrado' });
     const { _id, ...rest } = doc;
     res.json({ id: _id, ...rest });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -2511,7 +2515,7 @@ app.get('/api/blog/:slug', async (req, res) => {
 // ─── BLOG: CREAR POST ─────────────────────────────────────────
 app.post('/api/blog', requireAdmin, upload.single('cover'), async (req, res) => {
   try {
-    const { title, excerpt, content, category, tags, status, metaTitle, metaDescription, metaKeywords } = req.body;
+    const { title, excerpt, content, category, tags, status, metaTitle, metaDescription, metaKeywords, focusKeyword } = req.body;
     let slug = slugify(title || 'sin-titulo');
     // Verificar unicidad del slug
     const existing = await blogDB.findOneAsync({ slug });
@@ -2535,7 +2539,7 @@ app.post('/api/blog', requireAdmin, upload.single('cover'), async (req, res) => 
       status: status || 'draft',
       readTime: readTime(content),
       author: 'Alex Arias',
-      seo: { metaTitle: metaTitle || title || '', metaDescription: metaDescription || excerpt || '', metaKeywords: metaKeywords || '' },
+      seo: { metaTitle: metaTitle || title || '', metaDescription: metaDescription || excerpt || '', metaKeywords: metaKeywords || '', focusKeyword: focusKeyword || '' },
       views: 0,
       likes: 0,
       created_at: now,
@@ -2551,7 +2555,7 @@ app.post('/api/blog', requireAdmin, upload.single('cover'), async (req, res) => 
 // ─── BLOG: ACTUALIZAR POST ────────────────────────────────────
 app.put('/api/blog/:slug', requireAdmin, upload.single('cover'), async (req, res) => {
   try {
-    const { title, excerpt, content, category, tags, status, metaTitle, metaDescription, metaKeywords } = req.body;
+    const { title, excerpt, content, category, tags, status, metaTitle, metaDescription, metaKeywords, focusKeyword } = req.body;
     const existing = await blogDB.findOneAsync({ slug: req.params.slug });
     if (!existing) return res.status(404).json({ error: 'No encontrado' });
 
@@ -2576,7 +2580,8 @@ app.put('/api/blog/:slug', requireAdmin, upload.single('cover'), async (req, res
       seo: {
         metaTitle: metaTitle || title || existing.seo?.metaTitle || '',
         metaDescription: metaDescription || excerpt || existing.seo?.metaDescription || '',
-        metaKeywords: metaKeywords || existing.seo?.metaKeywords || ''
+        metaKeywords: metaKeywords || existing.seo?.metaKeywords || '',
+        focusKeyword: focusKeyword !== undefined ? focusKeyword : (existing.seo?.focusKeyword || '')
       },
       updated_at: new Date().toISOString(),
       published_at: nowPublishing ? new Date().toISOString() : (existing.published_at || null)
