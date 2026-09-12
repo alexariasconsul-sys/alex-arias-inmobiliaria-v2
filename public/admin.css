@@ -5,9 +5,9 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --brand:      #E71433;
-  --brand-dark: #c0102a;
-  --brand-light:#fff0f2;
+  --brand:      #0f766e;
+  --brand-dark: #115e59;
+  --brand-light:#f0fdfa;
   --sidebar-w:  240px;
   --topbar-h:   64px;
   --bg:         #f4f5f7;
@@ -605,11 +605,11 @@ body {
     border: none;
     cursor: pointer;
     align-items: center; justify-content: center;
-    box-shadow: 0 4px 20px rgba(231,20,51,.4);
+    box-shadow: 0 4px 20px rgba(15,118,110,.4);
     transition: transform .15s, box-shadow .15s;
     -webkit-tap-highlight-color: transparent;
   }
-  .adm-fab:active { transform: scale(.93); box-shadow: 0 2px 10px rgba(231,20,51,.3); }
+  .adm-fab:active { transform: scale(.93); box-shadow: 0 2px 10px rgba(15,118,110,.3); }
   .adm-fab svg { width: 24px; height: 24px; }
 
   /* KPI cards más compactas */
@@ -1471,7 +1471,7 @@ body {
   border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap;
   font-family: inherit; border-radius: 6px 6px 0 0;
 }
-.adm-integ-tab.active { color: #fff; border-bottom-color: #dc3545; background: rgba(220,53,69,.1); }
+.adm-integ-tab.active { color: #fff; border-bottom-color: #0f766e; background: rgba(15,118,110,.1); }
 .adm-integ-tab:hover:not(.active) { color: #c8d0dc; }
 .adm-integ-content { display: none; }
 .adm-integ-content.active { display: block; }
@@ -1524,7 +1524,7 @@ body {
 /* Mejora placeholder y borde del input principal */
 .adm-input::placeholder { color: #9ca3af; }
 .adm-input { border: 1.5px solid #c4cdd8; }
-.adm-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(220,53,69,.1); }
+.adm-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(15,118,110,.1); }
 
 /* API Keys */
 .adm-new-key-box {
@@ -1601,7 +1601,7 @@ body {
   content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px;
   background: #6b7280; border-radius: 50%; transition: transform .2s, background .2s;
 }
-.adm-toggle input:checked + .adm-toggle-slider { background: rgba(220,53,69,.3); }
+.adm-toggle input:checked + .adm-toggle-slider { background: rgba(15,118,110,.3); }
 .adm-toggle input:checked + .adm-toggle-slider::before { transform: translateX(18px); background: #dc3545; }
 .adm-toggle-label { font-size: 12px; color: #8b99b0; }
 
@@ -1685,8 +1685,8 @@ body {
 }
 
 .adm-stats-tab.active {
-  color: #e71433;
-  border-bottom-color: #e71433;
+  color: #0f766e;
+  border-bottom-color: #0f766e;
 }
 
 .adm-stats-tab-content {
@@ -2273,7 +2273,7 @@ body {
 }
 .leads-top-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #E71433, #f97316);
+  background: linear-gradient(90deg, #0f766e, #f97316);
   border-radius: 2px;
   transition: width .5s ease;
 }

@@ -14,6 +14,8 @@ const state = {
   barrio: '',
   minPrecio: 0,
   maxPrecio: 0,
+  minArea: 0,
+  maxArea: 0,
   minHab: 0,
   minBanos: 0,
   filterParqueadero: false,
@@ -205,6 +207,8 @@ function pushFilterState() {
   if (state.search) p.set('q', state.search);
   if (state.minPrecio) p.set('min', state.minPrecio);
   if (state.maxPrecio) p.set('max', state.maxPrecio);
+  if (state.minArea) p.set('minA', state.minArea);
+  if (state.maxArea) p.set('maxA', state.maxArea);
   if (state.minHab) p.set('hab', state.minHab);
   if (state.minBanos) p.set('ban', state.minBanos);
   if (state.filterParqueadero) p.set('pq', '1');
@@ -227,6 +231,8 @@ function readURLParams() {
   if (p.get('q')) state.search = p.get('q');
   if (p.get('min')) state.minPrecio = Number(p.get('min'));
   if (p.get('max')) state.maxPrecio = Number(p.get('max'));
+  if (p.get('minA')) state.minArea = Number(p.get('minA'));
+  if (p.get('maxA')) state.maxArea = Number(p.get('maxA'));
   if (p.get('hab')) state.minHab = Number(p.get('hab'));
   if (p.get('ban')) state.minBanos = Number(p.get('ban'));
   if (p.get('pq') === '1') state.filterParqueadero = true;
@@ -262,6 +268,11 @@ function syncUIFromState() {
   const fMax = document.getElementById('fMaxPrecio');
   if (fMin) fMin.value = state.minPrecio || '';
   if (fMax) fMax.value = state.maxPrecio || '';
+  // Área (m²)
+  const fMinA = document.getElementById('fMinArea');
+  const fMaxA = document.getElementById('fMaxArea');
+  if (fMinA) fMinA.value = state.minArea || '';
+  if (fMaxA) fMaxA.value = state.maxArea || '';
   // Hab buttons
   document.querySelectorAll('.hab-btn').forEach(b => {
     b.classList.toggle('active', Number(b.dataset.hab) === state.minHab);
@@ -285,7 +296,7 @@ function syncUIFromState() {
   const fOrderBy = document.getElementById('fOrderBy');
   if (fOrderBy) fOrderBy.value = state.orderBy || '';
   // Filter badge
-  const count = [state.minPrecio||state.maxPrecio, state.minHab, state.minBanos, state.filterParqueadero, state.filterAmenidades.length, state.filterEstado, state.orderBy].filter(Boolean).length;
+  const count = [state.minPrecio||state.maxPrecio, state.minArea||state.maxArea, state.minHab, state.minBanos, state.filterParqueadero, state.filterAmenidades.length, state.filterEstado, state.orderBy].filter(Boolean).length;
   const badge = document.getElementById('filterBadge');
   if (badge) { badge.style.display = count ? 'flex' : 'none'; badge.textContent = count; }
 
@@ -350,6 +361,18 @@ function renderActiveFilterTags() {
       document.querySelectorAll('.filter-preset').forEach(b=>b.classList.remove('active'));
     }});
   }
+  if (state.minArea || state.maxArea) {
+    let label = state.minArea && state.maxArea
+      ? `${state.minArea}–${state.maxArea} m²`
+      : state.minArea ? `Desde ${state.minArea} m²` : `Hasta ${state.maxArea} m²`;
+    tags.push({ label, clear: () => {
+      state.minArea = 0; state.maxArea = 0;
+      const mn=document.getElementById('fMinArea'); const mx=document.getElementById('fMaxArea');
+      if(mn) mn.value=''; if(mx) mx.value='';
+      const mnM=document.getElementById('fMinAreaMobile'); const mxM=document.getElementById('fMaxAreaMobile');
+      if(mnM) mnM.value=''; if(mxM) mxM.value='';
+    }});
+  }
   if (state.minHab) {
     tags.push({ label: `${state.minHab}+ hab`, clear: () => {
       state.minHab = 0;
@@ -384,9 +407,7 @@ function renderActiveFilterTags() {
   if (state.orderBy) {
     const orderLabels = {
       'vistas-desc': '👀 Más vistas',
-      'vistas-asc': '👀 Menos vistas',
       'likes-desc': '❤️ Más favoritos',
-      'likes-asc': '❤️ Menos favoritos',
       'precio-desc': '💰 Precio mayor',
       'precio-asc': '💰 Precio menor',
       'fecha-desc': '📅 Más recientes',
@@ -446,6 +467,7 @@ function renderActiveFilterTags() {
 function clearAllFilters() {
   state.tipo = 'todos'; state.municipio = ''; state.barrio = '';
   state.search = ''; state.minPrecio = 0; state.maxPrecio = 0;
+  state.minArea = 0; state.maxArea = 0;
   state.minHab = 0; state.minBanos = 0;
   state.filterParqueadero = false; state.filterAmenidades = [];
   state.filterEstado = ''; state.orderBy = '';
@@ -477,6 +499,7 @@ function saveCurrentSearch(name) {
     filters: {
       tipo: state.tipo, municipio: state.municipio, barrio: state.barrio,
       search: state.search, minPrecio: state.minPrecio, maxPrecio: state.maxPrecio,
+      minArea: state.minArea, maxArea: state.maxArea,
       minHab: state.minHab, minBanos: state.minBanos,
       filterParqueadero: state.filterParqueadero, filterAmenidades: [...state.filterAmenidades]
     },
@@ -502,6 +525,8 @@ function applySavedSearch(id) {
   state.search = f.search || '';
   state.minPrecio = f.minPrecio || 0;
   state.maxPrecio = f.maxPrecio || 0;
+  state.minArea = f.minArea || 0;
+  state.maxArea = f.maxArea || 0;
   state.minHab = f.minHab || 0;
   state.minBanos = f.minBanos || 0;
   state.filterParqueadero = f.filterParqueadero || false;
@@ -574,6 +599,8 @@ async function loadProperties() {
   if (state.search) params.set('search', state.search);
   if (state.minPrecio) params.set('minPrecio', state.minPrecio);
   if (state.maxPrecio) params.set('maxPrecio', state.maxPrecio);
+  if (state.minArea) params.set('minArea', state.minArea);
+  if (state.maxArea) params.set('maxArea', state.maxArea);
   if (state.minHab) params.set('minHab', state.minHab);
   if (state.minBanos) params.set('minBanos', state.minBanos);
   if (state.filterParqueadero) params.set('parqueadero', '1');
@@ -798,7 +825,7 @@ function updateDynamicFilterRanges() {
   const maxPrecio = Math.max(...precios);
 
   // Actualizar pills de habitaciones dinámicamente
-  const habContainer = document.querySelector('.filter-section:nth-of-type(1) .hab-options');
+  const habContainer = document.getElementById('filterHabOptions');
   if (habContainer) {
     const habOptions = [0];
     for (let i = 1; i <= Math.min(maxHab, 5); i++) {
@@ -825,7 +852,7 @@ function updateDynamicFilterRanges() {
   }
 
   // Actualizar pills de baños dinámicamente
-  const banContainer = document.querySelector('.filter-section:nth-of-type(2) .hab-options');
+  const banContainer = document.getElementById('filterBanOptions');
   if (banContainer) {
     const banOptions = [0];
     for (let i = 1; i <= Math.min(maxBan, 5); i++) {
@@ -889,8 +916,20 @@ function updateDynamicFilterRanges() {
   });
 
   const amenitiesContainers = document.querySelectorAll('.filter-amenidades');
+  const quickContainers = document.querySelectorAll('.filter-quick-chips-dynamic');
   if (amenitiesContainers.length > 0 && amenitiesSet.size > 0) {
-    const existingAmenities = Array.from(amenitiesSet).sort();
+    // Características con bajo poder de discriminación (casi todos los inmuebles
+    // las tienen) — no aportan al filtrar, se excluyen por completo.
+    const EXCLUDE_AMENITIES = ['cocina integral'];
+    // Las de mayor intención de búsqueda se promueven a "filtros rápidos"
+    // (junto a Parqueadero) en vez de ir mezcladas en la lista larga.
+    const QUICK_AMENITIES = ['ascensor', 'portería 24h', 'seguridad 24h'];
+
+    const allAmenities = Array.from(amenitiesSet)
+      .filter(a => !EXCLUDE_AMENITIES.includes(a.toLowerCase()))
+      .sort();
+    const quickAmenities = allAmenities.filter(a => QUICK_AMENITIES.includes(a.toLowerCase()));
+    const existingAmenities = allAmenities.filter(a => !QUICK_AMENITIES.includes(a.toLowerCase()));
     const AMENITY_ICONS = {
       'Piscina':         `<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0M2 17c2-3 4-3 6 0s4 3 6 0 4-3 6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="5" r="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 7v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
       'Gimnasio':        `<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M6 12h12M4 9v6M8 6v12M16 6v12M20 9v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
@@ -907,16 +946,34 @@ function updateDynamicFilterRanges() {
     const GENERIC_ICON = `<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
 
     const checkedAmenities = new Set([...document.querySelectorAll('.amenity-check input:checked')].map(cb => cb.value));
-    const amenityHTML = existingAmenities.map(amenity => {
+
+    // Chips rápidos (Ascensor, Portería 24h…) — mismo mecanismo de checkbox
+    // que las amenidades normales, solo que renderizados como pill compacta.
+    const quickHTML = quickAmenities.map(amenity => {
       const icon = AMENITY_ICONS[amenity] || GENERIC_ICON;
-      return `<label class="amenity-check">
+      return `<label class="amenity-check amenity-check--quick">
+        <input type="checkbox" value="${amenity}"${checkedAmenities.has(amenity) ? ' checked' : ''}/>
+        <span class="quick-chip-pill">${icon}${amenity}</span>
+      </label>`;
+    }).join('');
+    quickContainers.forEach(el => { el.innerHTML = quickHTML; });
+
+    // Resto de características: se muestran las primeras 4 y el resto queda
+    // colapsado tras un "+N más" (evita el "wall of checkboxes").
+    const AMENITY_PREVIEW = 4;
+    const amenityHTML = existingAmenities.map((amenity, i) => {
+      const icon = AMENITY_ICONS[amenity] || GENERIC_ICON;
+      const hidden = i >= AMENITY_PREVIEW ? ' hidden' : '';
+      return `<label class="amenity-check"${hidden}>
         <input type="checkbox" value="${amenity}"${checkedAmenities.has(amenity) ? ' checked' : ''}/>
         <span class="amenity-card">
           <span class="amenity-icon-wrap">${icon}</span>
           <span class="amenity-label">${amenity}</span>
         </span>
       </label>`;
-    }).join('');
+    }).join('') + (existingAmenities.length > AMENITY_PREVIEW
+      ? `<button type="button" class="filter-amenities-more" data-expanded="0">+${existingAmenities.length - AMENITY_PREVIEW} más</button>`
+      : '');
 
     for (const container of amenitiesContainers) {
       container.innerHTML = amenityHTML;
@@ -1016,9 +1073,6 @@ function renderGrid() {
     if (state.isAdmin) setupAdminActions(card);
   });
 
-  // Hint animations: like + share
-  setupHintAnimations(grid);
-
   // Auto-abrir inmueble desde ?id= en URL (guardado en state antes de que
   // pushFilterState() sobrescriba la URL)
   const urlId = state.autoOpenId;
@@ -1038,6 +1092,28 @@ function renderGrid() {
 }
 
 // ─── CARD HTML ────────────────────────────────────────────────
+const AMENITY_ICONS = [
+  [/parqueadero|garaje/i, '<path d="M5 17h14M6 17l1.4-4.7A2 2 0 019.3 11h5.4a2 2 0 011.9 1.3L18 17M8 17v2M16 17v2" stroke-linecap="round" stroke-linejoin="round"/>'],
+  [/ascensor/i, '<path d="M7 14l5 5 5-5M7 10l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/>'],
+  [/porter[ií]a|vigilancia|seguridad/i, '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2" stroke-linecap="round" stroke-linejoin="round"/>'],
+  [/piscina/i, '<path d="M3 17c1.5 1.3 3 1.3 4.5 0s3-1.3 4.5 0 3 1.3 4.5 0 3-1.3 4.5 0M4 12l7-7 9 9" stroke-linecap="round" stroke-linejoin="round"/>'],
+  [/gimnasio|gym/i, '<path d="M6 7v10M18 7v10M2 10v4M22 10v4M6 12h12" stroke-linecap="round" stroke-linejoin="round"/>'],
+  [/bbq|zona\s*bbq/i, '<path d="M12 3v4M8 8h8l-1 6a3 3 0 01-6 0l-1-6zM7 21h10" stroke-linecap="round" stroke-linejoin="round"/>'],
+  [/terraza|balc[oó]n/i, '<path d="M4 21V9l8-6 8 6v12M4 21h16M9 21v-6h6v6" stroke-linecap="round" stroke-linejoin="round"/>'],
+  [/cl[oó]set|vestier/i, '<path d="M6 3v18M18 3v18M6 3h12M6 21h12M9 12h.01M15 12h.01" stroke-linecap="round" stroke-linejoin="round"/>'],
+  [/estudio/i, '<path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z" stroke-linecap="round" stroke-linejoin="round"/>'],
+  [/cuarto\s*[uú]til|dep[oó]sito/i, '<path d="M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4M21 7v10l-9 4M3 7l9 4M21 7l-9 4v10" stroke-linecap="round" stroke-linejoin="round"/>'],
+  [/zona\s*social|sal[oó]n\s*comunal|sala\s*de\s*eventos/i, '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 20c0-3 3-5 7-5s7 2 7 5M15 15.5c3 .3 5 2 5 4.5" stroke-linecap="round" stroke-linejoin="round"/>'],
+  [/cancha/i, '<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18" stroke-linecap="round" stroke-linejoin="round"/>'],
+  [/lavander[ií]a/i, '<circle cx="12" cy="13" r="5"/><path d="M8 5h1M11 5h1" stroke-linecap="round"/><rect x="4" y="2" width="16" height="20" rx="2"/>'],
+  [/jard[ií]n|zona\s*verde/i, '<path d="M12 21V9M12 9c0-3.3-2.7-6-6-6 0 3.3 2.7 6 6 6zm0 0c0-3.3 2.7-6 6-6 0 3.3-2.7 6-6 6z" stroke-linecap="round" stroke-linejoin="round"/>'],
+];
+const AMENITY_ICON_DEFAULT = '<path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/>';
+function amenityIconSvg(text) {
+  const match = AMENITY_ICONS.find(([rx]) => rx.test(text));
+  return `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6">${match ? match[1] : AMENITY_ICON_DEFAULT}</svg>`;
+}
+
 function cardHTML(p, isFirst = false) {
   const images = p.images || [];
   let amenidades = [];
@@ -1098,12 +1174,14 @@ function cardHTML(p, isFirst = false) {
   const stripEmoji = s => s.replace(/\p{Extended_Pictographic}/gu, '').replace(/\s+/g, ' ').trim();
   const AMENITY_PREVIEW = 8;
   const amenidadesSorted = [...amenidades].sort((a, b) => stripEmoji(a).localeCompare(stripEmoji(b), 'es'));
-  const amenidadesPreviewHTML = amenidadesSorted.slice(0, AMENITY_PREVIEW)
-    .map(a => `<span class="amenity-chip">${stripEmoji(a)}</span>`)
-    .join('');
+  const amenityRowHTML = a => {
+    const clean = stripEmoji(a);
+    return `<span class="amenity-row">${amenityIconSvg(clean)}${clean}</span>`;
+  };
+  const amenidadesPreviewHTML = amenidadesSorted.slice(0, AMENITY_PREVIEW).map(amenityRowHTML).join('');
   const amenidadesExtra = amenidadesSorted.slice(AMENITY_PREVIEW);
   const amenidadesExtraHTML = amenidadesExtra
-    .map(a => `<span class="amenity-chip amenity-chip--extra" hidden>${stripEmoji(a)}</span>`)
+    .map(a => `<span class="amenity-row amenity-row--extra" hidden>${amenityIconSvg(stripEmoji(a))}${stripEmoji(a)}</span>`)
     .join('');
 
   const adminActions = state.isAdmin ? `
@@ -1142,16 +1220,6 @@ function cardHTML(p, isFirst = false) {
               </button>
               <div class="media-overlay-top-right">
                 ${topBadgeHtml}
-                <button class="share-btn card-share-btn" data-id="${p.id}" type="button" aria-label="Compartir">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                    <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </button>
-                <button class="like-btn ${isLiked ? 'is-liked' : ''}" data-id="${p.id}" type="button" aria-label="Me gusta">
-                  <svg viewBox="0 0 24 24" fill="${isLiked ? '#ef4444' : 'none'}" stroke="${isLiked ? '#ef4444' : 'currentColor'}" stroke-width="1.8">
-                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
-                  </svg>
-                </button>
               </div>
             </div>
             <div class="media-overlay-bottom">
@@ -1169,20 +1237,24 @@ function cardHTML(p, isFirst = false) {
         </div>
 
         <div class="card-actions-bar">
-          <div class="card-stat-item" aria-label="Habitaciones">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 20v-7a3 3 0 013-3h14a3 3 0 013 3v7M2 20v-3M22 20v-3M2 14h20M6 10V7a2 2 0 012-2h2a2 2 0 012 2v3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span>${p.habitaciones || 0}</span>
+          <div class="card-stats-group">
+            <div class="card-stat-item" aria-label="Habitaciones">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 20v-7a3 3 0 013-3h14a3 3 0 013 3v7M2 20v-3M22 20v-3M2 14h20M6 10V7a2 2 0 012-2h2a2 2 0 012 2v3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>${p.habitaciones || 0}</span>
+            </div>
+            <div class="card-stat-item" aria-label="Baños">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18v3a4 4 0 01-4 4H7a4 4 0 01-4-4v-3z" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 12V7a2 2 0 012-2h1" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 21v1M17 21v1" stroke-linecap="round"/></svg>
+              <span>${p.banos || 0}</span>
+            </div>
+            <div class="card-stat-item" aria-label="Área">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 14v6h6M20 10V4h-6M4 20l6-6M20 4l-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>${p.area || 0} m²</span>
+            </div>
           </div>
-          <div class="card-stat-item" aria-label="Baños">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18v3a4 4 0 01-4 4H7a4 4 0 01-4-4v-3z" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 12V7a2 2 0 012-2h1" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 21v1M17 21v1" stroke-linecap="round"/></svg>
-            <span>${p.banos || 0}</span>
+          <div class="card-tipo-group">
+            ${nuevoBadgeHtml}
+            <span class="tipo-badge tipo-badge--${isCombinado ? 'combinado' : (p.tipo === 'venta' ? 'venta' : 'arriendo')}">${isCombinado ? 'Arr · Venta' : (p.tipo === 'venta' ? 'Venta' : 'Arriendo')}</span>
           </div>
-          <div class="card-stat-item" aria-label="Área">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 14v6h6M20 10V4h-6M4 20l6-6M20 4l-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span>${p.area || 0} m²</span>
-          </div>
-          <span class="tipo-badge tipo-badge--${isCombinado ? 'combinado' : (p.tipo === 'venta' ? 'venta' : 'arriendo')}">${isCombinado ? 'Arr · Venta' : (p.tipo === 'venta' ? 'Venta' : 'Arriendo')}</span>
-          ${nuevoBadgeHtml}
           <button class="expand-toggle" type="button" aria-expanded="false" aria-label="Ver detalles">
             <svg viewBox="0 0 24 24" fill="none">
               <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1213,7 +1285,7 @@ function cardHTML(p, isFirst = false) {
             ${amenidades.length ? `
             <div class="property-amenities">
               <p class="section-label">Características</p>
-              <div class="amenities-list">${amenidadesPreviewHTML}${amenidadesExtraHTML}</div>
+              <div class="amenities-grid">${amenidadesPreviewHTML}${amenidadesExtraHTML}</div>
               ${amenidadesExtra.length ? `<button class="amenities-toggle" type="button" data-expanded="0">+${amenidadesExtra.length} más</button>` : ''}
             </div>` : ''}
 
@@ -1232,12 +1304,6 @@ function cardHTML(p, isFirst = false) {
             ${adminActions}
           </div>
           <div class="detail-actions">
-            <button class="share-btn" data-id="${p.id}" type="button">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              Compartir
-            </button>
             <button class="contact-btn" type="button"
               data-contact-id="${p.id}"
               data-contact-title="${(p.title||'').replace(/"/g,'&quot;')}"
@@ -1252,6 +1318,16 @@ function cardHTML(p, isFirst = false) {
               data-contact-amenities="${JSON.stringify(amenidades.slice(0,8)).replace(/"/g,'&quot;')}">
               <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
               Contactar
+            </button>
+            <button class="share-btn share-btn--icon" data-id="${p.id}" type="button" aria-label="Compartir">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="like-btn like-btn--icon ${isLiked ? 'is-liked' : ''}" data-id="${p.id}" type="button" aria-label="Me gusta">
+              <svg viewBox="0 0 24 24" fill="${isLiked ? '#ef4444' : 'none'}" stroke="${isLiked ? '#ef4444' : 'currentColor'}" stroke-width="1.8">
+                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+              </svg>
             </button>
           </div>
         </div>
@@ -2548,7 +2624,18 @@ function setupFilters() {
   document.addEventListener('click', (e) => {
     if (!e.target.classList.contains('amenities-toggle')) return;
     const wrap   = e.target.closest('.property-amenities');
-    const extras = wrap.querySelectorAll('.amenity-chip--extra');
+    const extras = wrap.querySelectorAll('.amenity-row--extra');
+    const expanded = e.target.dataset.expanded === '1';
+    extras.forEach(chip => { chip.hidden = expanded; });
+    e.target.dataset.expanded = expanded ? '0' : '1';
+    e.target.textContent = expanded ? `+${extras.length} más` : 'Ver menos';
+  });
+
+  // Mostrar / ocultar características extra en el filtro ("+N más")
+  document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('filter-amenities-more')) return;
+    const wrap   = e.target.closest('.filter-amenidades');
+    const extras = Array.from(wrap.querySelectorAll('.amenity-check')).slice(4);
     const expanded = e.target.dataset.expanded === '1';
     extras.forEach(chip => { chip.hidden = expanded; });
     e.target.dataset.expanded = expanded ? '0' : '1';
@@ -2566,13 +2653,24 @@ function setupFilters() {
 
   // Presets de precio — usar event delegation
   document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('filter-preset')) {
+    if (e.target.classList.contains('filter-preset') && e.target.dataset.min !== undefined) {
       const container = e.target.closest('.filter-price-presets');
       container.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
       document.getElementById('fMinPrecio').value = e.target.dataset.min || '';
       document.getElementById('fMaxPrecio').value = e.target.dataset.max || '';
       updatePrecioLabel();
+    }
+  });
+
+  // Presets de área (m²) — usar event delegation
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('filter-preset') && e.target.dataset.minA !== undefined) {
+      const container = e.target.closest('.filter-price-presets');
+      container.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      document.getElementById('fMinArea').value = e.target.dataset.minA || '';
+      document.getElementById('fMaxArea').value = e.target.dataset.maxA || '';
     }
   });
 
@@ -2619,6 +2717,8 @@ function setupFilters() {
   document.getElementById('clearFilters').addEventListener('click', () => {
     document.getElementById('fMinPrecio').value = '';
     document.getElementById('fMaxPrecio').value = '';
+    document.getElementById('fMinArea').value = '';
+    document.getElementById('fMaxArea').value = '';
     document.getElementById('precioRangeLabel').textContent = 'Cualquier precio';
     document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.hab-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
@@ -2628,6 +2728,7 @@ function setupFilters() {
     document.getElementById('fFilterParqueadero').checked = false;
     document.getElementById('fOrderBy').value = '';
     state.minPrecio = 0; state.maxPrecio = 0;
+    state.minArea = 0; state.maxArea = 0;
     state.minHab = 0; state.minBanos = 0;
     state.filterParqueadero = false; state.filterAmenidades = [];
     state.filterEstado = ''; state.orderBy = '';
@@ -2690,6 +2791,13 @@ function setupFilters() {
 
     state.minPrecio = minPrecio;
     state.maxPrecio = maxPrecio;
+
+    let minArea = Number(document.getElementById('fMinArea').value) || 0;
+    let maxArea = Number(document.getElementById('fMaxArea').value) || 0;
+    if (minArea > maxArea && maxArea > 0) { [minArea, maxArea] = [maxArea, minArea]; }
+    state.minArea = minArea;
+    state.maxArea = maxArea;
+
     const habActive = document.querySelector('.hab-btn.active');
     state.minHab = habActive ? Number(habActive.dataset.hab) : 0;
     const banActive = document.querySelector('.ban-btn.active');
@@ -2697,10 +2805,10 @@ function setupFilters() {
     state.filterParqueadero = document.getElementById('fFilterParqueadero').checked;
     state.filterAmenidades = [...document.querySelectorAll('#filtersModal .amenity-check input:checked')].map(cb => cb.value);
     const stateActive = document.querySelector('#filtersModal .filter-state-btn.active[data-state]');
-    state.filterEstado = stateActive ? stateActive.dataset.state : '';
+    state.filterEstado = (stateActive && (state.isAdmin || stateActive.dataset.state !== 'ocupado')) ? stateActive.dataset.state : '';
     state.orderBy = document.getElementById('fOrderBy')?.value || '';
 
-    const count = [state.minPrecio||state.maxPrecio, state.minHab, state.minBanos, state.filterParqueadero, state.filterAmenidades.length, state.filterEstado, state.orderBy].filter(Boolean).length;
+    const count = [state.minPrecio||state.maxPrecio, state.minArea||state.maxArea, state.minHab, state.minBanos, state.filterParqueadero, state.filterAmenidades.length, state.filterEstado, state.orderBy].filter(Boolean).length;
     const badge = document.getElementById('filterBadge');
     badge.style.display = count ? 'flex' : 'none';
     badge.textContent = count;
@@ -2787,6 +2895,14 @@ function setupFilters() {
       const min = Number(b.dataset.minM) || 0;
       const max = Number(b.dataset.maxM) || 0;
       b.classList.toggle('active', (min || max) && state.minPrecio === min && state.maxPrecio === max);
+    });
+    // Área (m²)
+    document.getElementById('fMinAreaMobile').value = state.minArea || '';
+    document.getElementById('fMaxAreaMobile').value = state.maxArea || '';
+    document.querySelectorAll('.filter-preset[data-min-a-m]').forEach(b => {
+      const min = Number(b.dataset.minAM) || 0;
+      const max = Number(b.dataset.maxAM) || 0;
+      b.classList.toggle('active', (min || max) && state.minArea === min && state.maxArea === max);
     });
     // Habitaciones
     document.querySelectorAll('.hab-btn-m').forEach(b => {
@@ -2892,6 +3008,16 @@ function setupFilters() {
     });
   });
 
+  // Presets área móvil
+  document.querySelectorAll('.filter-preset[data-min-a-m]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-preset[data-min-a-m]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('fMinAreaMobile').value = btn.dataset.minAM || '';
+      document.getElementById('fMaxAreaMobile').value = btn.dataset.maxAM || '';
+    });
+  });
+
   // Aplicar filtros móvil
   document.getElementById('applyMobileSearch').addEventListener('click', () => {
     const activeTipoBtn = document.querySelector('.mobile-tipo-btn.active');
@@ -2906,6 +3032,8 @@ function setupFilters() {
     state.search = searchMobile.value.trim();
     state.minPrecio = Number(document.getElementById('fMinPrecioMobile')?.value) || 0;
     state.maxPrecio = Number(document.getElementById('fMaxPrecioMobile')?.value) || 0;
+    state.minArea = Number(document.getElementById('fMinAreaMobile')?.value) || 0;
+    state.maxArea = Number(document.getElementById('fMaxAreaMobile')?.value) || 0;
     const habM = document.querySelector('.hab-btn-m.active');
     state.minHab = habM ? Number(habM.dataset.habM) : 0;
     const banM = document.querySelector('.ban-btn-m.active');
@@ -2915,7 +3043,7 @@ function setupFilters() {
     state.filterAmenidades = [...document.querySelectorAll('#mobileAmenitiesContainer .amenity-check input:checked')].map(cb => cb.value);
     // Capturar Estado (mobile)
     const stateActiveMobile = document.querySelector('.filter-state-btn.active[data-state-m]');
-    state.filterEstado = stateActiveMobile ? stateActiveMobile.dataset.stateM : '';
+    state.filterEstado = (stateActiveMobile && (state.isAdmin || stateActiveMobile.dataset.stateM !== 'ocupado')) ? stateActiveMobile.dataset.stateM : '';
     // Capturar Ordenamiento (mobile)
     state.orderBy = document.getElementById('fOrderByMobile')?.value || '';
 
@@ -2923,7 +3051,7 @@ function setupFilters() {
     document.getElementById('filterBarrio').value = state.barrio;
     document.getElementById('searchInput').value = state.search;
 
-    const count = [state.minPrecio||state.maxPrecio, state.minHab, state.minBanos, state.filterParqueadero, state.filterAmenidades.length, state.filterEstado, state.orderBy].filter(Boolean).length;
+    const count = [state.minPrecio||state.maxPrecio, state.minArea||state.maxArea, state.minHab, state.minBanos, state.filterParqueadero, state.filterAmenidades.length, state.filterEstado, state.orderBy].filter(Boolean).length;
     const badge = document.getElementById('filterBadge');
     badge.style.display = count ? 'flex' : 'none';
     badge.textContent = count;
@@ -2941,7 +3069,9 @@ function setupFilters() {
     searchMobile.value = '';
     document.getElementById('fMinPrecioMobile').value = '';
     document.getElementById('fMaxPrecioMobile').value = '';
-    document.querySelectorAll('.filter-preset[data-min-m]').forEach(b => b.classList.remove('active'));
+    document.getElementById('fMinAreaMobile').value = '';
+    document.getElementById('fMaxAreaMobile').value = '';
+    document.querySelectorAll('.filter-preset[data-min-m], .filter-preset[data-min-a-m]').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.hab-btn-m').forEach((b, i) => b.classList.toggle('active', i === 0));
     document.querySelectorAll('.ban-btn-m').forEach((b, i) => b.classList.toggle('active', i === 0));
     const pqm = document.getElementById('fParqueaderoMobile');
@@ -2955,6 +3085,7 @@ function setupFilters() {
     // Resetear estado global
     state.tipo = 'todos'; state.municipio = ''; state.barrio = '';
     state.search = ''; state.minPrecio = 0; state.maxPrecio = 0;
+    state.minArea = 0; state.maxArea = 0;
     state.minHab = 0; state.minBanos = 0;
     state.filterParqueadero = false; state.filterAmenidades = [];
     state.filterEstado = ''; state.orderBy = '';
@@ -3340,6 +3471,10 @@ function getVisibleProperties() {
   return visible.length ? visible : withCoords;
 }
 
+// Tiles Jawg (raster, compatible con Leaflet) — reemplaza a CARTO, que ahora exige cuenta
+const JAWG_ACCESS_TOKEN = 'VzdGoz76aRlf732N6br3cv6drvkGiLL34Jzx8rU7vFfG6iI1b07nd7JiqIP3TewR';
+const JAWG_ATTRIBUTION = '<a href="https://www.jawg.io?utm_medium=map&utm_source=attribution" target="_blank">&copy; Jawg</a> - <a href="https://www.openstreetmap.org?utm_medium=map-attribution" target="_blank">&copy; OpenStreetMap</a>&nbsp;contributors';
+
 function initMap() {
   if (state.leafletMap) return;
   if (typeof L === 'undefined') {
@@ -3356,15 +3491,15 @@ function initMap() {
   state.leafletMap = map;
 
   // Tile layers
-  const streetLightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/">CARTO</a>',
+  const streetLightLayer = L.tileLayer(`https://{s}.tile.jawg.io/jawg-streets/{z}/{x}/{y}{r}.png?access-token=${JAWG_ACCESS_TOKEN}`, {
+    attribution: JAWG_ATTRIBUTION,
     subdomains: 'abcd',
     maxZoom: 19,
     name: 'street-light'
   });
 
-  const streetDarkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/">CARTO</a>',
+  const streetDarkLayer = L.tileLayer(`https://{s}.tile.jawg.io/jawg-dark/{z}/{x}/{y}{r}.png?access-token=${JAWG_ACCESS_TOKEN}`, {
+    attribution: JAWG_ATTRIBUTION,
     subdomains: 'abcd',
     maxZoom: 19,
     name: 'street-dark'
@@ -4420,13 +4555,15 @@ function initFormMap(lat, lng) {
   formMapInstance = L.map('formMap', { zoomControl: true, attributionControl: false })
     .setView([defaultLat, defaultLng], 15);
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  L.tileLayer(`https://{s}.tile.jawg.io/jawg-streets/{z}/{x}/{y}{r}.png?access-token=${JAWG_ACCESS_TOKEN}`, {
+    attribution: JAWG_ATTRIBUTION,
+    subdomains: 'abcd',
     maxZoom: 19
   }).addTo(formMapInstance);
 
   const pinIcon = L.divIcon({
     className: '',
-    html: `<div class="form-map-pin"><svg viewBox="0 0 24 24" width="36" height="36"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#E71433"/></svg></div>`,
+    html: `<div class="form-map-pin"><svg viewBox="0 0 24 24" width="36" height="36"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#0f766e"/></svg></div>`,
     iconSize: [36, 36],
     iconAnchor: [18, 36]
   });
@@ -4872,6 +5009,12 @@ function refreshAdminUI() {
   // Toggle "Ocultar ocupados" en inicio/mapa — solo visible para admin
   const hideOccBtn = document.getElementById('btnHideOccupiedHome');
   if (hideOccBtn) { hideOccBtn.style.display = state.isAdmin ? 'flex' : 'none'; updateHideOccupiedBtn(); }
+  // Filtro de estado "Ocupada" — no aporta nada al público (los ocupados
+  // nunca se muestran en la grilla pública), solo tiene sentido para admin.
+  const stateOcupadoBtn = document.getElementById('filterStateOcupado');
+  if (stateOcupadoBtn) stateOcupadoBtn.style.display = state.isAdmin ? 'flex' : 'none';
+  const stateOcupadoBtnM = document.getElementById('filterStateOcupadoMobile');
+  if (stateOcupadoBtnM) stateOcupadoBtnM.style.display = state.isAdmin ? 'flex' : 'none';
   // "Salir" solo visible cuando está logueado
   if (logoutBtn) logoutBtn.style.display = state.isAdmin ? 'inline-flex' : 'none';
   // El botón siempre visible: cuando admin → "Editar perfil", cuando no → "Admin" (login)
@@ -6021,78 +6164,6 @@ function setupWelcomeBanner() {
 }
 
 // ─── AUTO-ABRIR INMUEBLE MÁS POPULAR ─────────────────────────
-// ── HINT ANIMATIONS ──────────────────────────────────────────────
-// Dispara una animación sutil en los botones de like y share cuando
-// la card entra en el viewport por primera vez, para que el usuario
-// entienda que son interactivos. Solo ocurre UNA vez por card/sesión.
-const _hintedCards = new Set();
-let _hintObserver = null;
-
-function setupHintAnimations(grid) {
-  // En escritorio, compartir/me gusta quedan ocultos hasta hover (ver CSS) —
-  // el hint de descubrimiento ya no aplica porque hover los revela directamente.
-  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-
-  // Desconectar el observer anterior si existe (evita listeners duplicados)
-  if (_hintObserver) _hintObserver.disconnect();
-
-  // Agregar data-hint a los botones para el label flotante
-  grid.querySelectorAll('.like-btn').forEach(btn => {
-    btn.setAttribute('data-hint', '♡ Me gusta');
-  });
-  grid.querySelectorAll('.share-btn.card-share-btn').forEach(btn => {
-    btn.setAttribute('data-hint', '↗ Compartir');
-  });
-
-  _hintObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const card = entry.target;
-      const cardId = card.dataset.cardId || card.dataset.id;
-
-      // Si ya fue animada esta sesión, no repetir
-      if (_hintedCards.has(cardId)) {
-        _hintObserver.unobserve(card);
-        return;
-      }
-
-      // Delay escalonado: las primeras 2 cards arrancan en 1.2s,
-      // las que vienen después (scroll) en 0.6s
-      const isFirstLoad = !document.documentElement.dataset.hintFirstDone;
-      const delay = isFirstLoad ? 1200 : 600;
-
-      setTimeout(() => {
-        // Verificar que la card siga visible antes de animar
-        const rect = card.getBoundingClientRect();
-        const inView = rect.top < window.innerHeight && rect.bottom > 0;
-        if (!inView) return;
-
-        _hintedCards.add(cardId);
-        card.classList.add('hint--active');
-
-        // Calcular duración total: animación × iteraciones + delay del share
-        // hint-heartbeat: 0.72s × 2 = 1.44s
-        // hint-send: delay 0.2s + 0.58s × 2 = 1.36s
-        // Total: ~1.5s + margen
-        setTimeout(() => {
-          card.classList.remove('hint--active');
-        }, 1700);
-
-        _hintObserver.unobserve(card);
-      }, delay);
-    });
-
-    // Marcar que la primera tanda ya se procesó
-    document.documentElement.dataset.hintFirstDone = '1';
-  }, {
-    threshold: 0.45,  // Al menos 45% de la card visible
-    rootMargin: '0px 0px -60px 0px'  // No disparar si está casi saliendo
-  });
-
-  grid.querySelectorAll('.property-card').forEach(card => {
-    _hintObserver.observe(card);
-  });
-}
 
 function autoOpenTopProperty() {
   // No interferir si ya viene con ?id= en la URL

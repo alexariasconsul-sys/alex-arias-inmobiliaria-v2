@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Integraciones de Marketing Digital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+/* ── TOKENS ─────────────────────────────────────── */
+:root {
+  --brand:    #0f766e;
+  --blue:     #3b82f6;
+  --green:    #22c55e;
+  --amber:    #f59e0b;
+  --red:      #ef4444;
+  --purple:   #8b5cf6;
+  --ink:      #0f172a;
+  --ink2:     #334155;
+  --muted:    #64748b;
+  --surface:  #ffffff;
+  --bg:       #f8fafc;
+  --border:   #e2e8f0;
+  --r:        14px;
+}
+
+/* ── RESET ──────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink2);
+  line-height: 1.65;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── CODE ───────────────────────────────────────── */
+code {
+  font-family: 'Menlo', 'Consolas', monospace;
+  font-size: .82em;
+  background: #f1f5f9;
+  color: #be185d;
+  padding: 2px 6px;
+  border-radius: 5px;
+  border: 1px solid #e2e8f0;
+}
+pre {
+  background: #0f172a;
+  color: #cbd5e1;
+  border-radius: 10px;
+  padding: 18px 22px;
+  overflow-x: auto;
+  font-size: .82em;
+  line-height: 1.8;
+  margin: 14px 0;
+}
+pre code { background: none; border: none; color: inherit; padding: 0; font-size: inherit; }
+
+/* ── NAV ────────────────────────────────────────── */
+.topbar {
+  position: sticky; top: 0; z-index: 200;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px;
+  height: 58px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.topbar-brand { font-weight: 800; font-size: .95rem; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+.topbar-brand span { color: var(--brand); }
+.topbar-sub { font-size: .75rem; color: var(--muted); }
+
+.navstrip {
+  position: sticky; top: 58px; z-index: 199;
+  background: rgba(255,255,255,.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px;
+  display: flex; gap: 4px; align-items: center;
+  overflow-x: auto; white-space: nowrap;
+  height: 46px;
+}
+.navstrip::-webkit-scrollbar { display: none; }
+.npill {
+  height: 28px; padding: 0 13px;
+  border: none; border-radius: 20px;
+  font-family: inherit; font-size: .75rem; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+  background: transparent; color: var(--muted);
+  flex-shrink: 0;
+}
+.npill:hover, .npill.active { background: var(--ink); color: #fff; }
+
+/* ── LAYOUT ─────────────────────────────────────── */
+.wrap { max-width: 860px; margin: 0 auto; padding: 40px 24px 100px; }
+
+/* ── SCROLL ANIMATIONS ──────────────────────────── */
+.fade-up {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity .55s cubic-bezier(.4,0,.2,1), transform .55s cubic-bezier(.4,0,.2,1);
+}
+.fade-up.visible { opacity: 1; transform: none; }
+
+.stagger > * {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity .45s cubic-bezier(.4,0,.2,1), transform .45s cubic-bezier(.4,0,.2,1);
+}
+.stagger.visible > *:nth-child(1) { opacity:1; transform:none; transition-delay:.05s }
+.stagger.visible > *:nth-child(2) { opacity:1; transform:none; transition-delay:.13s }
+.stagger.visible > *:nth-child(3) { opacity:1; transform:none; transition-delay:.21s }
+.stagger.visible > *:nth-child(4) { opacity:1; transform:none; transition-delay:.29s }
+.stagger.visible > *:nth-child(5) { opacity:1; transform:none; transition-delay:.37s }
+
+/* ── HERO ───────────────────────────────────────── */
+.hero {
+  border-radius: var(--r);
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+  padding: 44px 44px 40px;
+  margin-bottom: 36px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content:'';
+  position: absolute; top: -60px; right: -60px;
+  width: 260px; height: 260px;
+  background: radial-gradient(circle, rgba(15,118,110,.25) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.hero-eyebrow {
+  font-size: .72rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: #94a3b8; margin-bottom: 10px;
+}
+.hero h1 {
+  font-size: 2rem; font-weight: 800; line-height: 1.2;
+  color: #f8fafc; margin-bottom: 12px;
+}
+.hero p { color: #94a3b8; font-size: .9rem; max-width: 520px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+.chip {
+  background: rgba(255,255,255,.09);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 20px; padding: 5px 14px;
+  font-size: .75rem; font-weight: 600; color: #cbd5e1;
+  display: flex; align-items: center; gap: 5px;
+}
+.chip .dot { width:6px; height:6px; border-radius:50%; background: var(--green); flex-shrink:0; }
+.chip .dot--amber { background: var(--amber); }
+
+/* ── SECTION ────────────────────────────────────── */
+.sec {
+  background: var(--surface);
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+  overflow: hidden;
+  scroll-margin-top: 120px;
+}
+.sec-head {
+  padding: 22px 28px 20px;
+  display: flex; align-items: center; gap: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.sec-icon {
+  width: 44px; height: 44px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; flex-shrink: 0;
+  background: var(--bg);
+}
+.sec-meta { flex: 1; }
+.sec-title { font-size: 1rem; font-weight: 700; color: var(--ink); }
+.sec-sub { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+.sec-body { padding: 26px 28px; }
+
+/* ── BADGE ──────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .68rem; font-weight: 700; padding: 3px 9px;
+  border-radius: 20px; margin-left: 6px; vertical-align: middle;
+  letter-spacing: .02em;
+}
+.g  { background: #dcfce7; color: #16a34a; }
+.a  { background: #fef9c3; color: #a16207; }
+.b  { background: #dbeafe; color: #1d4ed8; }
+.r  { background: #fee2e2; color: #dc2626; }
+.p  { background: #ede9fe; color: #6d28d9; }
+
+/* ── H3 LABEL ───────────────────────────────────── */
+.label {
+  font-size: .72rem; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--muted);
+  margin: 22px 0 12px;
+}
+
+/* ── STEPS ──────────────────────────────────────── */
+.steps { display: flex; flex-direction: column; }
+.step  { display: flex; gap: 16px; padding: 14px 0; border-bottom: 1px solid #f8fafc; }
+.step:last-child { border: none; }
+.step-n {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  background: var(--ink); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .72rem; font-weight: 800; margin-top: 1px;
+}
+.step-body h4 { font-size: .88rem; font-weight: 700; color: var(--ink); margin-bottom: 5px; }
+.step-body p  { font-size: .84rem; color: var(--muted); line-height: 1.6; }
+
+/* ── CARDS ──────────────────────────────────────── */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px,1fr)); gap: 12px; }
+.card {
+  border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px;
+  transition: box-shadow .2s, transform .2s;
+}
+.card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.07); transform: translateY(-2px); }
+.card h4 { font-size: .85rem; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.card p  { font-size: .8rem; color: var(--muted); line-height: 1.55; }
+
+/* ── CALLOUT ────────────────────────────────────── */
+.callout {
+  border-radius: 10px; padding: 14px 18px;
+  margin: 14px 0; display: flex; gap: 12px; align-items: flex-start;
+  font-size: .84rem;
+}
+.callout-icon { font-size: 1.1rem; flex-shrink: 0; line-height: 1.5; }
+.callout-body h4 { font-size: .85rem; font-weight: 700; margin-bottom: 4px; }
+.callout-body p, .callout-body li { font-size: .83rem; line-height: 1.6; }
+.callout-body ul { padding-left: 16px; margin-top: 4px; }
+.callout-body a  { font-weight: 600; }
+
+.c-blue   { background: #eff6ff; border-left: 3px solid var(--blue); }
+.c-green  { background: #f0fdf4; border-left: 3px solid var(--green); }
+.c-amber  { background: #fffbeb; border-left: 3px solid var(--amber); }
+.c-purple { background: #faf5ff; border-left: 3px solid var(--purple); }
+.c-red    { background: #fff1f2; border-left: 3px solid var(--red); }
+
+/* ── URL BOX ────────────────────────────────────── */
+.urlbox {
+  display: flex; align-items: center; gap: 8px;
+  background: #f8fafc; border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 14px; margin: 10px 0;
+  font-family: 'Menlo','Consolas',monospace; font-size: .8rem;
+  word-break: break-all; color: var(--blue); font-weight: 500;
+}
+.urlbox .u-icon { font-size: .9rem; flex-shrink: 0; }
+
+/* ── ERROR BLOCK ────────────────────────────────── */
+.err-block {
+  border: 1px solid #fecaca; background: #fff1f2;
+  border-radius: 10px; padding: 18px 20px; margin: 14px 0;
+}
+.err-block h4 {
+  font-size: .88rem; font-weight: 700; color: #dc2626;
+  margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+}
+.err-block p { font-size: .83rem; color: var(--ink2); line-height: 1.6; margin-bottom: 6px; }
+.err-block ul { font-size: .83rem; color: var(--ink2); padding-left: 18px; margin: 6px 0; line-height: 1.7; }
+.fix {
+  background: #f0fdf4; border-left: 3px solid var(--green);
+  border-radius: 7px; padding: 10px 14px; margin-top: 10px;
+  font-size: .82rem; color: var(--ink2);
+}
+.fix strong { color: #15803d; display: block; margin-bottom: 3px; font-size: .8rem; }
+
+/* ── FLOW ───────────────────────────────────────── */
+.flow {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  background: #f8fafc; border-radius: 10px;
+  padding: 14px 16px; margin: 12px 0;
+}
+.flow-node {
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 7px; padding: 6px 12px;
+  font-size: .78rem; font-weight: 600; color: var(--ink);
+}
+.flow-arr { color: #cbd5e1; font-size: .85rem; }
+
+/* ── TABLE ──────────────────────────────────────── */
+.tbl { width: 100%; border-collapse: collapse; font-size: .83rem; margin: 12px 0; }
+.tbl th {
+  text-align: left; padding: 9px 12px; font-weight: 700;
+  color: var(--muted); font-size: .72rem; letter-spacing: .04em; text-transform: uppercase;
+  background: #f8fafc; border-bottom: 1px solid var(--border);
+}
+.tbl td { padding: 9px 12px; border-bottom: 1px solid #f8fafc; color: var(--ink2); vertical-align: top; }
+.tbl tr:last-child td { border: none; }
+.tbl tr:hover td { background: #fafbfc; }
+
+/* ── DIVIDER ────────────────────────────────────── */
+.div { border: none; border-top: 1px solid #f1f5f9; margin: 22px 0; }
+
+/* ── SUMMARY TABLE (last section) ──────────────── */
+.sum-table { width:100%; border-collapse:collapse; font-size:.83rem; margin-top:10px; }
+.sum-table th { padding:9px 12px; text-align:left; font-weight:700; font-size:.72rem; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); background:#f8fafc; border-bottom:1px solid var(--border); }
+.sum-table td { padding:10px 12px; border-bottom:1px solid #f8fafc; vertical-align:middle; }
+.sum-table tr:last-child td { border:none; }
+.sum-table tr:hover td { background:#fafbfc; }
+
+/* ── TOC FLOAT ──────────────────────────────────── */
+@media(min-width:1180px) {
+  .toc {
+    position: fixed; right: 28px; top: 130px;
+    width: 200px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--r);
+    padding: 14px 16px; font-size: .75rem;
+  }
+  .toc h4 {
+    font-size: .68rem; font-weight: 800; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px;
+  }
+  .toc a {
+    display: flex; align-items: center; gap: 7px;
+    color: var(--muted); padding: 5px 0;
+    border-bottom: 1px solid #f1f5f9; transition: color .15s;
+    font-weight: 500;
+  }
+  .toc a:hover { color: var(--ink); text-decoration: none; }
+  .toc a.active { color: var(--brand); font-weight: 700; }
+}
+@media(max-width:1179px) { .toc { display: none; } }
+
+/* ── FOOTER ─────────────────────────────────────── */
+footer {
+  text-align: center; padding: 28px 0 60px;
+  font-size: .75rem; color: var(--muted);
+}
+
+/* ── RESPONSIVE ─────────────────────────────────── */
+@media(max-width:640px) {
+  .hero { padding: 28px 22px; }
+  .hero h1 { font-size: 1.5rem; }
+  .sec-head, .sec-body { padding: 18px; }
+  .topbar, .navstrip { padding: 0 16px; }
+  .wrap { padding: 24px 14px 80px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div>
+    <div class="topbar-brand">📋 <span>Marketing</span> Integraciones</div>
+  </div>
+  <div class="topbar-sub">Documentación técnica reutilizable · 2026</div>
+</header>
+
+<!-- NAV STRIP -->
+<nav class="navstrip" id="navstrip">
+  <button class="npill" data-target="pixel">🎯 Meta Pixel</button>
+  <button class="npill" data-target="capi">🔌 CAPI</button>
+  <button class="npill" data-target="catalog">🗂 Catálogo</button>
+  <button class="npill" data-target="gtm">🏷 GTM</button>
+  <button class="npill" data-target="ga4">📊 Analytics</button>
+  <button class="npill" data-target="gsc">🔍 Search Console</button>
+  <button class="npill" data-target="clarity">🎥 Clarity</button>
+  <button class="npill" data-target="utm">🔗 UTM</button>
+  <button class="npill" data-target="flow">🗺 Flujo</button>
+</nav>
+
+<div class="wrap">
+
+<!-- HERO -->
+<div class="hero fade-up">
+  <div class="hero-eyebrow">Documentación técnica</div>
+  <h1>Manual de Integraciones<br>de Marketing Digital</h1>
+  <p>Guía completa de configuración, errores comunes y pasos exactos de registro para cada integración de marketing del sitio web.</p>
+  <div class="chips stagger">
+    <div class="chip"><span class="dot"></span> Meta Pixel</div>
+    <div class="chip"><span class="dot"></span> CAPI Servidor</div>
+    <div class="chip"><span class="dot"></span> Google Tag Manager</div>
+    <div class="chip"><span class="dot"></span> Clarity</div>
+    <div class="chip"><span class="dot dot--amber"></span> GA4 — pendiente</div>
+    <div class="chip"><span class="dot dot--amber"></span> Search Console — pendiente</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 1 · PIXEL ═══════════════════════ -->
+<div class="sec fade-up" id="pixel">
+  <div class="sec-head">
+    <div class="sec-icon">🎯</div>
+    <div class="sec-meta">
+      <div class="sec-title">Facebook / Meta Pixel <span class="badge g">✓ Activo</span></div>
+      <div class="sec-sub">Seguimiento del lado del navegador — rastrea visitantes y eventos</div>
+    </div>
+  </div>
+  <div class="sec-body">
+
+    <div class="callout c-blue">
+      <span class="callout-icon">ℹ️</span>
+      <div class="callout-body">
+        <h4>¿Qué es el Pixel?</h4>
+        <p>Un fragmento de JavaScript que Meta instala en el navegador del visitante. Registra PageViews, ViewContent, Contact y Search. Alimenta las campañas de Facebook e Instagram con datos reales de comportamiento.</p>
+      </div>
+    </div>
+
+    <p class="label">📍 Dónde encontrar tu Pixel ID</p>
+    <div class="steps stagger">
+      <div class="step">
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <h4>Ir al administrador de anuncios correcto</h4>
+          <p>Abre <a href="https://adsmanager.facebook.com" target="_blank">adsmanager.facebook.com</a> con la cuenta que creó el Pixel.</p>
+          <div class="callout c-amber" style="margin-top:8px">
+            <span class="callout-icon">⚠️</span>
+            <div class="callout-body"><p>Si tienes varias cuentas de Facebook, asegúrate de estar logueado con la que creó el Pixel. <strong>No aparecerá si estás en la cuenta equivocada.</strong></p></div>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <h4>Ir a Events Manager</h4>
+          <p>Menú principal → <strong>Todos los instrumentos</strong> → <strong>Events Manager</strong></p>
+          <div class="urlbox"><span class="u-icon">🔗</span> https://business.facebook.com/events_manager2/list/pixel</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-body">
+          <h4>Seleccionar el conjunto de datos correcto</h4>
+          <p>Busca el que tenga el ícono de <strong>Píxel de Meta</strong> (no "App" ni "Offline"). Anota el <code>ID numérico</code> de 15-16 dígitos.</p>
+        </div>
+      </div>
+    </div>
+
+    <hr class="div"/>
+    <p class="label">⚡ Eventos que dispara automáticamente</p>
+    <table class="tbl">
+      <tr><th>Evento</th><th>Cuándo se dispara</th><th>Datos enviados</th></tr>
+      <tr><td><code>PageView</code></td><td>Al cargar cualquier página</td><td>URL, referrer</td></tr>
+      <tr><td><code>ViewContent</code></td><td>Al abrir la tarjeta de un ítem</td><td>ID, título, precio, tipo</td></tr>
+      <tr><td><code>Contact</code></td><td>Al enviar consulta (WhatsApp, llamada, form)</td><td>Canal, propiedad</td></tr>
+      <tr><td><code>Search</code></td><td>Al usar filtros de búsqueda</td><td>Texto buscado, filtros</td></tr>
+    </table>
+
+    <hr class="div"/>
+    <p class="label">🔧 Flujo de inyección en el sitio</p>
+    <div class="flow stagger">
+      <div class="flow-node">Admin guarda Pixel ID</div><div class="flow-arr">→</div>
+      <div class="flow-node">settings.json</div><div class="flow-arr">→</div>
+      <div class="flow-node">/tracking.js (dinámico)</div><div class="flow-arr">→</div>
+      <div class="flow-node">index.html defer</div><div class="flow-arr">→</div>
+      <div class="flow-node">fbq('init') en navegador</div>
+    </div>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:6px">El endpoint <code>/tracking.js</code> se sirve con <code>Cache-Control: no-store</code> — los cambios del admin toman efecto inmediato sin deploy.</p>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ 2 · CAPI ═══════════════════════ -->
+<div class="sec fade-up" id="capi">
+  <div class="sec-head">
+    <div class="sec-icon">🔌</div>
+    <div class="sec-meta">
+      <div class="sec-title">Meta Conversions API (CAPI) <span class="badge g">✓ Activo</span></div>
+      <div class="sec-sub">Seguimiento servidor-a-servidor — funciona aunque el navegador bloquee el Pixel</div>
+    </div>
+  </div>
+  <div class="sec-body">
+
+    <div class="callout c-green">
+      <span class="callout-icon">🛡️</span>
+      <div class="callout-body">
+        <h4>¿Por qué es fundamental tener CAPI además del Pixel?</h4>
+        <p>iOS 14+, Safari y los bloqueadores de anuncios bloquean el Pixel del navegador. CAPI envía los mismos eventos <strong>directamente desde el servidor a Meta</strong>. Resultado: capturas el 20–40% adicional de conversiones que el Pixel solo perdería.</p>
+      </div>
+    </div>
+
+    <p class="label">🔑 Cómo generar el token de acceso</p>
+    <div class="steps stagger">
+      <div class="step">
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <h4>Ir a Events Manager → tu Pixel</h4>
+          <div class="urlbox"><span class="u-icon">🔗</span> https://business.facebook.com/events_manager2/list/pixel</div>
+          <p>Haz click en tu conjunto de datos (el que tiene el ícono de Pixel de Meta).</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <h4>Pestaña "Configuración"</h4>
+          <p>Haz click en la pestaña <strong>Configuración</strong> en el menú superior del dataset.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-body">
+          <h4>Sección "API de conversiones" → Generar token</h4>
+          <p>Baja hasta <strong>"API de conversiones"</strong> → selecciona <em>"Configurar con Dataset Quality API (Recommended)"</em> → <strong>"Generar token de acceso"</strong>.</p>
+          <p style="margin-top:5px">El token empieza con <code>EAA…</code> y tiene ~200 caracteres. Cópialo completo.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">4</div>
+        <div class="step-body">
+          <h4>Guardarlo en el servidor (.env)</h4>
+          <p>En la consola del VPS (sin TTY) usa <code>sed</code>, no <code>nano</code>:</p>
+          <pre><code>sed -i "s|FB_ACCESS_TOKEN=.*|FB_ACCESS_TOKEN=EAA_TU_TOKEN|" /var/www/tu-proyecto/.env
+pm2 restart all</code></pre>
+          <div class="callout c-amber" style="margin-top:8px">
+            <span class="callout-icon">⚠️</span>
+            <div class="callout-body"><p><code>nano</code> <strong>no funciona</strong> en consolas web de hosting (requiere TTY). Siempre usar <code>sed -i</code> para editar el <code>.env</code> desde esa consola.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="div"/>
+    <p class="label">🐛 Errores comunes</p>
+
+    <div class="err-block fade-up">
+      <h4>🔴 Error #190 — Invalid OAuth access token</h4>
+      <p><strong>Causa:</strong> El token venció. Los tokens de perfil personal duran <strong>~60 días</strong> y expiran automáticamente.</p>
+      <p><strong>Síntoma:</strong> Columna CAPI muestra <em>"Invalid OAuth access token - Cannot parse access token [190]"</em></p>
+      <div class="fix">
+        <strong>✅ Solución</strong>
+        Genera un nuevo token en Events Manager → Configuración → API de conversiones. Actualiza el <code>.env</code> con <code>sed</code> y reinicia PM2.
+      </div>
+    </div>
+
+    <div class="err-block fade-up">
+      <h4>🔴 Error #100 — Missing Permission</h4>
+      <p><strong>Causa:</strong> El token no tiene permiso <code>ads_read</code> para leer metadata del Pixel. Ocurre al intentar verificar el token con un GET a la Graph API en lugar de solo enviar eventos.</p>
+      <p><strong>Importante:</strong> Este error en verificación <em>no significa</em> que el CAPI no funcione. Un token puede enviar eventos correctamente y aún fallar una lectura de metadata.</p>
+      <div class="fix">
+        <strong>✅ Solución</strong>
+        Si los eventos muestran "✓ recibido" en el Debug Pixel, el token funciona correctamente. El error #100 solo aplica a consultas de metadatos, no al envío de eventos.
+      </div>
+    </div>
+
+    <div class="callout c-purple" style="margin-top:16px">
+      <span class="callout-icon">♾️</span>
+      <div class="callout-body">
+        <h4>Token permanente — recomendado para producción</h4>
+        <p>Para evitar renovar el token cada 60 días, crea un <strong>System User Token</strong> desde <a href="https://business.facebook.com/settings/system-users" target="_blank">Meta Business Settings → System Users</a>:</p>
+        <ul>
+          <li>Crea un System User con rol <em>Admin</em></li>
+          <li>Click <strong>"Generar nuevo token"</strong> → otorga permisos <code>ads_management</code> y <code>business_management</code></li>
+          <li>Este token <strong>nunca vence</strong> a menos que lo revoques manualmente</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ 3 · CATÁLOGO ═══════════════════════ -->
+<div class="sec fade-up" id="catalog">
+  <div class="sec-head">
+    <div class="sec-icon">🗂</div>
+    <div class="sec-meta">
+      <div class="sec-title">Catálogo de Facebook Ads</div>
+      <div class="sec-sub">Feed automático de productos para anuncios dinámicos de retargeting</div>
+    </div>
+  </div>
+  <div class="sec-body">
+
+    <div class="callout c-blue">
+      <span class="callout-icon">💡</span>
+      <div class="callout-body">
+        <h4>¿Para qué sirve?</h4>
+        <p>Permite crear anuncios dinámicos que muestran automáticamente el <strong>producto exacto</strong> que alguien visitó. Meta sincroniza el feed cada hora y retargetea con ese ítem específico en Instagram y Facebook.</p>
+      </div>
+    </div>
+
+    <p class="label">📡 URL del feed generada automáticamente</p>
+    <div class="urlbox"><span class="u-icon">📄</span> https://tu-sitio.com/api/feed/facebook.csv</div>
+    <p style="font-size:.8rem;color:var(--muted)">Se actualiza en tiempo real con cada cambio de productos. No requiere mantenimiento.</p>
+
+    <hr class="div"/>
+    <p class="label" style="color:var(--red)">⚠️ Error crítico — NO crear catálogo tipo "Real Estate" o "Bienes raíces"</p>
+
+    <div class="err-block">
+      <h4>🔴 Problema con el tipo de catálogo "Bienes raíces"</h4>
+      <p>Meta exige campos ultra-específicos del schema de Real Estate que son muy difíciles de cumplir desde un CSV externo:</p>
+      <ul>
+        <li>Requiere <code>home_listing_id</code> en lugar de <code>id</code></li>
+        <li>Requiere <code>listing_type</code> con valores exactos (<code>for_rent</code>, <code>for_sale</code>)</li>
+        <li>Requiere <code>availability</code> con valores (<code>for_rent</code>, <code>recently_sold</code>, etc.)</li>
+        <li>Los errores de validación son crípticos y el feed completo se rechaza si un campo falla</li>
+        <li>Soporte <strong>limitado</strong> en Advantage+ Catalog Ads vs. catálogo de Productos</li>
+      </ul>
+      <div class="fix">
+        <strong>✅ Solución: Crear como "E-commerce / Productos online"</strong>
+        El feed CSV ya genera los campos en formato de <strong>Catálogo de Productos</strong>. Meta lo acepta sin problemas, permite Dynamic Ads idénticos y tiene soporte completo en Advantage+ Catalog Ads.
+      </div>
+    </div>
+
+    <p class="label">📋 Pasos para crear el catálogo correctamente</p>
+    <div class="steps stagger">
+      <div class="step">
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <h4>Ir a Commerce Manager</h4>
+          <div class="urlbox"><span class="u-icon">🔗</span> https://business.facebook.com/commerce/</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <h4>Crear catálogo → tipo "E-commerce"</h4>
+          <p>Click <strong>"Crear catálogo"</strong> → selecciona <strong>"E-commerce"</strong> → <em>NO selecciones "Bienes raíces"</em>. Dale un nombre descriptivo.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-body">
+          <h4>Agregar fuente de datos → URL del feed</h4>
+          <p><strong>"Orígenes de datos"</strong> → <strong>"Agregar artículos"</strong> → <strong>"Usar una fuente de datos"</strong> → <strong>"Lista de datos programada"</strong></p>
+          <p style="margin-top:5px">Pega la URL del feed CSV. Frecuencia: <strong>Cada hora</strong>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">4</div>
+        <div class="step-body">
+          <h4>Vincular el catálogo al Pixel</h4>
+          <p><strong>"Configuración"</strong> → <strong>"Orígenes de eventos"</strong> → conecta tu Pixel ID. Esto activa el retargeting automático.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">5</div>
+        <div class="step-body">
+          <h4>Crear campaña</h4>
+          <p>Ads Manager → Crear campaña → Objetivo: <strong>"Ventas"</strong> → Conversión: <strong>"Catálogo"</strong> → selecciona tu catálogo.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ 4 · GTM ═══════════════════════ -->
+<div class="sec fade-up" id="gtm">
+  <div class="sec-head">
+    <div class="sec-icon">🏷</div>
+    <div class="sec-meta">
+      <div class="sec-title">Google Tag Manager <span class="badge g">✓ Activo</span></div>
+      <div class="sec-sub">Container: GTM-XXXXXXX — Gestor central de todos los tags de marketing</div>
+    </div>
+  </div>
+  <div class="sec-body">
+
+    <div class="callout c-green">
+      <span class="callout-icon">🎯</span>
+      <div class="callout-body">
+        <h4>¿Qué ventaja da GTM?</h4>
+        <p>Con GTM activo puedes agregar o modificar cualquier tag de marketing (GA4, TikTok Pixel, Clarity, Google Ads…) desde la interfaz web de Google <strong>sin tocar el código ni hacer deploy</strong>. Los cambios toman efecto en segundos.</p>
+      </div>
+    </div>
+
+    <p class="label">📍 Dónde encontrar tu Container ID</p>
+    <div class="urlbox"><span class="u-icon">🔗</span> https://tagmanager.google.com</div>
+    <p style="font-size:.8rem;color:var(--muted);margin-top:4px">El Container ID tiene el formato <code>GTM-XXXXXXX</code> — aparece en la esquina superior derecha de tu workspace.</p>
+
+    <hr class="div"/>
+    <p class="label">➕ Cómo agregar tags sin código</p>
+    <div class="steps stagger">
+      <div class="step">
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <h4>Abrir GTM → tu contenedor</h4>
+          <p>Ve a <a href="https://tagmanager.google.com" target="_blank">tagmanager.google.com</a> → selecciona tu workspace.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <h4>Crear nueva etiqueta</h4>
+          <p>Menú izquierdo → <strong>Etiquetas</strong> → <strong>Nueva</strong>. Elige el tipo predefinido (GA4, Ads) o usa <em>"HTML personalizado"</em> para cualquier otro.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-body">
+          <h4>Configurar activador → All Pages</h4>
+          <p>En <strong>"Activación"</strong> selecciona <em>All Pages</em> para que cargue en todas las páginas del sitio.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">4</div>
+        <div class="step-body">
+          <h4>Publicar</h4>
+          <p>Click <strong>"Enviar"</strong> → nombra la versión → <strong>"Publicar"</strong>. Cambios en producción en segundos.</p>
+        </div>
+      </div>
+    </div>
+
+    <hr class="div"/>
+    <div class="cards stagger">
+      <div class="card">
+        <h4>📊 GA4 via GTM</h4>
+        <p>Tipo: <strong>Google Analytics: GA4</strong>. Ingresa tu Measurement ID (<code>G-XXXXXXXXXX</code>). Activador: All Pages.</p>
+      </div>
+      <div class="card">
+        <h4>🎥 Clarity via GTM</h4>
+        <p>Tipo: <strong>HTML personalizado</strong>. Pega el snippet de <a href="https://clarity.microsoft.com" target="_blank">clarity.microsoft.com</a>. Activador: All Pages.</p>
+      </div>
+      <div class="card">
+        <h4>🎵 TikTok Pixel via GTM</h4>
+        <p>Tipo: <strong>HTML personalizado</strong>. Snippet en <a href="https://ads.tiktok.com" target="_blank">ads.tiktok.com</a> → Biblioteca → Pixel.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ 5 · GA4 ═══════════════════════ -->
+<div class="sec fade-up" id="ga4">
+  <div class="sec-head">
+    <div class="sec-icon">📊</div>
+    <div class="sec-meta">
+      <div class="sec-title">Google Analytics 4 <span class="badge a">⏳ Pendiente</span></div>
+      <div class="sec-sub">Análisis de tráfico total, comportamiento y conversiones</div>
+    </div>
+  </div>
+  <div class="sec-body">
+
+    <div class="callout c-amber">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <h4>¿Por qué es importante junto al Pixel de Meta?</h4>
+        <p>Meta Pixel solo ve el tráfico que viene de Meta. GA4 ve <strong>todo el tráfico</strong>: orgánico, directo, Google Ads, referidos. Sin GA4 no sabes cuánto tráfico viene de Google ni qué páginas tienen más rebote.</p>
+      </div>
+    </div>
+
+    <p class="label">📋 Pasos para crear y conectar GA4</p>
+    <div class="steps stagger">
+      <div class="step">
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <h4>Crear propiedad GA4</h4>
+          <div class="urlbox"><span class="u-icon">🔗</span> https://analytics.google.com</div>
+          <p>Click <strong>"Crear propiedad"</strong> → nombre del proyecto → zona horaria → moneda local.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <h4>Crear flujo de datos web</h4>
+          <p><strong>"Flujos de datos"</strong> → <strong>"Agregar flujo"</strong> → <strong>"Web"</strong> → ingresa la URL del sitio. Se genera un <strong>Measurement ID</strong> tipo <code>G-XXXXXXXXXX</code>.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-body">
+          <h4>Instalar via GTM (recomendado)</h4>
+          <p>GTM → Nueva etiqueta → tipo <strong>"Google Analytics: configuración de GA4"</strong> → pega el Measurement ID → Activador: All Pages → Publicar.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">4</div>
+        <div class="step-body">
+          <h4>Verificar en tiempo real</h4>
+          <p>GA4 → <strong>"En tiempo real"</strong>. Abre el sitio en otra pestaña → deberías ver 1 usuario activo.</p>
+        </div>
+      </div>
+    </div>
+
+    <hr class="div"/>
+    <div class="cards stagger">
+      <div class="card"><h4>🌐 Tráfico orgánico</h4><p>Cuánta gente llega desde Google de manera orgánica (SEO).</p></div>
+      <div class="card"><h4>📱 Dispositivos</h4><p>% móvil vs desktop, duración de sesión promedio.</p></div>
+      <div class="card"><h4>📍 Geografía</h4><p>De qué ciudades y países llegan los visitantes.</p></div>
+      <div class="card"><h4>🔄 Embudos</h4><p>Visitantes → ven producto → hacen contacto. Tasa de conversión real.</p></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ 6 · SEARCH CONSOLE ═══════════════════════ -->
+<div class="sec fade-up" id="gsc">
+  <div class="sec-head">
+    <div class="sec-icon">🔍</div>
+    <div class="sec-meta">
+      <div class="sec-title">Google Search Console <span class="badge a">⏳ Pendiente</span></div>
+      <div class="sec-sub">SEO — Muestra con qué palabras encuentran el sitio en Google</div>
+    </div>
+  </div>
+  <div class="sec-body">
+
+    <div class="callout c-blue">
+      <span class="callout-icon">🔑</span>
+      <div class="callout-body">
+        <h4>¿Qué hace Search Console?</h4>
+        <p>Muestra exactamente qué búsquedas llevan tráfico al sitio, en qué posición aparece, cuántos clics recibe, y si hay errores de indexación. Gratis y esencial para SEO.</p>
+      </div>
+    </div>
+
+    <p class="label">📋 Registro paso a paso</p>
+    <div class="steps stagger">
+      <div class="step">
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <h4>Registrar la propiedad</h4>
+          <div class="urlbox"><span class="u-icon">🔗</span> https://search.google.com/search-console</div>
+          <p>Click <strong>"Agregar propiedad"</strong> → tipo <strong>"Prefijo de URL"</strong> → ingresa <code>https://tu-sitio.com</code></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <h4>Verificar via GTM (más fácil)</h4>
+          <p>Google genera una <code>&lt;meta&gt;</code> tag de verificación. En GTM → nueva etiqueta → HTML personalizado → pega la meta tag → All Pages → Publicar. Luego en Search Console → verificar.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">3</div>
+        <div class="step-body">
+          <h4>Enviar sitemap</h4>
+          <p>Search Console → <strong>"Sitemaps"</strong> → ingresa <code>sitemap.xml</code>. Acelera la indexación de contenido nuevo.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ 7 · CLARITY ═══════════════════════ -->
+<div class="sec fade-up" id="clarity">
+  <div class="sec-head">
+    <div class="sec-icon">🎥</div>
+    <div class="sec-meta">
+      <div class="sec-title">Microsoft Clarity <span class="badge g">✓ Activo</span></div>
+      <div class="sec-sub">Grabaciones de sesión en tiempo real y mapas de calor — 100% gratis</div>
+    </div>
+  </div>
+  <div class="sec-body">
+
+    <div class="callout c-green">
+      <span class="callout-icon">💡</span>
+      <div class="callout-body">
+        <h4>Lo que Clarity registra</h4>
+        <p>Cada visita queda grabada como un video. Ves exactamente cómo navegó el usuario, qué tocó, dónde se confundió. También genera mapas de calor mostrando qué zonas reciben más clics.</p>
+      </div>
+    </div>
+
+    <p class="label">📍 Dónde ver los datos</p>
+    <div class="urlbox"><span class="u-icon">🔗</span> https://clarity.microsoft.com/projects/view/TU_CLARITY_ID</div>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:4px">Los primeros registros aparecen ~2 horas después de instalar. Las grabaciones se conservan 90 días.</p>
+
+    <hr class="div"/>
+    <p class="label">🔧 Snippet de instalación</p>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:8px">Pega en Admin → Integraciones → Marketing → <strong>"Código personalizado"</strong>. Se inyecta en todas las páginas vía <code>/tracking.js</code>.</p>
+    <pre><code>&lt;script type="text/javascript"&gt;
+  (function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+  })(window, document, "clarity", "script", "TU_CLARITY_ID");
+&lt;/script&gt;</code></pre>
+
+    <hr class="div"/>
+    <p class="label">📊 Métricas clave a monitorear</p>
+    <div class="cards stagger">
+      <div class="card"><h4>😤 Dead clicks</h4><p>Clics en elementos que no hacen nada — indica confusión del usuario.</p></div>
+      <div class="card"><h4>😡 Rage clicks</h4><p>Varios clics rápidos — el usuario espera una respuesta que no llega.</p></div>
+      <div class="card"><h4>📜 Scroll depth</h4><p>Hasta dónde bajan antes de irse. Identifica dónde se pierde la atención.</p></div>
+      <div class="card"><h4>🚪 Exit pages</h4><p>En qué punto exacto abandona el sitio la mayoría de visitantes.</p></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ 8 · UTM ═══════════════════════ -->
+<div class="sec fade-up" id="utm">
+  <div class="sec-head">
+    <div class="sec-icon">🔗</div>
+    <div class="sec-meta">
+      <div class="sec-title">UTM Tracking <span class="badge g">✓ Activo</span></div>
+      <div class="sec-sub">Atribución de leads por fuente — Instagram, Facebook, Google, etc.</div>
+    </div>
+  </div>
+  <div class="sec-body">
+
+    <div class="callout c-blue">
+      <span class="callout-icon">📌</span>
+      <div class="callout-body">
+        <h4>¿Qué son los parámetros UTM?</h4>
+        <p>Se agregan a la URL del sitio para saber exactamente de dónde viene cada visitante. El sistema los detecta automáticamente y los asocia a cada lead registrado.</p>
+      </div>
+    </div>
+
+    <p class="label">🔗 Formato de URL con UTM</p>
+    <div class="urlbox"><span class="u-icon">📎</span> https://tu-sitio.com/?utm_source=instagram&amp;utm_medium=bio&amp;utm_campaign=nombre-campaña</div>
+
+    <table class="tbl" style="margin-top:12px">
+      <tr><th>Parámetro</th><th>¿Qué indica?</th><th>Valores comunes</th></tr>
+      <tr><td><code>utm_source</code></td><td>Plataforma de origen</td><td>instagram, facebook, google, tiktok, email</td></tr>
+      <tr><td><code>utm_medium</code></td><td>Tipo de medio</td><td>bio, story, paid, organic, cpc, email</td></tr>
+      <tr><td><code>utm_campaign</code></td><td>Nombre de la campaña</td><td>lanzamiento, retargeting, mayo2026</td></tr>
+      <tr><td><code>utm_content</code></td><td>Variante del anuncio</td><td>video1, imagen-hero, carrusel (opcional)</td></tr>
+    </table>
+
+    <hr class="div"/>
+    <p class="label">⚙️ Flujo interno</p>
+    <div class="flow stagger">
+      <div class="flow-node">Visitante llega con ?utm_source=…</div><div class="flow-arr">→</div>
+      <div class="flow-node">app.js guarda en sessionStorage</div><div class="flow-arr">→</div>
+      <div class="flow-node">Lead incluye UTMs</div><div class="flow-arr">→</div>
+      <div class="flow-node">leads.db los almacena</div><div class="flow-arr">→</div>
+      <div class="flow-node">Admin → Audiencia → tabla UTM</div>
+    </div>
+
+    <div class="callout c-amber" style="margin-top:16px">
+      <span class="callout-icon">🛠</span>
+      <div class="callout-body">
+        <h4>Herramienta para crear UTMs sin errores</h4>
+        <p>Usa el <a href="https://ga-dev-tools.google/campaign-url-builder/" target="_blank"><strong>Google Campaign URL Builder</strong></a> para generar URLs con UTMs correctamente formateados.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ 9 · FLUJO GENERAL ═══════════════════════ -->
+<div class="sec fade-up" id="flow">
+  <div class="sec-head">
+    <div class="sec-icon">🗺</div>
+    <div class="sec-meta">
+      <div class="sec-title">Flujo general de datos</div>
+      <div class="sec-sub">Cómo viaja la información desde el visitante hasta los reportes</div>
+    </div>
+  </div>
+  <div class="sec-body">
+
+    <p class="label">👤 Cuando un visitante abre el sitio</p>
+    <div class="flow stagger">
+      <div class="flow-node">Visitante abre el sitio</div><div class="flow-arr">→</div>
+      <div class="flow-node">index.html carga /tracking.js</div><div class="flow-arr">→</div>
+      <div class="flow-node">GTM se inicializa</div><div class="flow-arr">→</div>
+      <div class="flow-node">Pixel → PageView</div><div class="flow-arr">→</div>
+      <div class="flow-node">Clarity inicia grabación</div>
+    </div>
+
+    <p class="label" style="margin-top:20px">🛍 Cuando abre un ítem / producto</p>
+    <div class="flow stagger">
+      <div class="flow-node">Click en tarjeta</div><div class="flow-arr">→</div>
+      <div class="flow-node">logView()</div><div class="flow-arr">→</div>
+      <div class="flow-node">Pixel → ViewContent</div><div class="flow-arr">→</div>
+      <div class="flow-node">POST /api/pixel/event</div><div class="flow-arr">→</div>
+      <div class="flow-node">CAPI → Meta API</div>
+    </div>
+
+    <p class="label" style="margin-top:20px">📱 Cuando envía una consulta (lead)</p>
+    <div class="flow stagger">
+      <div class="flow-node">Click WhatsApp / Llamar</div><div class="flow-arr">→</div>
+      <div class="flow-node">logLead() + UTMs</div><div class="flow-arr">→</div>
+      <div class="flow-node">Pixel → Contact</div><div class="flow-arr">→</div>
+      <div class="flow-node">POST /api/leads/log</div><div class="flow-arr">→</div>
+      <div class="flow-node">leads.db + CAPI</div>
+    </div>
+
+    <hr class="div"/>
+    <p class="label">📋 Resumen de integraciones</p>
+    <table class="sum-table">
+      <tr><th>Integración</th><th>Estado</th><th>Configurar en</th><th>Datos que genera</th></tr>
+      <tr><td>🎯 Meta Pixel</td><td><span class="badge g">Activo</span></td><td>Admin → Pixel ID</td><td>PageView, ViewContent, Contact, Search</td></tr>
+      <tr><td>🔌 CAPI</td><td><span class="badge g">Activo</span></td><td>.env → FB_ACCESS_TOKEN</td><td>Mismos eventos desde servidor</td></tr>
+      <tr><td>🗂 Catálogo</td><td><span class="badge a">Feed listo</span></td><td>Meta Commerce Manager</td><td>Retargeting dinámico de productos</td></tr>
+      <tr><td>🏷 GTM</td><td><span class="badge g">Activo</span></td><td>Admin → GTM Container ID</td><td>Contenedor central de tags</td></tr>
+      <tr><td>📊 Google Analytics 4</td><td><span class="badge a">Pendiente</span></td><td>analytics.google.com + GTM</td><td>Tráfico total, SEO, comportamiento</td></tr>
+      <tr><td>🔍 Search Console</td><td><span class="badge a">Pendiente</span></td><td>search.google.com/search-console</td><td>Palabras clave, posiciones SEO</td></tr>
+      <tr><td>🎥 Clarity</td><td><span class="badge g">Activo</span></td><td>Admin → Código personalizado</td><td>Grabaciones de sesión, heatmaps</td></tr>
+      <tr><td>🔗 UTM Tracking</td><td><span class="badge g">Activo</span></td><td>Parámetros en URL de links</td><td>Atribución de leads por campaña</td></tr>
+    </table>
+
+  </div>
+</div>
+
+<footer>Documentación técnica de integraciones de marketing digital · Reutilizable para cualquier proyecto</footer>
+
+</div><!-- /wrap -->
+
+<!-- TOC flotante -->
+<nav class="toc" id="toc">
+  <h4>Contenido</h4>
+  <a href="#pixel" data-target="pixel">🎯 Meta Pixel</a>
+  <a href="#capi" data-target="capi">🔌 CAPI</a>
+  <a href="#catalog" data-target="catalog">🗂 Catálogo</a>
+  <a href="#gtm" data-target="gtm">🏷 GTM</a>
+  <a href="#ga4" data-target="ga4">📊 Analytics 4</a>
+  <a href="#gsc" data-target="gsc">🔍 Search Console</a>
+  <a href="#clarity" data-target="clarity">🎥 Clarity</a>
+  <a href="#utm" data-target="utm">🔗 UTM</a>
+  <a href="#flow" data-target="flow">🗺 Flujo general</a>
+</nav>
+
+<script>
+/* ── SCROLL ANIMATIONS ──────────────────────────── */
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      io.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.fade-up, .stagger').forEach(el => io.observe(el));
+
+/* ── ACTIVE NAV ─────────────────────────────────── */
+const sections = document.querySelectorAll('.sec[id]');
+const pills    = document.querySelectorAll('[data-target]');
+
+const navIo = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      pills.forEach(p => {
+        p.classList.toggle('active', p.dataset.target === id);
+      });
+    }
+  });
+}, { rootMargin: '-30% 0px -60% 0px' });
+
+sections.forEach(s => navIo.observe(s));
+
+/* ── SMOOTH SCROLL ON PILL CLICK ────────────────── */
+document.querySelectorAll('.npill[data-target]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById(btn.dataset.target)?.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>

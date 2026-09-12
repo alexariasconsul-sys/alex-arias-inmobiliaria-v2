@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="/admin.css?v=4" />
+  <link rel="stylesheet" href="/admin.css?v=5" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -297,7 +297,7 @@
           <div id="chartConversionFunnel" style="padding:24px 20px"></div>
         </div>
         <div class="adm-row">
-          <div class="adm-card"><h3 class="adm-card-title">Métricas de Conversión</h3><div id="conversionMetrics" style="padding:20px;font-size:14px;line-height:1.8"><div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e5e7eb"><span>Búsquedas totales:</span><strong id="convTotal" style="color:#e71433">—</strong></div><div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e5e7eb"><span>Vistas (búsqueda→vista):</span><strong id="convView" style="color:#3b82f6">—</strong></div><div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e5e7eb"><span>Leads (vista→contacto):</span><strong id="convLead" style="color:#10b981">—</strong></div><div style="display:flex;justify-content:space-between;padding:10px 0;color:#6b7280"><span>Conversión general:</span><strong id="convOverall" style="color:#e71433">—</strong></div></div></div>
+          <div class="adm-card"><h3 class="adm-card-title">Métricas de Conversión</h3><div id="conversionMetrics" style="padding:20px;font-size:14px;line-height:1.8"><div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e5e7eb"><span>Búsquedas totales:</span><strong id="convTotal" style="color:#0f766e">—</strong></div><div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e5e7eb"><span>Vistas (búsqueda→vista):</span><strong id="convView" style="color:#3b82f6">—</strong></div><div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e5e7eb"><span>Leads (vista→contacto):</span><strong id="convLead" style="color:#10b981">—</strong></div><div style="display:flex;justify-content:space-between;padding:10px 0;color:#6b7280"><span>Conversión general:</span><strong id="convOverall" style="color:#0f766e">—</strong></div></div></div>
         </div>
       </div>
 
@@ -1494,7 +1494,7 @@ async function loadStats() {
     document.getElementById('kpiViews').textContent  = fmtNum(d.totals.views);
     document.getElementById('kpiLikes').textContent  = fmtNum(d.totals.likes);
     document.getElementById('kpiShares').textContent = fmtNum(d.totals.shares || 0);
-    drawDonut('chartTipo',   'legendTipo',   d.propsByType,   ['#E71433','#111827','#3b82f6','#f59e0b']);
+    drawDonut('chartTipo',   'legendTipo',   d.propsByType,   ['#0f766e','#111827','#3b82f6','#f59e0b']);
     drawDonut('chartEstado', 'legendEstado', d.propsByStatus, ['#16a34a','#dc2626','#f59e0b']);
     document.getElementById('topPropsList').innerHTML = d.topProps.length ? d.topProps.map((p,i) => `
       <div class="adm-list-item"><span class="adm-list-rank">${i+1}</span><div class="adm-list-info"><span class="adm-list-title">${p.title}</span><span class="adm-list-meta">${p.tipo}</span></div><div class="adm-list-stats"><span class="adm-stat-pill views">${fmtNum(p.views)} vistas</span><span class="adm-stat-pill likes">${p.likes} ♥</span>${p.shares ? `<span class="adm-stat-pill shares">${p.shares} ↗</span>` : ''}</div></div>`).join('') : '<p class="adm-empty">Sin datos aún</p>';
@@ -3046,7 +3046,7 @@ function renderAudienceTab(data) {
           data: counts,
           backgroundColor: counts.map(c => {
             const intensity = c / maxVal;
-            return `rgba(231, 20, 51, ${0.15 + intensity * 0.75})`;
+            return `rgba(15, 118, 110, ${0.15 + intensity * 0.75})`;
           }),
           borderRadius: 4,
           borderSkipped: false
@@ -3263,7 +3263,7 @@ async function renderPropPerformance() {
         <td>${price}</td>
         <td>${p.views||0}</td>
         <td>${p.likes||0}</td>
-        <td><strong style="color:${p.leads>0?'#E71433':'inherit'}">${p.leads||0}</strong></td>
+        <td><strong style="color:${p.leads>0?'#0f766e':'inherit'}">${p.leads||0}</strong></td>
         <td>${p.conversionRate}</td>
         <td>${p.daysSincePublished >= 0 ? p.daysSincePublished + 'd' : '—'}</td>
         <td>${TEMP_LABEL[p.temp] || '—'}</td>
@@ -3334,7 +3334,7 @@ function _destroyChart(id) {
   if (_chartInst[id]) { _chartInst[id].destroy(); delete _chartInst[id]; }
 }
 
-const CHART_COLORS = ['#E71433','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#6366f1'];
+const CHART_COLORS = ['#0f766e','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#6366f1'];
 
 function drawLineChart(canvas, data, title) {
   _destroyChart(canvas.id);
@@ -3350,12 +3350,12 @@ function drawLineChart(canvas, data, title) {
       datasets: [{
         label: title,
         data: data.map(([,v]) => v),
-        borderColor: '#E71433',
-        backgroundColor: 'rgba(231,20,51,0.08)',
+        borderColor: '#0f766e',
+        backgroundColor: 'rgba(15,118,110,0.08)',
         borderWidth: 2,
         tension: 0.4,
         fill: true,
-        pointBackgroundColor: '#E71433',
+        pointBackgroundColor: '#0f766e',
         pointRadius: 4,
         pointHoverRadius: 6
       }]
@@ -3433,8 +3433,8 @@ function drawDonutChart(canvas, data, title) {
 
 function drawFunnelChart(container, stages) {
   if (!container) return;
-  const colors     = ['#E71433', '#3b82f6', '#10b981'];
-  const colorsBg   = ['#fff0f2', '#dbeafe', '#dcfce7'];
+  const colors     = ['#0f766e', '#3b82f6', '#10b981'];
+  const colorsBg   = ['#f0fdfa', '#dbeafe', '#dcfce7'];
   const icons      = ['🔍', '👁️', '💬'];
   const max        = Math.max(...stages.map(s => s.value), 1);
 

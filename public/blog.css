@@ -1409,7 +1409,7 @@
     line-height: 1;
   }
   .blog-float-icon svg { width: 22px; height: 22px; flex-shrink: 0; }
-  .blog-float-icon.active { color: var(--brand, #E71433); }
+  .blog-float-icon.active { color: var(--brand, #0f766e); }
   .blog-float-icon:active { transform: scale(.9); }
 }
 
@@ -1430,7 +1430,7 @@
   line-height: 1.75;
   color: #374151;
   background: #f0f9ff;
-  border-left: 4px solid var(--brand, #E71433);
+  border-left: 4px solid var(--brand, #0f766e);
   border-radius: 0 8px 8px 0;
   padding: 16px 20px;
   margin: 0 0 2rem;
@@ -1459,7 +1459,7 @@
   font-size: 0.9rem;
 }
 .post-toc-list a {
-  color: var(--brand, #E71433);
+  color: var(--brand, #0f766e);
   text-decoration: none;
   font-weight: 500;
   transition: color .15s;
@@ -1612,7 +1612,7 @@
 }
 .post-faq-item[open] {
   box-shadow: 0 2px 12px rgba(0,0,0,.08);
-  border-color: var(--brand, #E71433);
+  border-color: var(--brand, #0f766e);
 }
 .post-faq-q {
   cursor: pointer;
@@ -1629,7 +1629,7 @@
 .post-faq-q::after {
   content: '＋';
   font-size: 1.2rem;
-  color: var(--brand, #E71433);
+  color: var(--brand, #0f766e);
   transition: transform .25s;
   flex-shrink: 0;
   margin-left: 12px;
@@ -1690,7 +1690,7 @@ details.post-faq {
 }
 details.post-faq[open] {
   box-shadow: 0 2px 12px rgba(0,0,0,.08);
-  border-color: var(--brand, #E71433);
+  border-color: var(--brand, #0f766e);
 }
 details.post-faq > summary {
   cursor: pointer;
@@ -1707,7 +1707,7 @@ details.post-faq > summary::-webkit-details-marker { display: none; }
 details.post-faq > summary::after {
   content: '＋';
   font-size: 1.15rem;
-  color: var(--brand, #E71433);
+  color: var(--brand, #0f766e);
   flex-shrink: 0;
   margin-left: 12px;
   transition: content .2s;

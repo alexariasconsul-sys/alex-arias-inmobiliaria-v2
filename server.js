@@ -1512,7 +1512,7 @@ const PDP_ICONS = {
   ruler: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 14v6h6M20 10V4h-6M4 20l6-6M20 4l-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor" stroke="none"/></svg>',
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  heart: (filled) => `<svg viewBox="0 0 24 24" fill="${filled ? '#E71433' : 'none'}" stroke="${filled ? '#E71433' : 'currentColor'}" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>`,
+  heart: (filled) => `<svg viewBox="0 0 24 24" fill="${filled ? '#ef4444' : 'none'}" stroke="${filled ? '#ef4444' : 'currentColor'}" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>`,
   share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
@@ -1702,7 +1702,7 @@ async function renderPropertyPage(req, res, prop) {
   <script type="application/ld+json">${propSchema}</script>
   <script type="application/ld+json">${breadcrumbSchema}</script>
 
-  <link rel="stylesheet" href="/property.css?v=1" />
+  <link rel="stylesheet" href="/property.css?v=2" />
 </head>
 <body>
   <header class="pdp-topbar">
@@ -1823,7 +1823,7 @@ async function renderPropertyPage(req, res, prop) {
   </div>
   ${pixelBlock}
   <script>window.__PROP__ = ${JSON.stringify({ id, title: prop.title || '', images: imgs })};</script>
-  <script src="/property.js?v=1" defer></script>
+  <script src="/property.js?v=2" defer></script>
 </body>
 </html>`;
 
@@ -1867,7 +1867,7 @@ app.post('/api/verify-password', (req, res) => {
 app.get('/api/properties', async (req, res) => {
   try {
     const db = getDB();
-    const { tipo, municipio, barrio, search, minPrecio, maxPrecio, minHab, minBanos, parqueadero, amenidades, estado, orderBy } = req.query;
+    const { tipo, municipio, barrio, search, minPrecio, maxPrecio, minArea, maxArea, minHab, minBanos, parqueadero, amenidades, estado, orderBy } = req.query;
 
     const query = {};
     if (tipo && tipo !== 'todos') query.tipo = { $in: [tipo, 'combinado'] };
@@ -1882,6 +1882,11 @@ app.get('/api/properties', async (req, res) => {
       query.precio = {};
       if (minPrecio) query.precio.$gte = Number(minPrecio);
       if (maxPrecio) query.precio.$lte = Number(maxPrecio);
+    }
+    if (minArea || maxArea) {
+      query.area = {};
+      if (minArea) query.area.$gte = Number(minArea);
+      if (maxArea) query.area.$lte = Number(maxArea);
     }
     if (minHab) query.habitaciones = { $gte: Number(minHab) };
     if (minBanos) query.banos = { $gte: Number(minBanos) };
@@ -1902,9 +1907,7 @@ app.get('/api/properties', async (req, res) => {
     // Sorting logic basado en orderBy
     const sortFns = {
       'vistas-desc': (a, b) => (b.views || 0) - (a.views || 0),
-      'vistas-asc': (a, b) => (a.views || 0) - (b.views || 0),
       'likes-desc': (a, b) => (b.likes || 0) - (a.likes || 0),
-      'likes-asc': (a, b) => (a.likes || 0) - (b.likes || 0),
       'precio-asc': (a, b) => (a.precio || 0) - (b.precio || 0),
       'precio-desc': (a, b) => (b.precio || 0) - (a.precio || 0),
       'fecha-desc': (a, b) => (new Date(b.created_at)||0) - (new Date(a.created_at)||0),

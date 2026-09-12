@@ -17,9 +17,9 @@
   --radius-lg: 20px;
   --radius-md: 14px;
   --radius-sm: 10px;
-  --brand: #E71433;
-  --brand-dark: #c0102a;
-  --brand-light: #fff0f2;
+  --brand: #0f766e;
+  --brand-dark: #115e59;
+  --brand-light: #f0fdfa;
 }
 
 * { box-sizing: border-box; }
@@ -231,7 +231,7 @@ button { font-family: inherit; cursor: pointer; }
   display: flex; align-items: center; justify-content: center; gap: 9px;
   width: 100%; padding: 15px; margin-top: 16px;
   background: var(--brand); color: #fff; font-size: 15px; font-weight: 800;
-  border-radius: 999px; border: none; box-shadow: 0 8px 20px rgba(231,20,51,.28);
+  border-radius: 999px; border: none; box-shadow: 0 8px 20px rgba(15,118,110,.28);
   transition: background .2s, transform .15s;
 }
 .pdp-cta-wa:hover { background: var(--brand-dark); }

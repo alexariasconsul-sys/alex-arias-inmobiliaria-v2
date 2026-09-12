@@ -82,8 +82,8 @@
       btn.classList.toggle('is-liked', isLiked);
       var svg = btn.querySelector('svg');
       if (svg) {
-        svg.setAttribute('fill', isLiked ? '#E71433' : 'none');
-        svg.setAttribute('stroke', isLiked ? '#E71433' : 'currentColor');
+        svg.setAttribute('fill', isLiked ? '#ef4444' : 'none');
+        svg.setAttribute('stroke', isLiked ? '#ef4444' : 'currentColor');
       }
     });
   }

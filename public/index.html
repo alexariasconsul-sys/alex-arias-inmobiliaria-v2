@@ -46,8 +46,6 @@
   <meta name="theme-color" content="#000000" />
 
   <link rel="icon" type="image/png" href="/assets/logo/favicon.png" />
-  <!-- Preload recursos críticos (LCP) -->
-  <link rel="preload" href="/assets/logo/Logo.png" as="image" />
   <!-- DNS Prefetch y Preconnect para terceros -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -58,6 +56,9 @@
   <!-- Google Fonts — no bloqueante (mejora FCP) -->
   <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
   <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" /></noscript>
+  <!-- Plus Jakarta Sans — solo para las tarjetas de propiedad (más amigable/fresca) -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
 
   <!-- Critical CSS: Solo lo mínimo para evitar FOUC -->
   <style>
@@ -72,10 +73,10 @@
     @media(max-width:767px){.app-shell{padding-bottom:calc(50px + env(safe-area-inset-bottom,0px))}}
   </style>
 
-  <link rel="stylesheet" href="/styles.min.css?v=48" />
+  <link rel="stylesheet" href="/styles.min.css?v=53" />
   <!-- admin.min.css: solo lo necesita el admin logueado, no bloquear el render de todos los visitantes -->
-  <link rel="stylesheet" href="/admin.min.css?v=9" media="print" onload="this.media='all'" />
-  <noscript><link rel="stylesheet" href="/admin.min.css?v=9" /></noscript>
+  <link rel="stylesheet" href="/admin.min.css?v=10" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="/admin.min.css?v=10" /></noscript>
 
   <!-- Leaflet CSS: Lazy load (media=print, onload para cambiar a all) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" media="print" onload="this.media='all'" />
@@ -263,8 +264,11 @@
 
         <!-- Logo -->
         <div class="brand-wrap">
-          <div class="brand-icon">
-            <img src="/assets/logo/Logo.png" alt="Alex Arias" class="brand-logo-img" />
+          <div class="brand-icon" aria-label="Alex Arias" role="img">
+            <svg class="brand-icon-svg" viewBox="0 0 24 24" fill="none">
+              <path d="M4 19.5L11 4.5C11.4 3.7 12.6 3.7 13 4.5L20 19.5" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8.3 13.5H15.7" stroke="white" stroke-width="2.4" stroke-linecap="round"/>
+            </svg>
           </div>
           <div class="brand-text">
             <span class="brand-name">Alex Arias</span>
@@ -477,43 +481,71 @@
             </div>
           </div>
 
-          <!-- Habitaciones -->
+          <!-- Área (m²) -->
           <div class="mobile-filter-section">
-            <p class="mobile-filter-label">Habitaciones</p>
-            <div class="hab-options">
-              <button class="hab-btn-m active" data-hab-m="0">Todas</button>
-              <button class="hab-btn-m" data-hab-m="1">1+</button>
-              <button class="hab-btn-m" data-hab-m="2">2+</button>
-              <button class="hab-btn-m" data-hab-m="3">3+</button>
-              <button class="hab-btn-m" data-hab-m="4">4+</button>
+            <p class="mobile-filter-label">Área</p>
+            <div class="filter-price-inputs">
+              <div class="filter-price-field">
+                <input type="number" id="fMinAreaMobile" placeholder="Mínimo" min="0" step="5" class="filter-price-input"/>
+                <span class="filter-price-symbol">m²</span>
+              </div>
+              <span class="filter-price-dash">—</span>
+              <div class="filter-price-field">
+                <input type="number" id="fMaxAreaMobile" placeholder="Máximo" min="0" step="5" class="filter-price-input"/>
+                <span class="filter-price-symbol">m²</span>
+              </div>
+            </div>
+            <div class="filter-price-presets">
+              <button class="filter-preset" data-min-a-m="0" data-max-a-m="50">Hasta 50 m²</button>
+              <button class="filter-preset" data-min-a-m="50" data-max-a-m="70">50–70 m²</button>
+              <button class="filter-preset" data-min-a-m="70" data-max-a-m="90">70–90 m²</button>
+              <button class="filter-preset" data-min-a-m="90" data-max-a-m="">+90 m²</button>
             </div>
           </div>
 
-          <!-- Baños -->
+          <!-- Habitaciones + Baños -->
+          <div class="mobile-filter-section filter-section-split">
+            <div class="filter-split-col">
+              <p class="mobile-filter-label">Habitaciones</p>
+              <div class="hab-options">
+                <button class="hab-btn-m active" data-hab-m="0">Todas</button>
+                <button class="hab-btn-m" data-hab-m="1">1+</button>
+                <button class="hab-btn-m" data-hab-m="2">2+</button>
+                <button class="hab-btn-m" data-hab-m="3">3+</button>
+                <button class="hab-btn-m" data-hab-m="4">4+</button>
+              </div>
+            </div>
+            <div class="filter-split-col">
+              <p class="mobile-filter-label">Baños</p>
+              <div class="hab-options">
+                <button class="ban-btn-m active" data-ban-m="0">Todos</button>
+                <button class="ban-btn-m" data-ban-m="1">1+</button>
+                <button class="ban-btn-m" data-ban-m="2">2+</button>
+                <button class="ban-btn-m" data-ban-m="3">3+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filtros rápidos -->
           <div class="mobile-filter-section">
-            <p class="mobile-filter-label">Baños</p>
-            <div class="hab-options">
-              <button class="ban-btn-m active" data-ban-m="0">Todos</button>
-              <button class="ban-btn-m" data-ban-m="1">1+</button>
-              <button class="ban-btn-m" data-ban-m="2">2+</button>
-              <button class="ban-btn-m" data-ban-m="3">3+</button>
+            <p class="mobile-filter-label">Filtros rápidos</p>
+            <div class="filter-quick-chips">
+              <label class="quick-chip">
+                <input type="checkbox" id="fParqueaderoMobile"/>
+                <span class="quick-chip-pill">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 17h14M6 17l1.4-4.7A2 2 0 019.3 11h5.4a2 2 0 011.9 1.3L18 17M8 17v2M16 17v2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Parqueadero
+                </span>
+              </label>
+              <div class="filter-quick-chips-dynamic" id="filterQuickChipsMobile"></div>
             </div>
           </div>
 
           <!-- Características / Amenidades (mobile) -->
           <div class="mobile-filter-section">
-            <p class="mobile-filter-label">Características</p>
+            <p class="mobile-filter-label">Más características</p>
             <p class="mobile-filter-sub">Selecciona las que necesitas</p>
             <div class="filter-amenidades" id="mobileAmenitiesContainer"></div>
-          </div>
-
-          <!-- Parqueadero -->
-          <div class="mobile-filter-section" style="display:flex;align-items:center;justify-content:space-between">
-            <p class="mobile-filter-label" style="margin:0">Con parqueadero</p>
-            <label class="filter-toggle">
-              <input type="checkbox" id="fParqueaderoMobile"/>
-              <span class="filter-toggle-track"></span>
-            </label>
           </div>
 
           <!-- Estado -->
@@ -522,7 +554,7 @@
             <div class="filter-state-group">
               <button class="filter-state-btn active" data-state-m="">Todos</button>
               <button class="filter-state-btn" data-state-m="libre"><span class="state-dot state-dot--libre"></span>Disponible</button>
-              <button class="filter-state-btn" data-state-m="ocupado"><span class="state-dot state-dot--ocupado"></span>Ocupada</button>
+              <button class="filter-state-btn" id="filterStateOcupadoMobile" data-state-m="ocupado" style="display:none"><span class="state-dot state-dot--ocupado"></span>Ocupada</button>
             </div>
           </div>
 
@@ -532,9 +564,7 @@
             <select id="fOrderByMobile" class="filter-select">
               <option value="">Por defecto</option>
               <option value="vistas-desc">Más vistas</option>
-              <option value="vistas-asc">Menos vistas</option>
               <option value="likes-desc">Más likes</option>
-              <option value="likes-asc">Menos likes</option>
               <option value="precio-asc">Menor precio</option>
               <option value="precio-desc">Mayor precio</option>
               <option value="fecha-desc">Más recientes</option>
@@ -1206,28 +1236,67 @@
 
           <div class="filter-divider"></div>
 
-          <!-- Habitaciones -->
+          <!-- Área (m²) -->
           <div class="filter-section">
-            <span class="filter-section-title">Habitaciones</span>
-            <div class="hab-options">
-              <button class="hab-btn active" data-hab="0">Todas</button>
-              <button class="hab-btn" data-hab="1">1+</button>
-              <button class="hab-btn" data-hab="2">2+</button>
-              <button class="hab-btn" data-hab="3">3+</button>
-              <button class="hab-btn" data-hab="4">4+</button>
+            <span class="filter-section-title">Área</span>
+            <div class="filter-price-inputs">
+              <div class="filter-price-field">
+                <input type="number" id="fMinArea" placeholder="Mínimo" min="0" step="5" class="filter-price-input"/>
+                <span class="filter-price-symbol">m²</span>
+              </div>
+              <span class="filter-price-dash">—</span>
+              <div class="filter-price-field">
+                <input type="number" id="fMaxArea" placeholder="Máximo" min="0" step="5" class="filter-price-input"/>
+                <span class="filter-price-symbol">m²</span>
+              </div>
+            </div>
+            <div class="filter-price-presets">
+              <button class="filter-preset" data-min-a="0" data-max-a="50">Hasta 50 m²</button>
+              <button class="filter-preset" data-min-a="50" data-max-a="70">50–70 m²</button>
+              <button class="filter-preset" data-min-a="70" data-max-a="90">70–90 m²</button>
+              <button class="filter-preset" data-min-a="90" data-max-a="">+90 m²</button>
             </div>
           </div>
 
           <div class="filter-divider"></div>
 
-          <!-- Baños -->
+          <!-- Habitaciones + Baños -->
+          <div class="filter-section filter-section-split">
+            <div class="filter-split-col">
+              <span class="filter-section-title">Habitaciones</span>
+              <div class="hab-options" id="filterHabOptions">
+                <button class="hab-btn active" data-hab="0">Todas</button>
+                <button class="hab-btn" data-hab="1">1+</button>
+                <button class="hab-btn" data-hab="2">2+</button>
+                <button class="hab-btn" data-hab="3">3+</button>
+                <button class="hab-btn" data-hab="4">4+</button>
+              </div>
+            </div>
+            <div class="filter-split-col">
+              <span class="filter-section-title">Baños</span>
+              <div class="hab-options" id="filterBanOptions">
+                <button class="ban-btn active" data-ban="0">Todos</button>
+                <button class="ban-btn" data-ban="1">1+</button>
+                <button class="ban-btn" data-ban="2">2+</button>
+                <button class="ban-btn" data-ban="3">3+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-divider"></div>
+
+          <!-- Filtros rápidos -->
           <div class="filter-section">
-            <span class="filter-section-title">Baños</span>
-            <div class="hab-options">
-              <button class="ban-btn active" data-ban="0">Todos</button>
-              <button class="ban-btn" data-ban="1">1+</button>
-              <button class="ban-btn" data-ban="2">2+</button>
-              <button class="ban-btn" data-ban="3">3+</button>
+            <span class="filter-section-title">Filtros rápidos</span>
+            <div class="filter-quick-chips">
+              <label class="quick-chip">
+                <input type="checkbox" id="fFilterParqueadero"/>
+                <span class="quick-chip-pill">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 17h14M6 17l1.4-4.7A2 2 0 019.3 11h5.4a2 2 0 011.9 1.3L18 17M8 17v2M16 17v2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Parqueadero
+                </span>
+              </label>
+              <div class="filter-quick-chips-dynamic" id="filterQuickChips"></div>
             </div>
           </div>
 
@@ -1235,7 +1304,7 @@
 
           <!-- Amenidades -->
           <div class="filter-section">
-            <span class="filter-section-title">Características</span>
+            <span class="filter-section-title">Más características</span>
             <p class="filter-section-sub" style="margin-bottom:14px">Selecciona las que necesitas</p>
             <div class="filter-amenidades">
 
@@ -1290,26 +1359,6 @@
               </label>
 
               <label class="amenity-check">
-                <input type="checkbox" value="Portería 24h"/>
-                <span class="amenity-card">
-                  <span class="amenity-icon-wrap">
-                    <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 2L3 6.5v5c0 5.25 3.75 10.15 9 11.35C17.25 21.65 21 16.75 21 11.5v-5L12 2z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </span>
-                  <span class="amenity-label">Portería 24h</span>
-                </span>
-              </label>
-
-              <label class="amenity-check">
-                <input type="checkbox" value="Ascensor"/>
-                <span class="amenity-card">
-                  <span class="amenity-icon-wrap">
-                    <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M9.5 10l2.5-3 2.5 3M9.5 14l2.5 3 2.5-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </span>
-                  <span class="amenity-label">Ascensor</span>
-                </span>
-              </label>
-
-              <label class="amenity-check">
                 <input type="checkbox" value="Terraza"/>
                 <span class="amenity-card">
                   <span class="amenity-icon-wrap">
@@ -1349,31 +1398,8 @@
                 </span>
               </label>
 
-              <label class="amenity-check">
-                <input type="checkbox" value="Cocina integral"/>
-                <span class="amenity-card">
-                  <span class="amenity-icon-wrap">
-                    <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="2" y="3" width="20" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M2 9h20" stroke="currentColor" stroke-width="1.8"/><circle cx="7" cy="6" r="1.2" fill="currentColor"/><circle cx="12" cy="6" r="1.2" fill="currentColor"/><circle cx="17" cy="6" r="1.2" fill="currentColor"/><rect x="6" y="12" width="12" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
-                  </span>
-                  <span class="amenity-label">Cocina integral</span>
-                </span>
-              </label>
 
             </div>
-          </div>
-
-          <div class="filter-divider"></div>
-
-          <!-- Parqueadero -->
-          <div class="filter-section filter-section-row">
-            <div>
-              <p class="filter-section-title">Parqueadero</p>
-              <p class="filter-section-sub">Solo inmuebles con parqueadero</p>
-            </div>
-            <label class="filter-toggle">
-              <input type="checkbox" id="fFilterParqueadero"/>
-              <span class="filter-toggle-track"></span>
-            </label>
           </div>
 
           <div class="filter-divider"></div>
@@ -1384,7 +1410,7 @@
             <div class="filter-state-group">
               <button class="filter-state-btn active" data-state="">Todos</button>
               <button class="filter-state-btn" data-state="libre"><span class="state-dot state-dot--libre"></span>Disponible</button>
-              <button class="filter-state-btn" data-state="ocupado"><span class="state-dot state-dot--ocupado"></span>Ocupada</button>
+              <button class="filter-state-btn" id="filterStateOcupado" data-state="ocupado" style="display:none"><span class="state-dot state-dot--ocupado"></span>Ocupada</button>
             </div>
           </div>
 
@@ -1396,9 +1422,7 @@
             <select id="fOrderBy" class="filter-select">
               <option value="">Por defecto</option>
               <option value="vistas-desc">Más vistas</option>
-              <option value="vistas-asc">Menos vistas</option>
               <option value="likes-desc">Más likes</option>
-              <option value="likes-asc">Menos likes</option>
               <option value="precio-asc">Menor precio</option>
               <option value="precio-desc">Mayor precio</option>
               <option value="fecha-desc">Más recientes</option>
@@ -1758,6 +1782,6 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
 
   <!-- App.js: Minificado para producción -->
-  <script src="/app.min.js?v=66"></script>
+  <script src="/app.min.js?v=70"></script>
 </body>
 </html>
