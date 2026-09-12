@@ -3208,6 +3208,30 @@ function feedDescription(p, useRent) {
   return text.replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, 500);
 }
 
+// Rango de precio para segmentar audiencias/retargeting en Meta Ads
+// (custom_label) sin depender de la categoria de producto.
+function priceBracket(rawPrice, useRent) {
+  const n = Number(rawPrice) || 0;
+  if (useRent) {
+    if (n < 2000000) return 'Menos de 2M';
+    if (n < 3000000) return '2M - 3M';
+    if (n < 5000000) return '3M - 5M';
+    return 'Más de 5M';
+  }
+  if (n < 300000000) return 'Menos de 300M';
+  if (n < 500000000) return '300M - 500M';
+  if (n < 800000000) return '500M - 800M';
+  return 'Más de 800M';
+}
+
+// Ruta de categorización interna (product_type) — agrupa por tipo de
+// operación, municipio y tipo de inmueble para filtrar sets de anuncios.
+function feedProductType(p, useRent) {
+  const tipoLabel = capitalizeFirst(p.tipo_inmueble || 'Inmueble');
+  const municipio  = p.municipio || 'Antioquia';
+  return `${useRent ? 'Arriendo' : 'Venta'} > ${municipio} > ${tipoLabel}`;
+}
+
 // ─── FEED FACEBOOK CATALOG (Real Estate) ─────────────────────
 // Genera una entrada por propiedad; para "combinado" genera DOS entradas
 // (una for_rent con precio arriendo + una for_sale con precio venta)
@@ -3415,7 +3439,7 @@ app.get('/api/feed/productos.csv', async (req, res) => {
           ? `${baseUrl}/api/feed/img/${encodeURIComponent(imgs[0].filename.replace(/\.jpeg$/i, '.jpg').split('/').pop())}`
           : `${baseUrl}/uploads/${encodeURIComponent(imgs[0].filename.split('/').pop())}`;
 
-        const extraImgs = imgs.slice(1, 4).map(i => {
+        const extraImgs = imgs.slice(1, 10).map(i => {
           const fname = i.filename.split('/').pop();
           return i.filename.startsWith('assets/')
             ? `${baseUrl}/api/feed/img/${encodeURIComponent(fname.replace(/\.jpeg$/i, '.jpg'))}`
@@ -3485,7 +3509,9 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
       'id', 'title', 'description',
       'availability', 'condition', 'price',
       'link', 'image_link', 'additional_image_link',
-      'brand', 'google_product_category', 'item_group_id'
+      'brand', 'google_product_category', 'item_group_id',
+      'product_type', 'custom_label_0', 'custom_label_1',
+      'custom_label_2', 'custom_label_3'
     ];
 
     const rows = [HEADERS.join(',')];
@@ -3547,7 +3573,6 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         const imgs = (p.images || []).filter(i => i.filename)
                        .map(i => `${baseUrl}/${encodeURI(i.filename)}`);
         const mainImg  = imgs[0] || '';
-        const extraImg = imgs.slice(1, 4).join(','); // hasta 3 adicionales separadas por coma
 
         // Saltar propiedades sin imagen — Meta requiere URL válida en campo "image"
         if (!mainImg) continue;
@@ -3582,7 +3607,9 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
           return url;
         };
         const metaMainImg  = toMetaImg(mainImg);
-        const metaExtraImg = imgs.slice(1, 4).map(toMetaImg).filter(Boolean).join(',');
+        // Hasta 9 fotos adicionales (10 en total) — Meta permite carruseles
+        // mas ricos y mas fotos suele subir el CTR del anuncio dinamico.
+        const metaExtraImg = imgs.slice(1, 10).map(toMetaImg).filter(Boolean).join(',');
 
         const desc = feedDescription(p, useRent);
         // Código postal colombiano por municipio
@@ -3626,6 +3653,11 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         // Para propiedades combinado esto vincula las dos entradas en Meta
         const itemGroupId = p._id;
 
+        // product_type y custom_label_* no afectan lo que ve el usuario: sirven
+        // para armar conjuntos de anuncios/audiencias segmentadas en Ads Manager
+        // (por tipo de operacion, municipio, tipo de inmueble y rango de precio).
+        const tipoLabel = capitalizeFirst(p.tipo_inmueble || 'Inmueble');
+
         rows.push([
           q(listingId),                            // id
           q(feedTitle(p, useRent)),                // title
@@ -3638,7 +3670,12 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
           q(metaExtraImg),                         // additional_image_link
           '"Alex Arias"',                          // brand
           gpc,                                     // google_product_category
-          q(itemGroupId)                           // item_group_id
+          q(itemGroupId),                          // item_group_id
+          q(feedProductType(p, useRent)),          // product_type
+          q(useRent ? 'Arriendo' : 'Venta'),       // custom_label_0: tipo de operación
+          q(municipio),                            // custom_label_1: municipio
+          q(tipoLabel),                            // custom_label_2: tipo de inmueble
+          q(priceBracket(rawPrice, useRent))       // custom_label_3: rango de precio
         ].join(','));
       }
     }
