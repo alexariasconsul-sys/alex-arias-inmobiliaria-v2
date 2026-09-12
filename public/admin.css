@@ -56,10 +56,12 @@ body {
   align-items: center;
   gap: 8px;
 }
-.adm-login-logo {
-  height: 44px;
-  width: auto;
-  margin-bottom: 8px;
+.adm-login-icon {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  background: var(--brand, #0f766e);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 8px;
 }
 .adm-login-card h1 { font-size: 22px; font-weight: 800; color: #111; }
 .adm-login-card p  { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
@@ -110,11 +112,12 @@ body {
   padding: 20px 18px;
   border-bottom: 1px solid rgba(255,255,255,.07);
 }
-.adm-sidebar-logo {
+.adm-sidebar-icon {
   height: 38px;
   width: 38px;
-  border-radius: 50%;
-  object-fit: cover;
+  border-radius: 11px;
+  background: var(--brand, #0f766e);
+  display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
 .adm-sidebar-name { display: block; font-size: 13px; font-weight: 700; color: #fff; }
