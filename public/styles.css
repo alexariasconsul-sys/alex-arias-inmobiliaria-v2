@@ -2639,8 +2639,11 @@ body { background: #0f172a; }
     position: fixed !important;
     top: var(--top-bar-h, 64px) !important;
     left: 0 !important; right: 0 !important; bottom: 0 !important;
+    /* Sin height explícito: que lo resuelva top+bottom — fijar los tres
+       (top/height/bottom) a la vez dejaba "bottom" sobre-restringido y el
+       navegador lo recalculaba, corriendo la tarjeta unos px de más y
+       tapando los botones Contactar/Compartir del fondo. */
     width: 100% !important;
-    height: calc(100dvh - var(--top-bar-h, 64px)) !important;
     z-index: 300 !important;
     margin: 0 !important;
     border-radius: 0 !important;
@@ -2649,7 +2652,7 @@ body { background: #0f172a; }
   .map-cards-list .property-card.is-open .property-card-inner {
     position: relative !important;
     height: auto !important;
-    min-height: calc(100dvh - 64px);
+    min-height: 100%;
     border-radius: 0 !important;
     overflow: visible !important;
   }
@@ -4103,8 +4106,13 @@ body { background: #0f172a; }
      ════════════════════════════════════════════════════════ */
   .map-sidebar.has-open-card {
     height: 100vh !important;
+    max-height: 100vh !important;
     border-radius: 0 !important;
     transition: height .3s cubic-bezier(.32,.72,0,1) !important;
+    /* Por encima del bottom tab bar (.floating-bar, z-index:100) — si no,
+       los botones Contactar/Compartir del fondo de la tarjeta quedan
+       tapados por la barra de navegación inferior. */
+    z-index: 400 !important;
   }
 
   /* Imagen más alta para verla mejor */

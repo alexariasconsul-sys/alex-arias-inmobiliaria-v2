@@ -3985,9 +3985,36 @@ function initBottomSheet() {
     else                     snapTo('hidden');
   });
 
-  // ── DRAG en header con rAF (60fps máx, evita lag) ────────
+  function currentSnap() {
+    return sidebar.classList.contains('sheet-expanded') ? 'expanded'
+         : sidebar.classList.contains('sheet-peek')     ? 'peek'
+         : 'hidden';
+  }
+
+  // ── DRAG con rAF (60fps máx) + velocidad para que se sienta nativo ──
+  // Se puede arrastrar desde el handle SIEMPRE, y también desde la propia
+  // lista de tarjetas (salvo cuando eso rompería el scroll/carrusel nativo).
+  const SNAP_POINTS = [
+    { name: 'hidden',   h: SHEET_H.hidden },
+    { name: 'peek',     h: SHEET_H.peek },
+    { name: 'expanded', h: SHEET_H.expanded },
+  ];
+  const FLICK_VELOCITY = 0.45;  // px/ms — un flick rápido avanza un snap sin importar la distancia
+  const ADVANCE_RATIO  = 0.22;  // sin flick: basta mover ~22% del camino al siguiente snap
+
   let startY = 0, startH = 0, isDragging = false;
   let pendingDy = 0, dragRafId = null;
+  let velocitySamples = [];
+
+  function beginDrag(y) {
+    startY = y;
+    startH = sidebar.getBoundingClientRect().height;
+    isDragging = false;
+    pendingDy = 0;
+    velocitySamples = [{ t: performance.now(), y }];
+    sidebar.style.transition = 'none';
+    sidebar.style.willChange = 'height';
+  }
 
   function applyDragHeight() {
     dragRafId = null;
@@ -3995,7 +4022,34 @@ function initBottomSheet() {
     sidebar.style.height = newH + 'px';
   }
 
-  function endDrag() {
+  function trackDrag(y) {
+    const dy = startY - y;
+    if (!isDragging && Math.abs(dy) < 5) return;
+    if (!isDragging) {
+      isDragging = true;
+      sidebar.classList.add('sheet-dragging');
+      // Quitar TODAS las clases de snap UNA SOLA VEZ al inicio del drag
+      // (evitar reflows en cada touchmove)
+      sidebar.classList.remove('sheet-hidden', 'sheet-peek', 'sheet-expanded');
+    }
+    pendingDy = dy;
+    const now = performance.now();
+    velocitySamples.push({ t: now, y });
+    const cutoff = now - 120; // solo nos importa el gesto reciente (últimos ~120ms)
+    while (velocitySamples.length > 2 && velocitySamples[0].t < cutoff) velocitySamples.shift();
+    if (dragRafId === null) dragRafId = requestAnimationFrame(applyDragHeight);
+  }
+
+  function computeVelocity() {
+    if (velocitySamples.length < 2) return 0;
+    const first = velocitySamples[0];
+    const last  = velocitySamples[velocitySamples.length - 1];
+    const dt = last.t - first.t;
+    if (dt <= 0) return 0;
+    return (first.y - last.y) / dt; // + = subiendo (creciendo), - = bajando
+  }
+
+  function finishDrag() {
     if (dragRafId !== null) {
       cancelAnimationFrame(dragRafId);
       dragRafId = null;
@@ -4009,56 +4063,71 @@ function initBottomSheet() {
     sidebar.classList.remove('sheet-dragging');
     sidebar.style.transition = '';
     sidebar.style.willChange = '';
+
     const h = sidebar.getBoundingClientRect().height;
-    const dHidden   = Math.abs(h - SHEET_H.hidden);
-    const dPeek     = Math.abs(h - SHEET_H.peek);
-    const dExpanded = Math.abs(h - SHEET_H.expanded);
-    if (dHidden <= dPeek && dHidden <= dExpanded) snapTo('hidden');
-    else if (dPeek <= dExpanded)                  snapTo('peek');
-    else                                           snapTo('expanded');
+    const v = computeVelocity();
+    const startIdx = SNAP_POINTS.reduce((closestI, p, i) =>
+      Math.abs(startH - p.h) < Math.abs(startH - SNAP_POINTS[closestI].h) ? i : closestI, 0);
+
+    let idx;
+    if (v > FLICK_VELOCITY && startIdx < SNAP_POINTS.length - 1) {
+      // Flick rápido hacia arriba: avanza al siguiente snap sin importar cuánto se arrastró
+      idx = startIdx + 1;
+    } else if (v < -FLICK_VELOCITY && startIdx > 0) {
+      idx = startIdx - 1;
+    } else if (h > startH && startIdx < SNAP_POINTS.length - 1) {
+      const dist  = SNAP_POINTS[startIdx + 1].h - SNAP_POINTS[startIdx].h;
+      const moved = h - SNAP_POINTS[startIdx].h;
+      idx = (moved > dist * ADVANCE_RATIO) ? startIdx + 1 : startIdx;
+    } else if (h < startH && startIdx > 0) {
+      const dist  = SNAP_POINTS[startIdx].h - SNAP_POINTS[startIdx - 1].h;
+      const moved = SNAP_POINTS[startIdx].h - h;
+      idx = (moved > dist * ADVANCE_RATIO) ? startIdx - 1 : startIdx;
+    } else {
+      idx = startIdx;
+    }
+    snapTo(SNAP_POINTS[idx].name);
   }
 
-  header.addEventListener('touchstart', (e) => {
-    startY = e.touches[0].clientY;
-    startH = sidebar.getBoundingClientRect().height;
-    isDragging = false;
-    pendingDy = 0;
-    sidebar.style.transition = 'none';
-    sidebar.style.willChange = 'height';
-  }, { passive: true });
+  // ── Handle: siempre arrastrable ───────────────────────────
+  header.addEventListener('touchstart', (e) => beginDrag(e.touches[0].clientY), { passive: true });
+  header.addEventListener('touchmove',  (e) => trackDrag(e.touches[0].clientY), { passive: true });
+  header.addEventListener('touchend',    finishDrag);
+  header.addEventListener('touchcancel', finishDrag);
 
-  header.addEventListener('touchmove', (e) => {
-    const dy = startY - e.touches[0].clientY;
-    if (!isDragging && Math.abs(dy) < 5) return;
-    if (!isDragging) {
-      isDragging = true;
-      sidebar.classList.add('sheet-dragging');
-      // Quitar TODAS las clases de snap UNA SOLA VEZ al inicio del drag
-      // (evitar reflows en cada touchmove)
-      sidebar.classList.remove('sheet-hidden', 'sheet-peek', 'sheet-expanded');
-    }
-    pendingDy = dy;
-    if (dragRafId === null) {
-      dragRafId = requestAnimationFrame(applyDragHeight);
-    }
-  }, { passive: true });
-
-  header.addEventListener('touchend',    endDrag);
-  header.addEventListener('touchcancel', endDrag);
-
-  // ── Scroll vertical en expanded → si llega al top vuelve a peek
+  // ── Lista de tarjetas: también arrastrable, sin romper el carrusel
+  //    horizontal (peek) ni el scroll vertical normal (expanded) ──
   if (list) {
-    let lastST = 0;
-    let scrollRaf = null;
-    list.addEventListener('scroll', () => {
-      if (scrollRaf !== null) return;
-      scrollRaf = requestAnimationFrame(() => {
-        scrollRaf = null;
-        if (isDragging || !sidebar.classList.contains('sheet-expanded')) return;
-        if (list.scrollTop < lastST && list.scrollTop === 0) snapTo('peek');
-        lastST = list.scrollTop;
-      });
+    let listStartY = 0, listStartX = 0, listAxis = null, listCanDrag = false;
+
+    list.addEventListener('touchstart', (e) => {
+      listStartY = e.touches[0].clientY;
+      listStartX = e.touches[0].clientX;
+      listAxis = null;
+      // En 'expanded' solo iniciamos el arrastre si el scroll ya está en el
+      // tope — si no, el gesto es para leer la lista, no para colapsarla.
+      listCanDrag = currentSnap() !== 'expanded' || list.scrollTop <= 0;
+      beginDrag(listStartY);
     }, { passive: true });
+
+    list.addEventListener('touchmove', (e) => {
+      const y = e.touches[0].clientY;
+      const x = e.touches[0].clientX;
+      if (listAxis === null) {
+        const dy = Math.abs(listStartY - y);
+        const dx = Math.abs(listStartX - x);
+        if (dy < 6 && dx < 6) return; // aún no hay gesto claro
+        listAxis = dy > dx ? 'v' : 'h';
+        if (listAxis === 'h' || !listCanDrag) return; // swipe del carrusel → dejar scroll nativo
+        // Si estamos en expanded y el primer movimiento es hacia arriba
+        // (scroll normal hacia más contenido), soltamos el control.
+        if (currentSnap() === 'expanded' && y < listStartY) { listCanDrag = false; return; }
+      }
+      if (listAxis === 'v' && listCanDrag) trackDrag(y);
+    }, { passive: true });
+
+    list.addEventListener('touchend',    finishDrag);
+    list.addEventListener('touchcancel', finishDrag);
   }
 
   // ── Click en mapa → collapsar a hidden ───────────────────
