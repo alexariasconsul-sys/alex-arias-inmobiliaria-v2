@@ -65,15 +65,13 @@
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     html{font-family:"Inter",sans-serif;-webkit-text-size-adjust:100%}
     body{background:#fff;color:#111;overflow-x:hidden}
-    .app-shell{min-height:100vh;position:relative;padding-bottom:90px}
+    .app-shell{min-height:100vh;position:relative;padding-bottom:0}
     .top-bar{position:fixed;top:0;left:0;right:0;z-index:200;background:#000}
     /* SEO: H1 visible solo para bots, invisible para humanos */
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-    /* Mobile: padding inferior = tab bar (no navbar fantma) */
-    @media(max-width:767px){.app-shell{padding-bottom:calc(50px + env(safe-area-inset-bottom,0px))}}
   </style>
 
-  <link rel="stylesheet" href="/styles.min.css?v=59" />
+  <link rel="stylesheet" href="/styles.min.css?v=60" />
   <!-- admin.min.css: solo lo necesita el admin logueado, no bloquear el render de todos los visitantes -->
   <link rel="stylesheet" href="/admin.min.css?v=10" media="print" onload="this.media='all'" />
   <noscript><link rel="stylesheet" href="/admin.min.css?v=10" /></noscript>

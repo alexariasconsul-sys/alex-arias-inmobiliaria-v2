@@ -60,7 +60,7 @@ body { background: #0f172a; }
   min-height: 100vh;
   background: var(--bg);
   padding-top: var(--top-bar-h, 72px);  /* se actualiza dinámicamente via JS */
-  padding-bottom: 90px;
+  padding-bottom: 0;   /* el espacio para el pill flotante ahora lo reserva .seo-footer (mismo color que el footer, no gris) */
 }
 
 /* ─── TOP BAR FIJA ─────────────────────────────────────────── */
@@ -2828,7 +2828,8 @@ body { background: #0f172a; }
 .seo-footer {
   background: #0f172a;
   border-top: 1px solid rgba(255,255,255,.07);
-  padding: 36px clamp(20px, 5vw, 60px) 28px;
+  /* padding-bottom incluye el espacio del pill flotante (antes gris, ahora del color del footer) */
+  padding: 36px clamp(20px, 5vw, 60px) 118px;
   margin-top: 0;
 }
 .seo-footer-inner {
@@ -4219,8 +4220,8 @@ body { background: #0f172a; }
   .float-icon::after { display: none; }
   .floating-bar-divider { display: none; }
 
-  /* Compensar el tab bar en la vista de grid */
-  .app-shell { padding-bottom: calc(50px + env(safe-area-inset-bottom, 0px)); }
+  /* El espacio para el tab bar ya lo reserva .seo-footer (mismo color, no gris) */
+  .app-shell { padding-bottom: 0; }
 
   /* En mobile la tab bar es full-width en bottom:0, altura ~40px.
      Sobreescribir scroll-margin-bottom para este contexto. */
