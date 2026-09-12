@@ -1708,7 +1708,12 @@ async function renderPropertyPage(req, res, prop) {
   <header class="pdp-topbar">
     <div class="pdp-topbar-inner">
       <a class="pdp-brand" href="/">
-        <img src="/assets/logo/Logo.png" alt="Alex Arias" />
+        <div class="pdp-brand-icon" aria-label="Alex Arias" role="img">
+          <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+            <path d="M4 19.5L11 4.5C11.4 3.7 12.6 3.7 13 4.5L20 19.5" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8.3 13.5H15.7" stroke="white" stroke-width="2.4" stroke-linecap="round"/>
+          </svg>
+        </div>
         <div class="pdp-brand-text">
           <span class="pdp-brand-name">Alex Arias</span>
           <span class="pdp-brand-sub">Consultor Inmobiliario</span>

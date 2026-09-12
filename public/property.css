@@ -50,7 +50,13 @@ button { font-family: inherit; cursor: pointer; }
   gap: 16px;
 }
 .pdp-brand { display: flex; align-items: center; gap: 10px; }
-.pdp-brand img { width: 36px; height: 36px; border-radius: 50%; }
+.pdp-brand-icon {
+  width: 36px; height: 36px;
+  border-radius: 11px;
+  background: var(--brand);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
 .pdp-brand-text { display: flex; flex-direction: column; line-height: 1.15; }
 .pdp-brand-name { font-weight: 800; font-size: 14px; }
 .pdp-brand-sub { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--brand); }

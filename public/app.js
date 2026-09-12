@@ -459,6 +459,11 @@ function renderActiveFilterTags() {
     const barH = bar.getBoundingClientRect().height;
     const topH  = document.querySelector('.top-bar')?.getBoundingClientRect().height || 72;
     const offset = Math.ceil(topH + barH);
+    // --top-bar-h se mide una sola vez al cargar la página (antes de que
+    // "N inmuebles" tenga texto), así que puede haber quedado corta —
+    // se recalcula aquí también para que la barra de tags no quede
+    // superpuesta con el contador de resultados.
+    document.documentElement.style.setProperty('--top-bar-h', Math.ceil(topH) + 'px');
     document.documentElement.style.setProperty('--filters-offset', offset + 'px');
     if (state.currentView === 'map') state.leafletMap?.invalidateSize();
   }));

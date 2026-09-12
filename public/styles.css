@@ -3627,11 +3627,19 @@ body { background: #0f172a; }
 .filter-quick-chips {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   gap: 8px;
+}
+/* Contenedor de los chips inyectados por JS: invisible para el layout,
+   así sus hijos quedan como items directos del flex de arriba (evita que
+   Parqueadero se estire para igualar la altura de un bloque envuelto). */
+.filter-quick-chips-dynamic {
+  display: contents;
 }
 .quick-chip {
   cursor: pointer;
   display: inline-flex;
+  align-items: flex-start;
 }
 .quick-chip input {
   display: none;
@@ -3663,7 +3671,7 @@ body { background: #0f172a; }
 .amenity-check--quick {
   cursor: pointer;
   display: inline-flex;
-  align-items: stretch;
+  align-items: flex-start;
 }
 .amenity-check--quick input {
   display: none;
