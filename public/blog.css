@@ -1388,18 +1388,18 @@
     padding-bottom: calc(62px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Barra inferior */
+  /* Barra inferior — mismo estilo blanco que la barra del inicio */
   .blog-float-bar {
     display: flex;
     position: fixed;
     left: 0; right: 0; bottom: 0;
     z-index: 200;
-    background: #0f172a;
+    background: #fff;
     border-radius: 18px 18px 0 0;
     padding: 10px 8px;
     padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     justify-content: space-around;
-    box-shadow: 0 -1px 0 rgba(255,255,255,.08), 0 -8px 32px rgba(0,0,0,.3);
+    box-shadow: 0 -1px 0 rgba(0,0,0,.06), 0 -8px 32px rgba(0,0,0,.12);
   }
   .blog-float-icon {
     flex: 1;
@@ -1407,7 +1407,7 @@
     flex-direction: column;
     align-items: center;
     gap: 3px;
-    color: rgba(255,255,255,.45);
+    color: var(--muted-2, #6b7280);
     text-decoration: none;
     font-size: 10px;
     font-weight: 500;
