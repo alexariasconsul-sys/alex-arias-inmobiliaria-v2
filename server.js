@@ -3291,7 +3291,7 @@ app.get('/api/feed/facebook.json', async (req, res) => {
         price,
         listing_type:     listingType,
         availability:     avail,
-        url:              `${baseUrl}/?id=${p._id}`,
+        url:              `${baseUrl}/inmueble/${propSlug(p)}`,
         image_url:        imgUrl,
         image_cdn_urls:   allImgs,          // todas las fotos para el carrusel del anuncio
         address: {
@@ -3311,7 +3311,7 @@ app.get('/api/feed/facebook.json', async (req, res) => {
         year_built:       p.anio_construccion ? Number(p.anio_construccion) : null,
         brand:            brandName,
         neighborhood:     p.barrio || '',
-        applink:          { web_url: `${baseUrl}/?id=${p._id}` }
+        applink:          { web_url: `${baseUrl}/inmueble/${propSlug(p)}` }
       };
     }
 
@@ -3367,7 +3367,7 @@ app.get('/api/feed/facebook.xml', async (req, res) => {
       <listing_type>${listingType}</listing_type>
       <availability>${avail}</availability>
       <price>${esc(price)}</price>
-      <url>${esc(`${baseUrl}/?id=${p._id}`)}</url>
+      <url>${esc(`${baseUrl}/inmueble/${propSlug(p)}`)}</url>
       <image_url>${esc(mainImg)}</image_url>
 ${extraImgs}
       <address>${esc([p.direccion, p.barrio, p.municipio].filter(Boolean).join(', '))}</address>
@@ -3468,7 +3468,7 @@ app.get('/api/feed/productos.csv', async (req, res) => {
           q(avail),
           '"new"',
           q(`${Number(rawPrice).toFixed(2)} COP`),
-          q(`${baseUrl}/?id=${p._id}`),
+          q(`${baseUrl}/inmueble/${propSlug(p)}`),
           q(mainImg),
           q(extraImgs),
           '"Alex Arias"',   // brand
@@ -3518,43 +3518,47 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
 
     // Pre-convertir/optimizar TODAS las imágenes a JPEG ≤1200px antes de generar el CSV.
     // Re-convierte también si el .jpg existente es >800KB (imagen subida sin redimensionar).
-    for (const p of docs) {
-      for (const img of (p.images || [])) {
-        if (!img.filename) continue;
-        const baseName = path.basename(img.filename);
-        const ext = baseName.split('.').pop().toLowerCase();
+    // I/O async y en paralelo (no fs.*Sync secuencial) para no bloquear el event loop
+    // ni frenar la respuesta del feed en cada request — Meta puede pedirlo seguido.
+    const statAsync = async p => { try { return await fs.promises.stat(p); } catch { return null; } };
+    const uniqueFilenames = [...new Set(
+      docs.flatMap(p => (p.images || []).map(img => img.filename).filter(Boolean))
+    )];
 
-        if (ext === 'webp') {
-          const webpPath = path.join(uploadsDir, baseName);
-          const jpgName  = baseName.replace(/\.webp$/i, '.jpg');
-          const jpgPath  = path.join(uploadsDir, jpgName);
-          const jpgStat  = fs.existsSync(jpgPath) ? fs.statSync(jpgPath) : null;
-          // Re-convertir si no existe o si el .jpg es >800KB (sin redimensionar)
-          if (fs.existsSync(webpPath) && (!jpgStat || jpgStat.size > 800000)) {
-            try {
-              const buf = await sharp(webpPath)
-                .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
-                .jpeg({ quality: 85 })
-                .toBuffer();
-              fs.writeFileSync(jpgPath, buf);
-            } catch (_) {}
-          }
-        } else if (ext === 'jpg' || ext === 'jpeg') {
-          // JPEG directo — re-optimizar si >800KB
-          const srcPath = path.join(uploadsDir, baseName);
-          const srcStat = fs.existsSync(srcPath) ? fs.statSync(srcPath) : null;
-          if (srcStat && srcStat.size > 800000) {
-            try {
-              const buf = await sharp(srcPath)
-                .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
-                .jpeg({ quality: 85 })
-                .toBuffer();
-              fs.writeFileSync(srcPath, buf); // Sobreescribir con versión optimizada
-            } catch (_) {}
-          }
+    await Promise.all(uniqueFilenames.map(async filename => {
+      const baseName = path.basename(filename);
+      const ext = baseName.split('.').pop().toLowerCase();
+
+      if (ext === 'webp') {
+        const webpPath = path.join(uploadsDir, baseName);
+        const jpgName  = baseName.replace(/\.webp$/i, '.jpg');
+        const jpgPath  = path.join(uploadsDir, jpgName);
+        const [webpStat, jpgStat] = await Promise.all([statAsync(webpPath), statAsync(jpgPath)]);
+        // Re-convertir si no existe o si el .jpg es >800KB (sin redimensionar)
+        if (webpStat && (!jpgStat || jpgStat.size > 800000)) {
+          try {
+            const buf = await sharp(webpPath)
+              .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
+              .jpeg({ quality: 85 })
+              .toBuffer();
+            await fs.promises.writeFile(jpgPath, buf);
+          } catch (_) {}
+        }
+      } else if (ext === 'jpg' || ext === 'jpeg') {
+        // JPEG directo — re-optimizar si >800KB
+        const srcPath = path.join(uploadsDir, baseName);
+        const srcStat = await statAsync(srcPath);
+        if (srcStat && srcStat.size > 800000) {
+          try {
+            const buf = await sharp(srcPath)
+              .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
+              .jpeg({ quality: 85 })
+              .toBuffer();
+            await fs.promises.writeFile(srcPath, buf); // Sobreescribir con versión optimizada
+          } catch (_) {}
         }
       }
-    }
+    }));
 
     for (const p of docs) {
       const variants = p.tipo === 'combinado' ? ['rent', 'sale'] : [p.tipo === 'venta' ? 'sale' : 'rent'];
@@ -3665,7 +3669,7 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
           q(p.estado === 'ocupado' ? 'out of stock' : 'in stock'), // availability
           '"new"',                                 // condition
           q(price),                                // price "3500000 COP"
-          q(`${baseUrl}/?id=${p._id}`),            // link
+          q(`${baseUrl}/inmueble/${propSlug(p)}`), // link
           q(metaMainImg),                          // image_link
           q(metaExtraImg),                         // additional_image_link
           '"Alex Arias"',                          // brand
