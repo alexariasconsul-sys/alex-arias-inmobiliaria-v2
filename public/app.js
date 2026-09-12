@@ -1475,8 +1475,9 @@ function setupScrollHideBars() {
 
   function onScroll() {
     if (window.innerWidth > 767) return;
-    const topBar = document.querySelector('.top-bar');
-    const tabBar = document.querySelector('.floating-bar');
+    const topBar     = document.querySelector('.top-bar');
+    const tabBar     = document.querySelector('.floating-bar');
+    const filtersBar = document.getElementById('activeFiltersBar');
     const y = Math.max(0, window.scrollY);
     const dy = y - lastY;
 
@@ -1485,6 +1486,9 @@ function setupScrollHideBars() {
       const shouldHide = dy > 0 && y > 80;
       topBar?.classList.toggle('scroll-hidden', shouldHide);
       tabBar?.classList.toggle('scroll-hidden', shouldHide);
+      // Al ocultarse el header, la barra de filtros activos sube y se
+      // pega arriba (si no, queda flotando con un hueco donde estaba el header).
+      filtersBar?.classList.toggle('header-hidden', shouldHide);
       lastY = y;
     }
     ticking = false;
@@ -4184,6 +4188,7 @@ function switchView(view) {
   // scroll de window, así que podrían quedar "atascados" ocultos).
   document.querySelector('.top-bar')?.classList.remove('scroll-hidden');
   document.querySelector('.floating-bar')?.classList.remove('scroll-hidden');
+  document.getElementById('activeFiltersBar')?.classList.remove('header-hidden');
   const gridView = document.getElementById('gridView');
   const mapView  = document.getElementById('mapView');
   const btnGrid  = document.getElementById('btnViewGrid');
