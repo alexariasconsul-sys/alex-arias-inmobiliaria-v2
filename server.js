@@ -3138,6 +3138,76 @@ fbq('track', 'PageView');
   res.send(js);
 });
 
+// ─── COPY ORIENTADO A CONVERSIÓN PARA EL FEED DE META ────────
+// Genera título y descripción de venta a partir de los datos reales
+// del inmueble (barrio, specs, amenidades). Reemplaza títulos genéricos
+// tipo "Apartamento en Arriendo" y descripciones con placeholders sin
+// llenar ($_____) — nunca inventa información que no esté cargada.
+function capitalizeFirst(s) {
+  s = String(s || '').trim();
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+function isGenericTitle(title) {
+  const t = String(title || '').trim().toLowerCase();
+  return /^(apartamento|apto\.?|casa|local|oficina|bodega|lote)\s*(en)?\s*(arriendo|venta)\.?$/.test(t);
+}
+
+function feedTitle(p, useRent) {
+  const tipoLabel = capitalizeFirst(p.tipo_inmueble || 'Inmueble');
+  const accion    = useRent ? 'en arriendo' : 'en venta';
+  const sector    = p.barrio || p.municipio || 'Antioquia';
+
+  const specs = [];
+  if (p.habitaciones) specs.push(`${p.habitaciones} hab`);
+  if (p.banos)         specs.push(`${p.banos} baños`);
+  if (p.area)          specs.push(`${p.area}m²`);
+  const specsStr = specs.join(' · ');
+
+  const base = (isGenericTitle(p.title) || !p.title)
+    ? `${tipoLabel} ${accion} en ${sector}`
+    : p.title.trim();
+
+  const title = (specsStr && !base.includes(specsStr)) ? `${base} · ${specsStr}` : base;
+  return title.length > 100 ? title.slice(0, 97) + '...' : title;
+}
+
+function feedDescription(p, useRent) {
+  const tipoLabel = capitalizeFirst(p.tipo_inmueble || 'Inmueble');
+  const accion    = useRent ? 'en arriendo' : 'en venta';
+  const sector    = p.barrio ? `${p.barrio}, ${p.municipio || 'Antioquia'}` : (p.municipio || 'Antioquia');
+
+  const specs = [];
+  if (p.area)         specs.push(`${p.area} m²`);
+  if (p.habitaciones) specs.push(`${p.habitaciones} habitaciones`);
+  if (p.banos)         specs.push(`${p.banos} baños`);
+  if (p.parqueadero)   specs.push('parqueadero');
+  const specsLine = specs.join(' · ');
+
+  const amenities     = Array.isArray(p.amenidades) ? p.amenidades.filter(Boolean) : [];
+  const topAmenities  = amenities.slice(0, 3);
+
+  // Descripción con "$_____" u otro placeholder sin llenar → se descarta
+  // y se genera una limpia en su lugar (nunca se envía texto roto a Meta).
+  const hasPlaceholder = /\$?_{3,}/.test(p.descripcion || '');
+  const customDescOk   = !!p.descripcion && !hasPlaceholder && p.descripcion.trim().length > 20;
+
+  let text;
+  if (customDescOk) {
+    text = p.descripcion.trim();
+  } else {
+    text = `${tipoLabel} ${accion} en ${sector}.`;
+    if (specsLine) text += ` ${specsLine}.`;
+    if (topAmenities.length) text += ` Cuenta con ${topAmenities.join(', ')}.`;
+  }
+
+  if (!/contáctanos|escríbenos|agenda|visita/i.test(text)) {
+    text += ' Contáctanos hoy y agenda tu visita.';
+  }
+
+  return text.replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, 500);
+}
+
 // ─── FEED FACEBOOK CATALOG (Real Estate) ─────────────────────
 // Genera una entrada por propiedad; para "combinado" genera DOS entradas
 // (una for_rent con precio arriendo + una for_sale con precio venta)
@@ -3190,13 +3260,10 @@ app.get('/api/feed/facebook.json', async (req, res) => {
         ? (useRent ? p._id : `${p._id}_vta`)
         : p._id;
 
-      const descBase = p.descripcion
-        || `${useRent ? 'En arriendo' : 'En venta'} en ${p.municipio || 'Antioquia'}. ${p.area ? p.area + ' m². ' : ''}${p.habitaciones ? p.habitaciones + ' hab. ' : ''}${p.banos ? p.banos + ' baños.' : ''}`;
-
       return {
         home_listing_id:  listingId,
-        name:             p.title || 'Inmueble',
-        description:      descBase.slice(0, 5000),
+        name:             feedTitle(p, useRent),
+        description:      feedDescription(p, useRent),
         price,
         listing_type:     listingType,
         availability:     avail,
@@ -3265,13 +3332,13 @@ app.get('/api/feed/facebook.xml', async (req, res) => {
       const mainImg = allImgs[0] || '';
       const extraImgs = allImgs.slice(1).map(u => `      <additional_image_url>${esc(u)}</additional_image_url>`).join('\n');
 
-      const desc = esc((p.descripcion || `${useRent ? 'En arriendo' : 'En venta'} en ${p.municipio || 'Antioquia'}`).slice(0, 500));
+      const desc = esc(feedDescription(p, useRent));
 
       return `
     <item>
       <id>${esc(listingId)}</id>
       <home_listing_id>${esc(listingId)}</home_listing_id>
-      <title>${esc(p.title || 'Inmueble')}</title>
+      <title>${esc(feedTitle(p, useRent))}</title>
       <description>${desc}</description>
       <listing_type>${listingType}</listing_type>
       <availability>${avail}</availability>
@@ -3355,19 +3422,19 @@ app.get('/api/feed/productos.csv', async (req, res) => {
             : `${baseUrl}/uploads/${encodeURIComponent(fname)}`;
         }).join(',');
 
-        const tipoLabel = useRent ? 'Arriendo' : 'Venta';
         const hab       = p.habitaciones ? `${p.habitaciones}hab` : '';
         const area      = p.area ? `${p.area}m²` : '';
         const muni      = p.municipio || '';
 
-        // Título máx 65 chars: intentar completo, si no, usar versión corta
-        const titleFull  = [p.title, hab, area, muni].filter(Boolean).join(' - ');
+        // Título máx 65 chars: usar el título orientado a conversión, y si no
+        // cabe, una versión corta basada en barrio + specs
+        const titleFull  = feedTitle(p, useRent);
         const titleShort = [p.barrio || muni, hab, area].filter(Boolean).join(' - ');
         const titleStr   = titleFull.length <= 65 ? titleFull
                          : titleShort.length <= 65 ? titleShort
                          : titleShort.slice(0, 62) + '...';
 
-        const desc  = (p.descripcion || `${tipoLabel} en ${muni}`).replace(/[\r\n]+/g, ' ').trim().slice(0, 500);
+        const desc  = feedDescription(p, useRent);
         const avail = p.estado === 'ocupado' ? 'out of stock' : 'in stock';
 
         rows.push([
@@ -3517,9 +3584,7 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
         const metaMainImg  = toMetaImg(mainImg);
         const metaExtraImg = imgs.slice(1, 4).map(toMetaImg).filter(Boolean).join(',');
 
-        // Eliminar saltos de línea que rompen el parser CSV de Meta
-        const rawDesc = (p.descripcion || `${useRent ? 'En arriendo' : 'En venta'}, ${p.habitaciones || ''} habitaciones, ${p.area || ''}m² en ${p.municipio || 'Antioquia'}`);
-        const desc    = rawDesc.replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, 500);
+        const desc = feedDescription(p, useRent);
         // Código postal colombiano por municipio
         const postalCodes = {
           'sabaneta':  '055450',
@@ -3563,7 +3628,7 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
 
         rows.push([
           q(listingId),                            // id
-          q(p.title || 'Inmueble'),                // title
+          q(feedTitle(p, useRent)),                // title
           q(desc),                                 // description
           q(p.estado === 'ocupado' ? 'out of stock' : 'in stock'), // availability
           '"new"',                                 // condition
