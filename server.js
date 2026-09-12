@@ -3153,6 +3153,10 @@ function isGenericTitle(title) {
   return /^(apartamento|apto\.?|casa|local|oficina|bodega|lote)\s*(en)?\s*(arriendo|venta)\.?$/.test(t);
 }
 
+function hasDescPlaceholder(desc) {
+  return /\$?_{3,}/.test(desc || '');
+}
+
 function feedTitle(p, useRent) {
   const tipoLabel = capitalizeFirst(p.tipo_inmueble || 'Inmueble');
   const accion    = useRent ? 'en arriendo' : 'en venta';
@@ -3189,8 +3193,7 @@ function feedDescription(p, useRent) {
 
   // Descripción con "$_____" u otro placeholder sin llenar → se descarta
   // y se genera una limpia en su lugar (nunca se envía texto roto a Meta).
-  const hasPlaceholder = /\$?_{3,}/.test(p.descripcion || '');
-  const customDescOk   = !!p.descripcion && !hasPlaceholder && p.descripcion.trim().length > 20;
+  const customDescOk = !!p.descripcion && !hasDescPlaceholder(p.descripcion) && p.descripcion.trim().length > 20;
 
   let text;
   if (customDescOk) {
@@ -3232,6 +3235,27 @@ function feedProductType(p, useRent) {
   return `${useRent ? 'Arriendo' : 'Venta'} > ${municipio} > ${tipoLabel}`;
 }
 
+// ─── CACHÉ EN MEMORIA PARA LOS FEEDS ──────────────────────────
+// Meta (y cualquiera) puede rastrear estos endpoints seguido; regenerar
+// el catálogo completo (DB + optimización de imágenes) en cada request
+// es trabajo repetido innecesario. Se cachea el cuerpo ya generado por
+// unos minutos — un inmueble nuevo o un cambio de precio tarda hasta
+// ese tiempo en reflejarse, a cambio de mucha menos carga en el server.
+// El Cache-Control de la respuesta sigue diciéndole a los clientes que
+// no cacheen: esto es solo una caché interna del servidor.
+const FEED_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutos
+const feedCache = new Map(); // key (URL completa) -> { body, expiresAt }
+
+function getFeedCache(key) {
+  const hit = feedCache.get(key);
+  if (hit && hit.expiresAt > Date.now()) return hit.body;
+  if (hit) feedCache.delete(key); // vencida, limpiar
+  return null;
+}
+function setFeedCache(key, body) {
+  feedCache.set(key, { body, expiresAt: Date.now() + FEED_CACHE_TTL_MS });
+}
+
 // ─── FEED FACEBOOK CATALOG (Real Estate) ─────────────────────
 // Genera una entrada por propiedad; para "combinado" genera DOS entradas
 // (una for_rent con precio arriendo + una for_sale con precio venta)
@@ -3242,6 +3266,9 @@ app.get('/api/feed/facebook', (req, res) => {
 
 app.get('/api/feed/facebook.json', async (req, res) => {
   try {
+    const cached = getFeedCache(req.originalUrl);
+    if (cached) return res.json(cached);
+
     const db      = getDB();
     const profile = readProfile();
     const allDocs = await db.findAsync({});
@@ -3325,7 +3352,9 @@ app.get('/api/feed/facebook.json', async (req, res) => {
       }
     }
 
-    res.json({ data: items });
+    const payload = { data: items };
+    setFeedCache(req.originalUrl, payload);
+    res.json(payload);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -3333,6 +3362,12 @@ app.get('/api/feed/facebook.json', async (req, res) => {
 // También genera doble entrada para propiedades "combinado"
 app.get('/api/feed/facebook.xml', async (req, res) => {
   try {
+    const cached = getFeedCache(req.originalUrl);
+    if (cached) {
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      return res.send(cached);
+    }
+
     const db      = getDB();
     const profile = readProfile();
     const allDocs = await db.findAsync({});
@@ -3402,6 +3437,7 @@ ${extraImgs}
 ${itemParts.join('\n')}
 </listings>`;
 
+    setFeedCache(req.originalUrl, xml);
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
     res.send(xml);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -3411,6 +3447,15 @@ ${itemParts.join('\n')}
 // URL: https://alexariasc.com/api/feed/productos.csv
 app.get('/api/feed/productos.csv', async (req, res) => {
   try {
+    const cached = getFeedCache(req.originalUrl);
+    if (cached) {
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', 'attachment; filename="meta_productos.csv"');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+      res.setHeader('Pragma', 'no-cache');
+      return res.send(cached);
+    }
+
     const db      = getDB();
     const allDocs = await db.findAsync({});
     const docs    = allDocs.filter(p => p.estado !== 'ocupado');
@@ -3477,11 +3522,13 @@ app.get('/api/feed/productos.csv', async (req, res) => {
       }
     }
 
+    const body = rows.join('\r\n');
+    setFeedCache(req.originalUrl, body);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="meta_productos.csv"');
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
     res.setHeader('Pragma', 'no-cache');
-    res.send(rows.join('\r\n'));
+    res.send(body);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -3489,6 +3536,15 @@ app.get('/api/feed/productos.csv', async (req, res) => {
 // URL para Facebook: https://alexariasc.com/api/feed/facebook.csv
 app.get('/api/feed/facebook.csv', async (req, res) => {
   try {
+    const cached = getFeedCache(req.originalUrl);
+    if (cached) {
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', 'attachment; filename="meta_feed.csv"');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+      res.setHeader('Pragma', 'no-cache');
+      return res.send(cached);
+    }
+
     const db      = getDB();
     const profile = readProfile();
     const allDocs = await db.findAsync({});
@@ -3684,11 +3740,77 @@ app.get('/api/feed/facebook.csv', async (req, res) => {
       }
     }
 
+    const body = rows.join('\r\n');
+    setFeedCache(req.originalUrl, body);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="meta_feed.csv"');
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
     res.setHeader('Pragma', 'no-cache');
-    res.send(rows.join('\r\n'));
+    res.send(body);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ─── DIAGNÓSTICO DEL FEED — qué inmuebles se caen o traen aviso ────
+// Uso interno (admin): revisa los mismos inmuebles activos que ve el
+// feed y reporta cuáles quedan afuera (sin foto, sin precio) o generan
+// una advertencia (descripción con placeholder, título genérico) —
+// para saber exactamente qué corregir en el admin sin esperar a que
+// Meta rechace el anuncio.
+app.get('/api/feed/diagnostico', requireAdmin, async (req, res) => {
+  try {
+    const db      = getDB();
+    const allDocs = await db.findAsync({});
+    const docs    = allDocs.filter(p => p.estado !== 'ocupado');
+
+    const excluidos    = [];
+    const advertencias = [];
+
+    for (const p of docs) {
+      const label     = p.title || p._id;
+      const tieneFoto = (p.images || []).some(i => i.filename);
+
+      if (!tieneFoto) {
+        excluidos.push({
+          id: p._id, title: label,
+          razon: 'Sin fotos — Meta exige al menos una imagen, este inmueble no aparece en el feed.'
+        });
+        continue; // sin foto no llega a generarse ninguna entrada, el resto no aplica
+      }
+
+      const variants = p.tipo === 'combinado' ? ['rent', 'sale'] : [p.tipo === 'venta' ? 'sale' : 'rent'];
+      for (const variant of variants) {
+        const useRent  = variant === 'rent';
+        const rawPrice = useRent ? (p.precioArriendo || p.precio || 0) : (p.precioVenta || p.precio || 0);
+        if (!rawPrice || Number(rawPrice) <= 0) {
+          advertencias.push({
+            id: p._id, title: label,
+            aviso: `Sin precio de ${useRent ? 'arriendo' : 'venta'} — se está enviando a Meta como $0, revisa el campo en el admin.`
+          });
+        }
+      }
+
+      if (hasDescPlaceholder(p.descripcion)) {
+        advertencias.push({
+          id: p._id, title: label,
+          aviso: 'La descripción tiene texto sin llenar (ej. "$_____") — el feed genera una automática, pero conviene corregirla en el admin.'
+        });
+      }
+      if (isGenericTitle(p.title) || !p.title) {
+        advertencias.push({
+          id: p._id, title: label,
+          aviso: 'Título genérico o vacío — el feed genera uno automático, pero un título propio suele convertir mejor.'
+        });
+      }
+    }
+
+    res.json({
+      revisado_en: new Date().toISOString(),
+      total_activos: docs.length,
+      excluidos_del_feed: excluidos.length,
+      inmuebles_con_advertencia: new Set(advertencias.map(a => a.id)).size,
+      excluidos,
+      advertencias
+    });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
