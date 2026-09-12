@@ -1036,7 +1036,8 @@ function renderGrid() {
     return;
   }
 
-  // Calcular "Muy interesante" basado en engagement score (likes + vistas + compartidos)
+  // Engagement score (likes + vistas + compartidos) para ordenar los más
+  // populares primero — sin badge visual, solo afecta el orden.
   const engagementScore = (p) => {
     const likes = p.likes || 0;
     const views = p.views || 0;
@@ -1046,16 +1047,15 @@ function renderGrid() {
 
   const trendingIds = new Set(
     [...state.properties]
-      .filter(p => p.estado !== 'ocupado') // ocupados nunca son "Muy interesante"
+      .filter(p => p.estado !== 'ocupado') // ocupados nunca suben al inicio
       .map(p => ({ id: String(p.id), score: engagementScore(p) }))
       .filter(p => p.score >= 60)
       .sort((a, b) => b.score - a.score)
       .slice(0, 5)
       .map(p => p.id)
   );
-  state._trendingIds = trendingIds;
 
-  // Ordenar props: "Muy interesante" primero, luego el resto
+  // Ordenar props: mayor engagement primero, luego el resto
   const trendingProps = props.filter(p => trendingIds.has(String(p.id)));
   const otherProps = props.filter(p => !trendingIds.has(String(p.id)));
   const orderedProps = [...trendingProps, ...otherProps];
@@ -1142,13 +1142,6 @@ function cardHTML(p, isFirst = false) {
   const statusClass = p.estado === 'ocupado' ? 'status-ocupado' : 'status-libre';
   const statusLabel = p.estado === 'ocupado' ? 'Ocupado' : 'Disponible';
 
-  // Badge esquina superior derecha: "Muy interesante" basado en engagement score
-  // Los ocupados nunca muestran este badge aunque tengan alto engagement
-  const isTrending = p.estado !== 'ocupado' && (state._trendingIds || new Set()).has(String(p.id));
-  const topBadgeHtml = isTrending
-    ? '<span class="prop-corner-badge">Muy interesante</span>'
-    : '';
-
   // Badge inline: "Nuevo" si tiene menos de 5 días desde su publicación
   const _createdMs = p.created_at ? new Date(p.created_at).getTime() : 0;
   const isNuevo = _createdMs > 0 && (Date.now() - _createdMs) < 5 * 24 * 60 * 60 * 1000;
@@ -1223,9 +1216,6 @@ function cardHTML(p, isFirst = false) {
               <button class="status-btn ${statusClass}" data-id="${p.id}" data-estado="${p.estado}" type="button">
                 <span class="status-dot"></span>${statusLabel}
               </button>
-              <div class="media-overlay-top-right">
-                ${topBadgeHtml}
-              </div>
             </div>
             <div class="media-overlay-bottom">
               <div class="media-location">
@@ -1473,6 +1463,38 @@ function updateBarVisibility() {
     });
 
   bar.classList.toggle('bar-hidden', anyNear);
+}
+
+// ─── AUTO-OCULTAR HEADER + TAB BAR AL HACER SCROLL (mobile) ────
+// Scroll hacia abajo → se ocultan (más espacio para ver inmuebles).
+// Scroll hacia arriba (o cerca del tope) → reaparecen.
+function setupScrollHideBars() {
+  let lastY = window.scrollY;
+  let ticking = false;
+  const THRESHOLD = 6; // ignora micro-jitters de scroll
+
+  function onScroll() {
+    if (window.innerWidth > 767) return;
+    const topBar = document.querySelector('.top-bar');
+    const tabBar = document.querySelector('.floating-bar');
+    const y = Math.max(0, window.scrollY);
+    const dy = y - lastY;
+
+    if (Math.abs(dy) > THRESHOLD) {
+      // No ocultar cerca del tope de la página — ahí siempre deben verse.
+      const shouldHide = dy > 0 && y > 80;
+      topBar?.classList.toggle('scroll-hidden', shouldHide);
+      tabBar?.classList.toggle('scroll-hidden', shouldHide);
+      lastY = y;
+    }
+    ticking = false;
+  }
+
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(onScroll);
+  }, { passive: true });
 }
 
 function openCard(card) {
@@ -4153,6 +4175,10 @@ function clearFavoritesFilter() {
 function switchView(view) {
   state.currentView = view;
   clearFavoritesFilter(); // limpia favoritos (restaura estado + re-renderiza grid si era necesario)
+  // Al cambiar de vista siempre se ven header/tab bar (el mapa no dispara
+  // scroll de window, así que podrían quedar "atascados" ocultos).
+  document.querySelector('.top-bar')?.classList.remove('scroll-hidden');
+  document.querySelector('.floating-bar')?.classList.remove('scroll-hidden');
   const gridView = document.getElementById('gridView');
   const mapView  = document.getElementById('mapView');
   const btnGrid  = document.getElementById('btnViewGrid');
@@ -5598,6 +5624,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   updateTopBarHeight();
   window.addEventListener('resize', updateTopBarHeight);
+  setupScrollHideBars();
 
   // Check sesión admin — solo Google OAuth
   try {

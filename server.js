@@ -662,7 +662,7 @@ app.get('/', async (req, res) => {
 
     // LCP: precargar imagen de la primera propiedad antes de que corra el JS.
     // Debe replicar el mismo criterio de orden que usa el cliente en app.js
-    // (trending "Muy interesante" primero, luego la más reciente) — si no
+    // (mayor engagement primero, luego la más reciente) — si no
     // coinciden, el navegador precarga una imagen que no es la que realmente
     // se pinta primero, y el LCP real no se beneficia del preload.
     const engagementScore = p => (p.likes||0)*2 + (p.views||0)*0.5 + (p.shares||0)*3;
