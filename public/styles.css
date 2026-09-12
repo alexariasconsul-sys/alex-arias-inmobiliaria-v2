@@ -4071,6 +4071,16 @@ body { background: #0f172a; }
     max-height: 100vh !important;
     border-radius: 0 !important;
     transition: height .3s cubic-bezier(.32,.72,0,1) !important;
+    /* .map-sidebar trae transform:translateZ(0) para compositing — eso lo
+       convierte en el "containing block" de cualquier hijo position:fixed
+       (como la tarjeta abierta), así que su top ya NO es relativo al
+       viewport sino a este elemento. Como el sidebar arranca por encima
+       del viewport visible (bottom:0 + height:100vh dentro de un
+       .map-view más corto), la tarjeta terminaba naciendo por debajo del
+       header, tapándole la esquina superior (foto + badge "Disponible").
+       Quitamos el transform en este estado para que "fixed" vuelva a ser
+       relativo al viewport real. */
+    transform: none !important;
     /* Por encima del bottom tab bar (.floating-bar, z-index:100) — si no,
        los botones Contactar/Compartir del fondo de la tarjeta quedan
        tapados por la barra de navegación inferior. */
@@ -4125,10 +4135,11 @@ body { background: #0f172a; }
     padding: 10px 18px 12px;
     border-bottom: 1px solid #f0f0f0;
   }
-  /* Padding del contenido debajo del header sticky */
+  /* Padding del contenido debajo del header sticky — suficiente espacio
+     arriba para que el avatar no quede pegado/cortado contra el header. */
   .profile-card #profileView,
   .profile-card #profileEdit {
-    padding: 4px 18px calc(80px + env(safe-area-inset-bottom, 0px));
+    padding: 22px 18px calc(80px + env(safe-area-inset-bottom, 0px));
   }
 
   .main-content { width: 95vw; }

@@ -1542,6 +1542,10 @@ function openCard(card) {
     // En map view: snap el sheet a expanded SIN animación PRIMERO
     // (evita que sheet+card animen simultaneamente — gran fuente de lag)
     if (isInMapView && window._snapMapSheet) {
+      // Recalcular --top-bar-h por si la medición inicial quedó corta —
+      // si no, la tarjeta (position:fixed, top:var(--top-bar-h)) arranca
+      // más arriba de lo real y el header le tapa la esquina superior.
+      window._updateTopBarHeight?.();
       window._snapMapSheet('expanded', false); // animate=false
       // Marcar el sheet como "tarjeta abierta" → CSS lo pone fullscreen
       // (100vh), permite que la tarjeta crezca con su contenido y agrega
@@ -2981,7 +2985,8 @@ function setupFilters() {
     mobileOverlay.classList.remove('is-closing');
     mobileOverlay.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    setTimeout(() => document.getElementById('searchInputMobile')?.focus(), 100);
+    // Sin autofocus: abrir el teclado de inmediato es invasivo — que el
+    // usuario toque el campo si realmente quiere escribir una búsqueda.
   }
 
   if (openMobileBtn) {
@@ -5625,6 +5630,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateTopBarHeight();
   window.addEventListener('resize', updateTopBarHeight);
   setupScrollHideBars();
+  // Expuesta globalmente: al abrir una tarjeta desde el mapa (mobile) hay
+  // que recalcularla justo antes, porque la medición inicial pudo quedar
+  // corta (corrió antes de que "N inmuebles" tuviera texto) y eso corría
+  // la tarjeta unos px de más, dejando el header por encima tapándole la
+  // esquina superior (foto + badge "Disponible").
+  window._updateTopBarHeight = updateTopBarHeight;
 
   // Check sesión admin — solo Google OAuth
   try {
