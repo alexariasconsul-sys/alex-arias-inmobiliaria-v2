@@ -2361,6 +2361,22 @@ body {
 
 .prop-perf-table td { vertical-align: middle; }
 
+.prop-alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 20px 20px;
+}
+.prop-alert-item {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+.prop-alert-item-title { font-weight: 700; font-size: 13px; color: var(--text); margin-bottom: 4px; }
+.prop-alert-item-reasons { margin: 0; padding-left: 18px; font-size: 12.5px; color: #92400e; }
+.prop-alert-item-reasons li { margin: 2px 0; }
+
 .kpi-delta {
   font-size: 11px;
   font-weight: 600;

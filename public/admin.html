@@ -313,7 +313,8 @@
 
       <!-- Tab: Patrones -->
       <div class="adm-stats-tab-content" data-tab="patrones">
-        <div class="adm-card adm-card--full"><h3 class="adm-card-title">Análisis de Patrones de Búsqueda</h3><div id="patternsTableWrap" style="overflow-x:auto"><table class="adm-table"><thead><tr><th>Municipio</th><th>Búsquedas</th><th>% Total</th><th>Leads</th><th>Conversión</th></tr></thead><tbody id="patternsTableBody"><tr><td colspan="5" style="text-align:center;padding:20px">Cargando...</td></tr></tbody></table></div></div>
+        <div class="adm-card adm-card--full"><h3 class="adm-card-title">Patrones por municipio</h3><div id="patternsTableWrap" style="overflow-x:auto"><table class="adm-table"><thead><tr><th>Municipio</th><th>Búsquedas</th><th>% Total</th><th>Leads</th><th>Conversión</th></tr></thead><tbody id="patternsTableBody"><tr><td colspan="5" style="text-align:center;padding:20px">Cargando...</td></tr></tbody></table></div></div>
+        <div class="adm-card adm-card--full"><h3 class="adm-card-title">Patrones por barrio</h3><div id="patternsBarrioTableWrap" style="overflow-x:auto"><table class="adm-table"><thead><tr><th>Barrio</th><th>Búsquedas</th><th>% Total</th><th>Leads</th><th>Conversión</th></tr></thead><tbody id="patternsBarrioTableBody"><tr><td colspan="5" style="text-align:center;padding:20px">Cargando...</td></tr></tbody></table></div></div>
         <div class="adm-card adm-card--full"><h3 class="adm-card-title">Insights Automáticos</h3><div id="statsInsights" style="padding:20px;line-height:1.8;color:#6b7280"><p>Cargando insights...</p></div></div>
       </div>
 
@@ -415,6 +416,10 @@
 
       <!-- Tab: Inmuebles -->
       <div class="adm-stats-tab-content" data-tab="inmuebles">
+        <div class="adm-card adm-card--full" id="propAlertsCard" style="display:none">
+          <h3 class="adm-card-title">⚠️ Inmuebles que necesitan atención</h3>
+          <div id="propAlertsList" class="prop-alerts-list"></div>
+        </div>
         <div class="adm-card adm-card--full">
           <div class="adm-card-title-row" style="padding:20px 20px 0">
             <h3 class="adm-card-title" style="margin-bottom:0">Performance por inmueble</h3>
@@ -428,6 +433,7 @@
                   <th>Precio</th>
                   <th>👁 Vistas</th>
                   <th>❤️ Likes</th>
+                  <th>🔗 Compartidos</th>
                   <th>💬 Leads</th>
                   <th>Conversión</th>
                   <th>Publicado</th>
@@ -435,7 +441,7 @@
                 </tr>
               </thead>
               <tbody id="propPerfBody">
-                <tr><td colspan="8" style="text-align:center;padding:20px;color:#9ca3af">Cargando...</td></tr>
+                <tr><td colspan="9" style="text-align:center;padding:20px;color:#9ca3af">Cargando...</td></tr>
               </tbody>
             </table>
           </div>
@@ -3252,12 +3258,15 @@ async function renderReviewsHistory() {
 async function renderPropPerformance() {
   const tbody = document.getElementById('propPerfBody');
   const countEl = document.getElementById('propPerfCount');
+  const alertsCard = document.getElementById('propAlertsCard');
+  const alertsList = document.getElementById('propAlertsList');
   if (!tbody) return;
   try {
     const res = await fetch('/api/stats/property-performance', { credentials: 'include', headers: authHeaders() });
     const data = await res.json();
     if (!Array.isArray(data) || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#9ca3af">Sin datos</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#9ca3af">Sin datos</td></tr>';
+      if (alertsCard) alertsCard.style.display = 'none';
       return;
     }
     if (countEl) countEl.textContent = data.length + ' inmuebles';
@@ -3275,14 +3284,34 @@ async function renderPropPerformance() {
         <td>${price}</td>
         <td>${p.views||0}</td>
         <td>${p.likes||0}</td>
+        <td>${p.shares||0}</td>
         <td><strong style="color:${p.leads>0?'#0f766e':'inherit'}">${p.leads||0}</strong></td>
         <td>${p.conversionRate}</td>
         <td>${p.daysSincePublished >= 0 ? p.daysSincePublished + 'd' : '—'}</td>
         <td>${TEMP_LABEL[p.temp] || '—'}</td>
       </tr>`;
     }).join('');
+
+    // Inmuebles que necesitan atención — solo los que traen alertas del servidor
+    const withAlerts = data.filter(p => Array.isArray(p.alerts) && p.alerts.length);
+    if (alertsCard && alertsList) {
+      if (!withAlerts.length) {
+        alertsCard.style.display = 'none';
+      } else {
+        alertsCard.style.display = '';
+        alertsList.innerHTML = withAlerts.map(p => `
+          <div class="prop-alert-item">
+            <div class="prop-alert-item-title">${p.title || p.id}</div>
+            <ul class="prop-alert-item-reasons">
+              ${p.alerts.map(a => `<li>${a}</li>`).join('')}
+            </ul>
+          </div>
+        `).join('');
+      }
+    }
   } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#9ca3af">Error cargando datos</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#9ca3af">Error cargando datos</td></tr>';
+    if (alertsCard) alertsCard.style.display = 'none';
   }
 }
 
@@ -3305,24 +3334,31 @@ function loadConversionStats(data) {
 function loadPatterns(searches, leads) {
   if (!searches) return;
 
-  // Tabla de patrones
-  const tbody = document.getElementById('patternsTableBody');
-  if (tbody) {
-    const byMuni = {};
-    (searches.byMunicipio || []).forEach(([m, count]) => {
-      byMuni[m] = { searches: count, leads: 0 };
-    });
-    (leads?.recent || []).forEach(l => {
-      // Extraer municipio si está en los datos... simplificado por ahora
+  // Tabla genérica: cruza búsquedas (searches.by___) con leads reales
+  // (leads.by___, ya calculados en el servidor cruzando propId -> propiedad)
+  function renderPatternTable(tbodyId, searchPairs, leadsMap) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    const rows = {};
+    (searchPairs || []).forEach(([key, count]) => { rows[key] = { searches: count, leads: 0 }; });
+    Object.entries(leadsMap || {}).forEach(([key, count]) => {
+      if (!rows[key]) rows[key] = { searches: 0, leads: 0 };
+      rows[key].leads = count;
     });
 
-    tbody.innerHTML = Object.entries(byMuni).slice(0, 10).map(([m, stats]) => {
-      const total = searches.total || 1;
-      const pct = ((stats.searches / total) * 100).toFixed(1);
-      const conv = stats.leads > 0 ? ((stats.leads / stats.searches) * 100).toFixed(1) : '0';
-      return `<tr><td>${m}</td><td>${stats.searches}</td><td>${pct}%</td><td>${stats.leads}</td><td>${conv}%</td></tr>`;
-    }).join('') || '<tr><td colspan="5" style="text-align:center;color:#9ca3af">Sin datos</td></tr>';
+    const total = searches.total || 1;
+    tbody.innerHTML = Object.entries(rows)
+      .sort((a, b) => b[1].searches - a[1].searches)
+      .slice(0, 10)
+      .map(([key, stats]) => {
+        const pct = ((stats.searches / total) * 100).toFixed(1);
+        const conv = stats.searches > 0 ? ((stats.leads / stats.searches) * 100).toFixed(1) : '0';
+        return `<tr><td>${key}</td><td>${stats.searches}</td><td>${pct}%</td><td>${stats.leads}</td><td>${conv}%</td></tr>`;
+      }).join('') || '<tr><td colspan="5" style="text-align:center;color:#9ca3af">Sin datos</td></tr>';
   }
+
+  renderPatternTable('patternsTableBody', searches.byMunicipio, leads?.byMunicipio);
+  renderPatternTable('patternsBarrioTableBody', searches.byBarrio, leads?.byBarrio);
 
   // Insights
   const insights = document.getElementById('statsInsights');

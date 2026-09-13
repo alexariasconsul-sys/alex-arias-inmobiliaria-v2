@@ -1155,6 +1155,23 @@ app.get('/api/stats/leads', requireAdmin, async (req, res) => {
 
     const leads = await leadsDB.findAsync({ ts: { $gte: dateThreshold } });
 
+    // Municipio/barrio de cada lead — el lead solo guarda propId, así que
+    // hay que cruzarlo con la propiedad. Antes esto quedaba como un stub
+    // sin implementar y la tabla de Patrones siempre mostraba 0 leads.
+    const propsForLeads = await getDB().findAsync({});
+    const propById = {};
+    propsForLeads.forEach(p => { propById[p._id] = p; });
+
+    const byMunicipio = {};
+    const byBarrio = {};
+    leads.forEach(l => {
+      const prop = propById[l.propId];
+      const m = prop?.municipio || 'sin dato';
+      const b = prop?.barrio || 'sin dato';
+      byMunicipio[m] = (byMunicipio[m] || 0) + 1;
+      byBarrio[b] = (byBarrio[b] || 0) + 1;
+    });
+
     // Estadísticas por canal
     const byChannel = {};
     leads.forEach(l => {
@@ -1305,6 +1322,8 @@ app.get('/api/stats/leads', requireAdmin, async (req, res) => {
       total,
       byChannel,
       bySource,
+      byMunicipio,
+      byBarrio,
       byDay: Object.entries(leadsByDay).sort(),
       recent: leads.slice(-50).reverse(),
       byHour,
@@ -1327,22 +1346,11 @@ app.get('/api/stats/property-performance', requireAdmin, async (req, res) => {
     const db = getDB();
     const properties = await db.findAsync({});
     const allLeads = await leadsDB.findAsync({});
-    const allViews = await viewsDB.findAsync({});
 
     // Contar leads por propId
     const leadsByProp = {};
     allLeads.forEach(l => {
       if (l.propId) leadsByProp[l.propId] = (leadsByProp[l.propId] || 0) + 1;
-    });
-
-    // Última vista por propertyId
-    const lastViewByProp = {};
-    allViews.forEach(v => {
-      if (!v.propertyId) return;
-      const t = new Date(v.ts).getTime();
-      if (!lastViewByProp[v.propertyId] || t > lastViewByProp[v.propertyId]) {
-        lastViewByProp[v.propertyId] = t;
-      }
     });
 
     const now = Date.now();
@@ -1356,14 +1364,30 @@ app.get('/api/stats/property-performance', requireAdmin, async (req, res) => {
       const conversionRate = views > 0 ? ((leads / views) * 100).toFixed(2) + '%' : '0.00%';
       const createdAt = p.createdAt ? new Date(p.createdAt).getTime() : null;
       const daysSincePublished = createdAt ? Math.floor((now - createdAt) / (24 * 60 * 60 * 1000)) : -1;
-      const lastViewTs = lastViewByProp[id] || null;
-      const lastViewDaysAgo = lastViewTs ? Math.floor((now - lastViewTs) / (24 * 60 * 60 * 1000)) : 999;
+      // lastViewedAt vive directo en la propiedad desde el POST /view — antes
+      // se buscaba en viewsDB con un nombre de campo que nunca coincidía
+      // (propertyId vs. propId real) y esa tabla además solo guarda 24h,
+      // así que "última vista" nunca se calculaba bien.
+      const lastViewTs = p.lastViewedAt ? new Date(p.lastViewedAt).getTime() : null;
+      const lastViewDaysAgo = lastViewTs ? Math.floor((now - lastViewTs) / (24 * 60 * 60 * 1000)) : null;
 
       let temp = 'cold';
       if (leads > 0 || (lastViewTs && (now - lastViewTs) < sevenDaysMs)) {
         temp = 'hot';
       } else if (lastViewTs && (now - lastViewTs) < thirtyDaysMs) {
         temp = 'warm';
+      }
+
+      // Alertas accionables — solo para inmuebles activos (un "ocupado" ya
+      // no se está promocionando, no tiene sentido avisar sobre él).
+      const alerts = [];
+      if (p.estado !== 'ocupado') {
+        if (daysSincePublished >= 14 && views === 0) {
+          alerts.push(`Sin ninguna vista en ${daysSincePublished} días — revisa el título, el precio o las fotos.`);
+        }
+        if (views >= 10 && leads === 0) {
+          alerts.push(`${views} vistas sin ningún contacto — el precio o las fotos podrían estar alejando a los interesados.`);
+        }
       }
 
       return {
@@ -1380,7 +1404,8 @@ app.get('/api/stats/property-performance', requireAdmin, async (req, res) => {
         conversionRate,
         daysSincePublished,
         lastViewDaysAgo,
-        temp
+        temp,
+        alerts
       };
     });
 
@@ -2367,7 +2392,11 @@ app.post('/api/properties/:id/view', async (req, res) => {
     const doc = await db.findOneAsync({ _id: propId });
     if (!doc) return res.status(404).json({ error: 'No encontrado' });
     const newViews = (doc.views || 0) + 1;
-    await db.updateAsync({ _id: propId }, { $set: { views: newViews } });
+    // lastViewedAt vive en la propiedad (no en viewsDB, que solo guarda un
+    // rolling de 24h para deduplicar por IP y se poda constantemente) —
+    // así las estadísticas de "última vista" no dependen de una tabla que
+    // se vacía sola.
+    await db.updateAsync({ _id: propId }, { $set: { views: newViews, lastViewedAt: new Date() } });
 
     // Limpiar registros viejos de vez en cuando (no bloquear)
     viewsDB.removeAsync({ ts: { $lt: cutoff } }, { multi: true }).catch(() => {});
