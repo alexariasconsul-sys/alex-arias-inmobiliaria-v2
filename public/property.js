@@ -126,4 +126,100 @@
       fetch('/api/properties/' + data.id + '/share', { method: 'POST' }).catch(function () {});
     });
   });
+
+  // ── Registro de leads (WhatsApp) — antes esta página no registraba
+  // nada al hacer clic en WhatsApp, así que los contactos que llegaban
+  // desde acá (incluyendo los del feed de Meta) quedaban invisibles en
+  // las estadísticas. Misma lógica que usa el sitio principal (app.js).
+  function _getCookie(name) {
+    return document.cookie.split(';').map(function (c) { return c.trim(); })
+      .find(function (c) { return c.indexOf(name + '=') === 0; })
+      ?.split('=')[1] || undefined;
+  }
+  function _fbEventId(name) {
+    return name + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  }
+  function getUTMParams() {
+    var url = new URLSearchParams(window.location.search);
+    var stored = {};
+    try { stored = JSON.parse(sessionStorage.getItem('utm_params') || '{}'); } catch (_) {}
+    var params = {
+      utm_source:   url.get('utm_source')   || stored.utm_source   || '',
+      utm_medium:   url.get('utm_medium')   || stored.utm_medium   || '',
+      utm_campaign: url.get('utm_campaign') || stored.utm_campaign || '',
+      utm_content:  url.get('utm_content')  || stored.utm_content  || ''
+    };
+    if (url.get('utm_source')) sessionStorage.setItem('utm_params', JSON.stringify(params));
+    return params;
+  }
+  function getDeviceType() {
+    var ua = navigator.userAgent;
+    if (/iPad|Tablet/i.test(ua)) return 'tablet';
+    if (/Mobile|Android|iPhone|iPod/i.test(ua)) return 'mobile';
+    return 'desktop';
+  }
+  function _sendCAPI(eventName, customData, eventId) {
+    fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventName: eventName,
+        eventId: eventId,
+        customData: customData,
+        fbp: _getCookie('_fbp'),
+        fbc: _getCookie('_fbc') || new URLSearchParams(location.search).get('fbclid') || undefined,
+        userAgent: navigator.userAgent,
+        pageUrl: location.href
+      })
+    }).catch(function () {});
+  }
+  function trackWhatsAppLead(source) {
+    var utm = getUTMParams();
+    fetch('/api/leads/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        propId: data.id || '',
+        propTitle: data.title || '',
+        propPrice: data.precio || 0,
+        contactChannel: 'whatsapp',
+        source: source,
+        utm_source: utm.utm_source,
+        utm_medium: utm.utm_medium,
+        utm_campaign: utm.utm_campaign,
+        utm_content: utm.utm_content,
+        device: getDeviceType()
+      })
+    }).catch(function () {});
+
+    if (typeof fbq !== 'function') return;
+    var eid = _fbEventId('Lead');
+    var ids = data.id ? [String(data.id)] : [];
+    fbq('track', 'Lead', {
+      content_ids: ids,
+      content_type: 'product',
+      content_name: data.title || 'Consulta general',
+      content_category: 'inmobiliaria',
+      value: data.precio || 0,
+      currency: 'COP',
+      eventID: eid
+    });
+    fbq('trackCustom', 'ContactWhatsApp', {
+      content_ids: ids,
+      content_name: data.title || '',
+      value: data.precio || 0,
+      currency: 'COP'
+    });
+    _sendCAPI('Lead', {
+      content_ids: ids,
+      content_type: 'product',
+      content_name: data.title || 'Consulta general',
+      value: data.precio || 0,
+      currency: 'COP'
+    }, eid);
+  }
+  var waDesktop = document.querySelector('.pdp-cta-wa');
+  var waMobile  = document.querySelector('.pdp-mobile-cta');
+  if (waDesktop) waDesktop.addEventListener('click', function () { trackWhatsAppLead('pdp_whatsapp_desktop'); });
+  if (waMobile)  waMobile.addEventListener('click',  function () { trackWhatsAppLead('pdp_whatsapp_mobile'); });
 })();

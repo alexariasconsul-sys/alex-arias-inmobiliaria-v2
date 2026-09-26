@@ -1852,8 +1852,8 @@ async function renderPropertyPage(req, res, prop) {
     <div class="pdp-lightbox-count" id="pdpLightboxCount"></div>
   </div>
   ${pixelBlock}
-  <script>window.__PROP__ = ${JSON.stringify({ id, title: prop.title || '', images: imgs })};</script>
-  <script src="/property.js?v=2" defer></script>
+  <script>window.__PROP__ = ${JSON.stringify({ id, title: prop.title || '', images: imgs, precio: numPrice })};</script>
+  <script src="/property.js?v=3" defer></script>
 </body>
 </html>`;
 
