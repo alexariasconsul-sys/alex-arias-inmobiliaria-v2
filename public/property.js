@@ -220,6 +220,8 @@
   }
   var waDesktop = document.querySelector('.pdp-cta-wa');
   var waMobile  = document.querySelector('.pdp-mobile-cta');
+  var waFooter  = document.querySelector('.pdp-footer-wa');
   if (waDesktop) waDesktop.addEventListener('click', function () { trackWhatsAppLead('pdp_whatsapp_desktop'); });
   if (waMobile)  waMobile.addEventListener('click',  function () { trackWhatsAppLead('pdp_whatsapp_mobile'); });
+  if (waFooter)  waFooter.addEventListener('click',  function () { trackWhatsAppLead('pdp_whatsapp_footer'); });
 })();
