@@ -6319,7 +6319,15 @@ function setupIntroModal() {
     avatarEl.alt = p.name;
     nameEl.textContent = p.name;
     roleEl.textContent = [p.role, p.zone].filter(Boolean).join(' · ');
-    bioEl.textContent  = (p.bio || '').trim();
+    // Saludo personal en primera persona — el bio del perfil (p.bio) es más
+    // formal y se usa en SEO/schema.org; aquí buscamos que se sienta como
+    // un saludo, no como una hoja de vida.
+    const years = (p.experience_years || '10+').replace(/\+?$/, '+');
+    const zoneParts = (p.zone || 'Medellín').split('·').map(s => s.trim()).filter(Boolean);
+    const zoneStr = zoneParts.length > 1
+      ? zoneParts.slice(0, -1).join(', ') + ' y ' + zoneParts.slice(-1)
+      : zoneParts[0];
+    bioEl.textContent = `¡Hola! Soy Alex, y llevo ${years} años ayudando a familias en ${zoneStr} a encontrar el apartamento donde realmente quieren vivir. Si tienes alguna duda o buscas algo en particular, escríbeme — te oriento sin ningún costo.`;
 
     let waNum = (p.whatsapp || '573122588521').replace(/\D/g, '');
     if (waNum.length === 10) waNum = `57${waNum}`;
