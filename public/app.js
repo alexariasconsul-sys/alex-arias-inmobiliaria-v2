@@ -28,6 +28,7 @@ const state = {
   likedIds: new Set(),
   shareTargetId: null,
   autoOpenId: null,       // id de inmueble a abrir automáticamente (desde ?id= en URL)
+  hadDirectLink: false,   // true si llegó con ?id= — a diferencia de autoOpenId, no se consume/resetea
   editingId: null,
   leafletMap: null,
   markerClusterGroup: null,
@@ -240,8 +241,8 @@ function readURLParams() {
   if (p.get('est')) state.filterEstado = p.get('est');
   if (p.get('ord')) state.orderBy = p.get('ord');
   // Guardar ?id= antes de que pushFilterState() sobrescriba la URL
-  if (p.get('id')) state.autoOpenId = p.get('id');
-  if (window._autoOpenId) state.autoOpenId = window._autoOpenId;
+  if (p.get('id')) { state.autoOpenId = p.get('id'); state.hadDirectLink = true; }
+  if (window._autoOpenId) { state.autoOpenId = window._autoOpenId; state.hadDirectLink = true; }
   // Auto-abrir panel de reseñas
   if (p.get('reviews') === 'open') state.autoOpenReviews = true;
   // Auto-abrir vista mapa (viene desde el blog)
@@ -5681,6 +5682,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderSavedSearches();
   setupSocket();
   setupWelcomeBanner();
+  setupIntroModal();
   autoOpenTopProperty();
 
   // ── Facebook Pixel: Lead en botones de WhatsApp del mapa ─────
@@ -6278,6 +6280,57 @@ function setupWelcomeBanner() {
   }
 
   closeBtn?.addEventListener('click', closeBanner);
+}
+
+// ─── MODAL DE PRESENTACIÓN (primera visita) ──────────────────
+// Se muestra una sola vez por navegador (localStorage), y no
+// interrumpe a quien llega con un enlace directo a un inmueble.
+function setupIntroModal() {
+  const overlay    = document.getElementById('introModalOverlay');
+  const closeBtn   = document.getElementById('introModalClose');
+  const dismissBtn = document.getElementById('introModalDismiss');
+  const cta        = document.getElementById('introModalCta');
+  const avatarEl   = document.getElementById('introModalAvatar');
+  const nameEl     = document.getElementById('introModalName');
+  const roleEl     = document.getElementById('introModalRole');
+  const bioEl      = document.getElementById('introModalBio');
+  if (!overlay) return;
+
+  if (localStorage.getItem('introModalSeen')) return;
+  if (state.hadDirectLink) return; // llegó con ?id= — no interrumpir con un enlace directo
+
+  function closeModal() {
+    overlay.classList.remove('is-visible');
+    localStorage.setItem('introModalSeen', '1');
+    setTimeout(() => { overlay.style.display = 'none'; }, 300);
+  }
+
+  closeBtn?.addEventListener('click', closeModal);
+  dismissBtn?.addEventListener('click', closeModal);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay.classList.contains('is-visible')) closeModal();
+  });
+  cta?.addEventListener('click', () => trackLead('intro_modal_wa', 'Consulta general', null, 0));
+
+  fetch('/api/profile').then(r => r.json()).then(p => {
+    if (!p || !p.name) return; // sin perfil configurado, no mostrar nada
+    avatarEl.src = p.avatar ? `/${p.avatar}` : '/assets/logo/Logo.png';
+    avatarEl.alt = p.name;
+    nameEl.textContent = p.name;
+    roleEl.textContent = [p.role, p.zone].filter(Boolean).join(' · ');
+    bioEl.textContent  = (p.bio || '').trim();
+
+    let waNum = (p.whatsapp || '573122588521').replace(/\D/g, '');
+    if (waNum.length === 10) waNum = `57${waNum}`;
+    const msg = p.whatsapp_msg || 'Hola Alex, me gustaría recibir asesoría inmobiliaria.';
+    cta.href = `https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`;
+
+    setTimeout(() => {
+      overlay.style.display = 'flex';
+      requestAnimationFrame(() => overlay.classList.add('is-visible'));
+    }, 1200);
+  }).catch(() => {});
 }
 
 // ─── AUTO-ABRIR INMUEBLE MÁS POPULAR ─────────────────────────
