@@ -4044,6 +4044,28 @@ body { background: #0f172a; }
   .intro-modal-bio { font-size: 14px; }
 }
 
+/* Escritorio: foto grande a la izquierda, info a la derecha */
+@media (min-width: 640px) {
+  .intro-modal {
+    max-width: 640px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    text-align: left;
+    padding: 44px 44px 44px 40px;
+  }
+  .intro-modal-photo { flex-shrink: 0; }
+  .intro-modal-avatar {
+    width: 168px; height: 168px;
+    margin: 0;
+    border-width: 4px;
+  }
+  .intro-modal-content { flex: 1; min-width: 0; }
+  .intro-modal-name, .intro-modal-role, .intro-modal-bio { text-align: left; }
+  .intro-modal-name { font-size: 23px; }
+  .intro-modal-bio { margin-bottom: 22px; }
+}
+
 /* ─── TOAST ─────────────────────────────────────────────────── */
 .toast {
   position: fixed;
