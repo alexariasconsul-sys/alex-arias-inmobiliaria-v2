@@ -163,6 +163,60 @@ if (document.getElementById('blogGrid')) {
 }
 
 /* ════════════════════════════════════════════════════════════
+   REGISTRO DE LEADS (WhatsApp/Llamar) — blog.html y post.html
+   Antes estos botones no registraban nada al hacer clic (ni UTM,
+   ni la base de datos de leads), igual que pasaba en /inmueble/.
+═════════════════════════════════════════════════════════════ */
+(function () {
+  function getUTMParams() {
+    const url = new URLSearchParams(window.location.search);
+    let stored = {};
+    try { stored = JSON.parse(sessionStorage.getItem('utm_params') || '{}'); } catch (_) {}
+    const params = {
+      utm_source:   url.get('utm_source')   || stored.utm_source   || '',
+      utm_medium:   url.get('utm_medium')   || stored.utm_medium   || '',
+      utm_campaign: url.get('utm_campaign') || stored.utm_campaign || '',
+      utm_content:  url.get('utm_content')  || stored.utm_content  || ''
+    };
+    if (url.get('utm_source')) sessionStorage.setItem('utm_params', JSON.stringify(params));
+    return params;
+  }
+  function getDeviceType() {
+    const ua = navigator.userAgent;
+    if (/iPad|Tablet/i.test(ua)) return 'tablet';
+    if (/Mobile|Android|iPhone|iPod/i.test(ua)) return 'mobile';
+    return 'desktop';
+  }
+  function logBlogLead(contactChannel, source) {
+    const slug = slugFromUrl ? slugFromUrl() : '';
+    fetch('/api/leads/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        propId: slug ? `blog:${slug}` : 'blog',
+        propTitle: document.title || '',
+        propPrice: 0,
+        contactChannel,
+        source,
+        ...getUTMParams(),
+        device: getDeviceType()
+      })
+    }).catch(function () {});
+    if (typeof fbq === 'function') {
+      fbq('track', 'Lead', { content_name: document.title || 'Blog', content_category: 'blog' });
+    }
+  }
+  const postWa = document.querySelector('.post-cta-wa');
+  if (postWa) postWa.addEventListener('click', () => logBlogLead('whatsapp', 'post_cta_wa'));
+  document.querySelectorAll('.blog-footer-wa').forEach(el => {
+    el.addEventListener('click', () => logBlogLead('whatsapp', IS_POST_PAGE ? 'post_footer_wa' : 'blog_footer_wa'));
+  });
+  document.querySelectorAll('a[href^="tel:+5731225"]').forEach(el => {
+    el.addEventListener('click', () => logBlogLead('call', IS_POST_PAGE ? 'post_footer_llamar' : 'blog_footer_llamar'));
+  });
+})();
+
+/* ════════════════════════════════════════════════════════════
    PÁGINA: POST INDIVIDUAL  (post.html)
 ═════════════════════════════════════════════════════════════ */
 if (document.getElementById('postArticle')) {
