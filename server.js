@@ -203,6 +203,7 @@ async function serveIndex(req, res, overrides = {}) {
     const baseUrl   = process.env.SITE_URL || 'https://alexariasc.com';
     const indexPath = path.join(__dirname, 'public', 'index.html');
     let html = fs.readFileSync(indexPath, 'utf8');
+    if (isInternal(req)) html = html.replace('<head>', '<head><script>window.fbq=function(){};</script>');
     const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
     const {
@@ -512,6 +513,7 @@ app.get('/', async (req, res) => {
     const [rating, topReviews] = await Promise.all([getAggregateRating(), getTopReviews(5)]);
     const indexPath = path.join(__dirname, 'public', 'index.html');
     let html = fs.readFileSync(indexPath, 'utf8');
+    if (isInternal(req)) html = html.replace('<head>', '<head><script>window.fbq=function(){};</script>');
 
     let pageTitle = 'Alex Arias · Consultor Inmobiliario | Apartamentos en Medellín';
     let metaDesc  = 'Portafolio inmobiliario de Alexander Arias — Arriendo y venta de apartamentos en Sabaneta, Envigado y Medellín. Asesoría inmobiliaria especializada.';
@@ -954,6 +956,34 @@ app.get('/auth/status', (req, res) => {
   });
 });
 
+// ─── TRÁFICO INTERNO ──────────────────────────────────────────
+// Quien abre /interno queda marcado con una cookie y sus visitas, clics,
+// búsquedas y eventos de Pixel/CAPI dejan de contarse, para que las pruebas
+// del dueño o del equipo no contaminen las estadísticas.
+function isInternal(req) {
+  return /(?:^|;\s*)interno=1(?:;|$)/.test(req.headers.cookie || '');
+}
+
+app.get('/interno', (req, res) => {
+  const off = req.query.off === '1';
+  if (off) res.clearCookie('interno', { path: '/' });
+  else res.cookie('interno', '1', { maxAge: 365 * 24 * 60 * 60 * 1000, sameSite: 'lax', httpOnly: true, path: '/' });
+  res.set('Cache-Control', 'no-store');
+  res.set('X-Robots-Tag', 'noindex');
+  res.send(`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Tráfico interno</title>
+<style>body{font-family:system-ui,sans-serif;background:#f0f1f3;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:20px}
+.c{background:#fff;border-radius:20px;padding:32px;max-width:380px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+h1{font-size:20px;margin:0 0 10px}p{color:#6b7280;font-size:14.5px;line-height:1.6;margin:0 0 20px}
+a{display:inline-block;margin:4px;padding:10px 18px;border-radius:999px;font-weight:600;font-size:14px;text-decoration:none}
+.p{background:#0f766e;color:#fff}.s{color:#6b7280;border:1px solid #e5e7eb}</style></head><body><div class="c">
+<h1>${off ? 'Modo interno desactivado' : 'Modo interno activado'}</h1>
+<p>${off
+  ? 'Este navegador vuelve a contar como visitante normal: sus visitas, clics y búsquedas se registran.'
+  : 'En este navegador, tus visitas, clics, búsquedas y eventos de Facebook ya no se cuentan en las estadísticas. Hazlo una vez en cada dispositivo o navegador que uses para probar.'}</p>
+<a class="p" href="/">Ir al sitio</a>${off ? '<a class="s" href="/interno">Activar de nuevo</a>' : '<a class="s" href="/interno?off=1">Desactivar</a>'}
+</div></body></html>`);
+});
+
 // Auth middleware — acepta sesión Google O contraseña clásica
 function requireAdmin(req, res, next) {
   if (req.isAuthenticated && req.isAuthenticated()) return next();
@@ -1050,6 +1080,7 @@ app.get('/api/stats', requireAdmin, async (req, res) => {
 // ─── LOGGING DE BÚSQUEDAS ─────────────────────────────────────
 app.post('/api/searches/log', async (req, res) => {
   try {
+    if (isInternal(req)) return res.json({ ok: true, internal: true });
     const { filters, resultsCount } = req.body;
     const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
     const userAgent = req.headers['user-agent'] || 'unknown';
@@ -1071,6 +1102,7 @@ app.post('/api/searches/log', async (req, res) => {
 // ─── LOGGING DE LEADS ──────────────────────────────────────────
 app.post('/api/leads/log', async (req, res) => {
   try {
+    if (isInternal(req)) return res.json({ ok: true, internal: true });
     const { propId, propTitle, propPrice, contactChannel, source, utm_source, utm_medium, utm_campaign, utm_content, device } = req.body;
     const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
     const userAgent = req.headers['user-agent'] || '';
@@ -1093,6 +1125,25 @@ app.post('/api/leads/log', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('Error logging lead:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── LIMPIEZA DE LEADS DE PRUEBA (solo admin) ──────────────────
+// Borra leads cuya utm_campaign empieza por el prefijo indicado (ej. QA_).
+// Con dryRun=1 solo cuenta y muestra cuáles borraría, sin tocar nada.
+app.delete('/api/leads/cleanup', requireAdmin, async (req, res) => {
+  try {
+    const prefix = String(req.query.campaignPrefix || '');
+    if (prefix.length < 3) return res.status(400).json({ error: 'campaignPrefix requerido (mínimo 3 caracteres)' });
+    const query = { utm_campaign: { $regex: new RegExp('^' + prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) } };
+    const matches = await leadsDB.findAsync(query);
+    const summary = matches.map(l => ({ ts: l.ts, source: l.source, utm_campaign: l.utm_campaign }));
+    if (req.query.dryRun === '1') return res.json({ dryRun: true, wouldDelete: matches.length, matches: summary });
+    const removed = await leadsDB.removeAsync(query, { multi: true });
+    res.json({ deleted: removed, matches: summary });
+  } catch (err) {
+    console.error('Error en limpieza de leads:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -1672,7 +1723,7 @@ async function renderPropertyPage(req, res, prop) {
   const pixelId = (settings.facebookPixelId || '1997851838283373').trim();
   const numPrice = prop.precio || prop.precioArriendo || prop.precioVenta || 0;
 
-  const pixelBlock = pixelId ? `
+  const pixelBlock = (pixelId && !isInternal(req)) ? `
   <script>
     !function(f,b,e,v,n,t,s)
     {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -2375,6 +2426,10 @@ app.post('/api/properties/:id/view', async (req, res) => {
   try {
     const db = getDB();
     const propId = req.params.id;
+    if (isInternal(req)) {
+      const cur = await db.findOneAsync({ _id: propId });
+      return res.json({ views: cur?.views || 0, counted: false });
+    }
     const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
     const TWENTY_FOUR_H = 24 * 60 * 60 * 1000;
     const cutoff = new Date(Date.now() - TWENTY_FOUR_H);
@@ -2666,7 +2721,7 @@ app.post('/api/blog/:slug/view', async (req, res) => {
     const seen = await viewsDB.findOneAsync({ propId: `blog:${req.params.slug}`, ip, ts: { $gt: cutoff } });
     const doc = await blogDB.findOneAsync({ slug: req.params.slug });
     if (!doc) return res.status(404).json({ error: 'No encontrado' });
-    if (seen) return res.json({ views: doc.views || 0, counted: false });
+    if (seen || isInternal(req)) return res.json({ views: doc.views || 0, counted: false });
     await viewsDB.insertAsync({ propId: `blog:${req.params.slug}`, ip, ts: new Date() });
     const newViews = (doc.views || 0) + 1;
     await blogDB.updateAsync({ slug: req.params.slug }, { $set: { views: newViews } });
@@ -2905,6 +2960,7 @@ const FB_VALID_EVENTS = new Set([
 ]);
 
 app.post('/api/track', async (req, res) => {
+  if (isInternal(req)) return res.json({ ok: true, internal: true });
   const t0 = Date.now();
   const logEntry = {
     createdAt: new Date(), eventName: req.body?.eventName || '?',
@@ -3093,6 +3149,13 @@ app.post('/api/admin/test-event', requireAdmin, async (req, res) => {
 // Todas las páginas incluyen <script src="/tracking.js"> en el <head>
 // Este endpoint genera el JS dinámicamente según la config guardada
 app.get('/tracking.js', (req, res) => {
+  // Navegador marcado como interno (/interno): sin Pixel ni GTM. Se deja un
+  // fbq vacío para que el resto del código lo llame sin errores.
+  if (isInternal(req)) {
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    return res.send('/* tráfico interno */ window.fbq = window.fbq || function(){};');
+  }
   const s = readSettings();
   const pixelId    = (s.facebookPixelId || '').trim();
   const gtmId      = (s.gtmId           || '').trim();
