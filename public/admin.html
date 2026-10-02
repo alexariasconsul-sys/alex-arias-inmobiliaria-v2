@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="/admin.css?v=6" />
+  <link rel="stylesheet" href="/admin.css?v=7" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -68,6 +68,11 @@
       <button class="adm-nav-item active" data-section="dashboard">
         <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/></svg>
         Dashboard
+      </button>
+      <button class="adm-nav-item" data-section="contactos">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Contactos
+        <span class="adm-nav-badge" id="navContactsBadge" style="display:none">0</span>
       </button>
       <button class="adm-nav-item" data-section="estadísticas">
         <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M3 3v18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 14v-4M12 14v-7M17 14v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -146,6 +151,20 @@
     </section>
 
     <!-- ── ESTADÍSTICAS ────────────────────────────────────────── -->
+    <section class="adm-section" id="sectionContactos">
+      <div class="adm-section-toolbar">
+        <select class="adm-search-input" id="contactsFilter" style="max-width:220px">
+          <option value="pendiente">Pendientes de llamar</option>
+          <option value="all">Todos</option>
+          <option value="contactado">Contactados</option>
+          <option value="descartado">Descartados</option>
+        </select>
+        <span class="adm-card-subtitle" id="contactsCount"></span>
+      </div>
+      <div id="contactsList" class="adm-contacts-list"></div>
+      <div class="adm-table-empty" id="contactsEmpty" style="display:none">No hay contactos en esta vista</div>
+    </section>
+
     <section class="adm-section" id="sectionEstadísticas">
       <div class="adm-section-toolbar">
         <select class="adm-search-input" id="statsDateRange" style="max-width:180px">
@@ -1423,7 +1442,7 @@ function showShell() {
   document.getElementById('admShell').style.display = 'flex';
   document.getElementById('admBottomNav').style.display = '';
   document.getElementById('admFab').style.display = '';
-  loadStats(); loadProperties();
+  loadStats(); loadProperties(); loadContacts(true);
 }
 
 // ── LOGIN: verificar sesión Google primero, luego contraseña ─
@@ -1454,8 +1473,8 @@ async function tryLogin(p, silent = false) {
 }
 
 // ── NAV ─────────────────────────────────────────────────────
-const sectionLabels = { dashboard:'Dashboard', estadísticas:'Estadísticas', properties:'Propiedades', blog:'Blog', profile:'Perfil', integraciones:'Integraciones & APIs' };
-const newBtnLabels  = { dashboard:'Nueva propiedad', estadísticas:null, properties:'Nueva propiedad', blog:'Nuevo artículo', profile:null, integraciones:null };
+const sectionLabels = { dashboard:'Dashboard', contactos:'Contactos', estadísticas:'Estadísticas', properties:'Propiedades', blog:'Blog', profile:'Perfil', integraciones:'Integraciones & APIs' };
+const newBtnLabels  = { dashboard:'Nueva propiedad', contactos:null, estadísticas:null, properties:'Nueva propiedad', blog:'Nuevo artículo', profile:null, integraciones:null };
 let currentSection = 'dashboard';
 
 document.querySelectorAll('.adm-nav-item').forEach(btn => {
@@ -1475,6 +1494,7 @@ document.querySelectorAll('.adm-nav-item').forEach(btn => {
     if (currentSection === 'profile') loadProfile();
     if (currentSection === 'integraciones') loadIntegraciones();
     if (currentSection === 'estadísticas') loadStatistics();
+    if (currentSection === 'contactos') loadContacts();
     document.getElementById('admSidebar').classList.remove('open');
   });
 });
@@ -1489,6 +1509,108 @@ document.getElementById('propNewBtn').addEventListener('click', openPropPanel);
 document.getElementById('blogNewBtn').addEventListener('click', openBlogPanel);
 
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ── CONTACTOS ("Prefiero que me llamen") ─────────────────────
+let contactsCache = [];
+const CONTACT_SOURCES = {
+  tarjeta_contactar: 'Tarjeta de inmueble', mapa_tarjeta_wa: 'Mapa',
+  pdp_whatsapp_desktop: 'Página del inmueble', pdp_whatsapp_mobile: 'Página del inmueble',
+  wa_flotante_arriendo: 'WhatsApp flotante · arriendo', wa_flotante_compra: 'WhatsApp flotante · compra',
+  wa_flotante_administracion: 'WhatsApp flotante · administración',
+  intro_modal_wa: 'Modal de bienvenida', post_cta_wa: 'Artículo del blog'
+};
+function contactAgo(iso) {
+  const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (m < 1) return 'ahora mismo';
+  if (m < 60) return `hace ${m} min`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `hace ${h} h`;
+  const d = Math.floor(h / 24);
+  return d === 1 ? 'ayer' : `hace ${d} días`;
+}
+function fmtContactPhone(p) {
+  const d = String(p || '').replace(/\D/g, '');
+  return d.length === 10 ? d.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3') : d;
+}
+
+async function loadContacts(badgeOnly) {
+  try {
+    const r = await fetch('/api/contacts', { credentials: 'include', headers: authHeaders() });
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!Array.isArray(data)) return;
+    contactsCache = data;
+  } catch (_) { return; }
+  const pending = contactsCache.filter(c => c.status === 'pendiente' && !c.isTest).length;
+  const badge = document.getElementById('navContactsBadge');
+  if (badge) { badge.textContent = pending; badge.style.display = pending ? '' : 'none'; }
+  const bb = document.getElementById('bottomContactsBadge');
+  if (bb) { bb.textContent = pending; bb.style.display = pending ? '' : 'none'; }
+  if (!badgeOnly) renderContacts();
+}
+
+function renderContacts() {
+  const filter = document.getElementById('contactsFilter').value;
+  const list = contactsCache.filter(c => filter === 'all' || c.status === filter);
+  const el = document.getElementById('contactsList');
+  document.getElementById('contactsCount').textContent = `${list.length} contacto${list.length === 1 ? '' : 's'}`;
+  document.getElementById('contactsEmpty').style.display = list.length ? 'none' : '';
+  el.innerHTML = list.map(c => {
+    const digits = String(c.phone || '').replace(/\D/g, '');
+    const origin = c.utm_source === 'facebook' ? 'Anuncio de Facebook'
+                 : (CONTACT_SOURCES[c.source] || c.source || '');
+    const meta = [c.propTitle, origin, contactAgo(c.createdAt)].filter(Boolean).map(escHtml).join(' · ');
+    const opt = (v, t) => `<option value="${v}"${c.status === v ? ' selected' : ''}>${t}</option>`;
+    return `<div class="adm-contact-card adm-contact-card--${escHtml(c.status)}" data-id="${escHtml(c.id)}">
+      <div class="adm-contact-main">
+        <div class="adm-contact-name">${escHtml(c.name)}${c.isTest ? ' <span class="adm-contact-test">Prueba</span>' : ''}</div>
+        <a class="adm-contact-phone" href="tel:+57${digits}">${escHtml(fmtContactPhone(c.phone))}</a>
+        <div class="adm-contact-meta">${meta}</div>
+      </div>
+      <div class="adm-contact-actions">
+        <a class="adm-contact-btn adm-contact-btn--call" href="tel:+57${digits}">Llamar</a>
+        <a class="adm-contact-btn adm-contact-btn--wa" href="https://wa.me/57${digits}" target="_blank" rel="noopener">WhatsApp</a>
+        <select class="adm-contact-status" data-act="status">${opt('pendiente', 'Pendiente')}${opt('contactado', 'Contactado')}${opt('descartado', 'Descartado')}</select>
+        <button type="button" class="adm-contact-del" data-act="delete" title="Eliminar">&times;</button>
+      </div>
+      <input class="adm-contact-note" data-act="note" maxlength="500" placeholder="Nota (ej. llamar mañana a las 3 pm)" value="${escHtml(c.note)}">
+    </div>`;
+  }).join('');
+}
+
+async function patchContact(id, body) {
+  try {
+    const r = await fetch('/api/contacts/' + encodeURIComponent(id), {
+      method: 'PATCH', credentials: 'include',
+      headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(body)
+    });
+    return r.ok;
+  } catch (_) { return false; }
+}
+
+document.getElementById('contactsFilter').addEventListener('change', renderContacts);
+document.getElementById('contactsList').addEventListener('change', async (e) => {
+  const card = e.target.closest('.adm-contact-card');
+  if (!card) return;
+  const c = contactsCache.find(x => x.id === card.dataset.id);
+  if (!c) return;
+  if (e.target.dataset.act === 'status') {
+    if (await patchContact(c.id, { status: e.target.value })) { c.status = e.target.value; loadContacts(false); }
+  } else if (e.target.dataset.act === 'note') {
+    if (await patchContact(c.id, { note: e.target.value })) c.note = e.target.value;
+  }
+});
+document.getElementById('contactsList').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-act="delete"]');
+  if (!btn) return;
+  const id = btn.closest('.adm-contact-card').dataset.id;
+  showConfirm('¿Eliminar contacto?', 'Se borra de forma permanente.', async () => {
+    try {
+      const r = await fetch('/api/contacts/' + encodeURIComponent(id), { method: 'DELETE', credentials: 'include', headers: authHeaders() });
+      if (r.ok) loadContacts(false);
+    } catch (_) {}
+  });
+});
 
 // ── CONFIRM DIALOG ───────────────────────────────────────────
 function showConfirm(title, msg, cb) {
@@ -2744,6 +2866,10 @@ try {
     if (currentSection === 'blog') loadBlogPosts();
     loadStats();
   });
+
+  socket.on('contact-new', () => {
+    loadContacts(currentSection !== 'contactos');
+  });
 } catch (_) {}
 
 // ── ESTADÍSTICAS ──────────────────────────────────────────────
@@ -3812,6 +3938,10 @@ new MutationObserver(() => {
   <button class="adm-bottom-nav-item" data-section="estadísticas">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14v-4M12 14v-7M17 14v-9" stroke-linecap="round"/></svg>
     Stats
+  </button>
+  <button class="adm-bottom-nav-item" data-section="contactos">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.8 19.8 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg>
+    Contactos<span class="adm-nav-badge" id="bottomContactsBadge" style="display:none">0</span>
   </button>
   <button class="adm-bottom-nav-item" data-section="blog">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>

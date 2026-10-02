@@ -29,6 +29,9 @@ const searchesDB = new Datastore({ filename: path.join(__dirname, 'searches.db')
 // Base de datos de leads (tracking de contactos)
 const leadsDB = new Datastore({ filename: path.join(__dirname, 'leads.db'), autoload: true });
 
+// Base de datos de contactos ("Prefiero que me llamen": nombre + teléfono) — datos personales, no se versiona
+const contactsDB = new Datastore({ filename: path.join(__dirname, 'contacts.db'), autoload: true });
+
 // Base de datos de eventos Pixel/CAPI — debug y auditoría (máx 500 entradas)
 const pixelEventsDB = new Datastore({ filename: path.join(__dirname, 'pixel_events.db'), autoload: true });
 
@@ -1148,6 +1151,102 @@ app.delete('/api/leads/cleanup', requireAdmin, async (req, res) => {
   }
 });
 
+// ─── CONTACTOS: "Prefiero que me llamen" ───────────────────────
+// Guarda nombre + teléfono (con autorización de datos) para que el asesor
+// llame. También registra un lead (canal "callback") para que cuente en las
+// estadísticas de conversión.
+const contactLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 8,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
+  message: { error: 'Demasiados envíos desde este dispositivo. Intenta de nuevo en unos minutos.' }
+});
+
+// Celular colombiano (10 dígitos, empieza por 3) o fijo (60 + 8 dígitos). Acepta prefijo 57.
+function normalizeCoPhone(raw) {
+  let d = String(raw || '').replace(/\D/g, '');
+  if (d.length === 12 && d.startsWith('57')) d = d.slice(2);
+  if (d.length === 10 && (d.startsWith('3') || d.startsWith('60'))) return d;
+  return null;
+}
+
+app.post('/api/contacts', contactLimiter, async (req, res) => {
+  try {
+    // En modo interno se guarda igual (para poder probar el formulario) pero
+    // marcado como prueba y sin sumar a las estadísticas de leads.
+    const isTest = isInternal(req);
+    const b = req.body || {};
+    if (b.website) return res.json({ ok: true }); // honeypot: los bots llenan este campo oculto
+
+    const name  = String(b.name || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 80);
+    const phone = normalizeCoPhone(b.phone);
+    if (name.length < 2) return res.status(400).json({ error: 'Escribe tu nombre.' });
+    if (!phone)          return res.status(400).json({ error: 'Ingresa un número válido de 10 dígitos (ej. 3001234567).' });
+    if (b.consent !== true) return res.status(400).json({ error: 'Debes autorizar el tratamiento de tus datos para continuar.' });
+
+    const clip = (v, n) => String(v || '').slice(0, n);
+    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+    const userAgent = req.headers['user-agent'] || '';
+    const base = {
+      propId: clip(b.propId, 64), propTitle: clip(b.propTitle, 200), propPrice: Number(b.propPrice) || 0,
+      source: clip(b.source, 60) || 'unknown',
+      utm_source: clip(b.utm_source, 100), utm_medium: clip(b.utm_medium, 100),
+      utm_campaign: clip(b.utm_campaign, 150), utm_content: clip(b.utm_content, 150),
+      device: clip(b.device, 20)
+    };
+
+    await contactsDB.insertAsync({
+      name, phone, ...base,
+      status: 'pendiente', note: '', isTest,
+      consent: true, consentAt: new Date(),
+      ip, userAgent, createdAt: new Date()
+    });
+    if (!isTest) await leadsDB.insertAsync({ ...base, ip, userAgent, contactChannel: 'callback', ts: new Date() });
+
+    io.emit('contact-new'); // sin datos personales: solo avisa al admin para que recargue la lista
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Error guardando contacto:', err);
+    res.status(500).json({ error: 'No pudimos guardar tus datos. Intenta de nuevo.' });
+  }
+});
+
+app.get('/api/contacts', requireAdmin, async (req, res) => {
+  try {
+    const docs = await contactsDB.findAsync({});
+    docs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    res.json(docs.slice(0, 500).map(d => ({
+      id: d._id, name: d.name, phone: d.phone, propId: d.propId, propTitle: d.propTitle,
+      source: d.source, utm_source: d.utm_source, utm_campaign: d.utm_campaign, device: d.device,
+      status: d.status || 'pendiente', note: d.note || '', isTest: !!d.isTest, createdAt: d.createdAt
+    })));
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.patch('/api/contacts/:id', requireAdmin, async (req, res) => {
+  try {
+    const set = {};
+    if (req.body.status !== undefined) {
+      if (!['pendiente', 'contactado', 'descartado'].includes(req.body.status)) return res.status(400).json({ error: 'Estado inválido' });
+      set.status = req.body.status;
+    }
+    if (req.body.note !== undefined) set.note = String(req.body.note).slice(0, 500);
+    const n = await contactsDB.updateAsync({ _id: req.params.id }, { $set: set });
+    if (!n) return res.status(404).json({ error: 'No encontrado' });
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/contacts/:id', requireAdmin, async (req, res) => {
+  try {
+    const n = await contactsDB.removeAsync({ _id: req.params.id }, {});
+    if (!n) return res.status(404).json({ error: 'No encontrado' });
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // ─── ESTADÍSTICAS DE BÚSQUEDAS ────────────────────────────────
 app.get('/api/stats/searches', requireAdmin, async (req, res) => {
   try {
@@ -1906,7 +2005,8 @@ async function renderPropertyPage(req, res, prop) {
   </div>
   ${pixelBlock}
   <script>window.__PROP__ = ${JSON.stringify({ id, title: prop.title || '', images: imgs, precio: numPrice })};</script>
-  <script src="/property.js?v=4" defer></script>
+  <script src="/contact-modal.js?v=2" defer></script>
+  <script src="/property.js?v=5" defer></script>
 </body>
 </html>`;
 

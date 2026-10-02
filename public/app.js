@@ -2413,12 +2413,15 @@ function setupContactBtn(card) {
       amenities: btn.dataset.contactAmenities || '[]'
     };
 
-    trackLead('tarjeta_contactar', data.title, data.id, data.price);
-
     const waNum = await getWaNum();
     const msg   = buildPropertyWhatsAppMessage(data);
     const url   = `https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`;
-    window.open(url, '_blank');
+    if (window.openContactModal) {
+      openContactModal({ waUrl: url, source: 'tarjeta_contactar', propId: data.id, propTitle: data.title, propPrice: data.price });
+    } else {
+      trackLead('tarjeta_contactar', data.title, data.id, data.price);
+      window.open(url, '_blank');
+    }
   });
 }
 
@@ -5479,9 +5482,14 @@ async function setupWaFloatWidget() {
     const el = document.getElementById(opt.id);
     if (!el) return;
     el.href = `https://wa.me/${waNum}?text=${encodeURIComponent(opt.msg)}`;
-    el.addEventListener('click', () => {
-      trackLead(opt.source, opt.label, null, 0);
+    el.addEventListener('click', (e) => {
       closeWaFloat();
+      if (window.openContactModal) {
+        e.preventDefault();
+        openContactModal({ waUrl: el.href, source: opt.source, propTitle: opt.label });
+      } else {
+        trackLead(opt.source, opt.label, null, 0);
+      }
     });
   });
 
@@ -5698,7 +5706,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                       || cardContainer?.querySelector('.map-card-title')?.textContent
                       || 'Inmueble mapa';
       const prop = state.properties.find(p => String(p.id) === String(cardId));
-      trackLead('mapa_tarjeta_wa', cardTitle, cardId, prop?.precio);
+      if (window.openContactModal) {
+        e.preventDefault();
+        openContactModal({ waUrl: waMapCard.href, source: 'mapa_tarjeta_wa', propId: cardId, propTitle: cardTitle, propPrice: prop?.precio });
+      } else {
+        trackLead('mapa_tarjeta_wa', cardTitle, cardId, prop?.precio);
+      }
     }
     if (waOverlay) {
       trackLead('mapa_overlay_wa', 'Inmueble overlay');
@@ -6311,7 +6324,15 @@ function setupIntroModal() {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && overlay.classList.contains('is-visible')) closeModal();
   });
-  cta?.addEventListener('click', () => trackLead('intro_modal_wa', 'Consulta general', null, 0));
+  cta?.addEventListener('click', (e) => {
+    if (window.openContactModal) {
+      e.preventDefault();
+      closeModal();
+      openContactModal({ waUrl: cta.href, source: 'intro_modal_wa', propTitle: 'Asesoría gratuita con Alex' });
+    } else {
+      trackLead('intro_modal_wa', 'Consulta general', null, 0);
+    }
+  });
 
   fetch('/api/profile').then(r => r.json()).then(p => {
     if (!p || !p.name) return; // sin perfil configurado, no mostrar nada

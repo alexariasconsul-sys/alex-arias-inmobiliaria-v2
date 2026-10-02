@@ -207,7 +207,14 @@ if (document.getElementById('blogGrid')) {
     }
   }
   const postWa = document.querySelector('.post-cta-wa');
-  if (postWa) postWa.addEventListener('click', () => logBlogLead('whatsapp', 'post_cta_wa'));
+  if (postWa) postWa.addEventListener('click', (e) => {
+    if (window.openContactModal) {
+      e.preventDefault();
+      openContactModal({ waUrl: postWa.href, source: 'post_cta_wa', propId: `blog:${slugFromUrl()}`, propTitle: document.title.replace(/ · Alex Arias Blog$/, '') });
+    } else {
+      logBlogLead('whatsapp', 'post_cta_wa');
+    }
+  });
   document.querySelectorAll('.blog-footer-wa').forEach(el => {
     el.addEventListener('click', () => logBlogLead('whatsapp', IS_POST_PAGE ? 'post_footer_wa' : 'blog_footer_wa'));
   });

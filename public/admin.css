@@ -2469,3 +2469,57 @@ body {
   line-height: 1.5;
 }
 .kpi-delta--flat { background: rgba(148,163,184,.1); color: #64748b; }
+
+/* ── Contactos ("Prefiero que me llamen") ─────────────────── */
+.adm-nav-badge {
+  margin-left: auto;
+  min-width: 20px; height: 20px; padding: 0 6px;
+  border-radius: 10px;
+  background: #f59e0b; color: #fff;
+  font-size: 11px; font-weight: 700; line-height: 20px; text-align: center;
+}
+.adm-bottom-nav-item { position: relative; }
+.adm-bottom-nav-item .adm-nav-badge {
+  position: absolute; top: 2px; left: 50%; margin-left: 6px;
+  min-width: 16px; height: 16px; padding: 0 4px; line-height: 16px; font-size: 10px;
+}
+.adm-contacts-list { display: flex; flex-direction: column; gap: 10px; }
+.adm-contact-card {
+  display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; align-items: center;
+  background: #fff; border: 1px solid var(--border); border-left: 4px solid #f59e0b;
+  border-radius: 12px; padding: 14px 16px;
+}
+.adm-contact-card--contactado { border-left-color: #16a34a; }
+.adm-contact-card--descartado { border-left-color: #9ca3af; opacity: .75; }
+.adm-contact-name { font-size: 15px; font-weight: 700; color: #111827; }
+.adm-contact-test {
+  font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 8px;
+  background: #e5e7eb; color: #4b5563; vertical-align: middle; margin-left: 4px;
+}
+.adm-contact-phone { display: inline-block; margin-top: 2px; font-size: 17px; font-weight: 700; color: var(--brand); text-decoration: none; }
+.adm-contact-meta { margin-top: 4px; font-size: 12px; color: var(--muted); line-height: 1.4; }
+.adm-contact-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.adm-contact-btn {
+  padding: 8px 14px; border-radius: 9px; font-size: 13px; font-weight: 600;
+  text-decoration: none; color: #fff;
+}
+.adm-contact-btn--call { background: var(--brand); }
+.adm-contact-btn--wa { background: #25d366; }
+.adm-contact-status {
+  padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px;
+  font-size: 13px; font-family: inherit; background: #fff;
+}
+.adm-contact-del {
+  width: 32px; height: 32px; border: none; border-radius: 8px; background: transparent;
+  color: #9ca3af; font-size: 22px; line-height: 1; cursor: pointer;
+}
+.adm-contact-del:hover { background: #fee2e2; color: #dc2626; }
+.adm-contact-note {
+  grid-column: 1 / -1; width: 100%; box-sizing: border-box;
+  padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px;
+  font-size: 13px; font-family: inherit; background: #fafafa;
+}
+@media (max-width: 640px) {
+  .adm-contact-card { grid-template-columns: 1fr; }
+  .adm-contact-actions { justify-content: flex-start; }
+}

@@ -221,7 +221,21 @@
   var waDesktop = document.querySelector('.pdp-cta-wa');
   var waMobile  = document.querySelector('.pdp-mobile-cta');
   var waFooter  = document.querySelector('.pdp-footer-wa');
-  if (waDesktop) waDesktop.addEventListener('click', function () { trackWhatsAppLead('pdp_whatsapp_desktop'); });
-  if (waMobile)  waMobile.addEventListener('click',  function () { trackWhatsAppLead('pdp_whatsapp_mobile'); });
+  // Los CTA principales abren el modal de contacto (WhatsApp o "que me llamen");
+  // el modal registra el lead según el camino que elija. Sin el modal, se
+  // comporta como antes: registra el clic y abre WhatsApp.
+  function bindPrimaryCta(el, source) {
+    if (!el) return;
+    el.addEventListener('click', function (e) {
+      if (window.openContactModal) {
+        e.preventDefault();
+        window.openContactModal({ waUrl: el.href, source: source, propId: data.id, propTitle: data.title, propPrice: data.precio });
+      } else {
+        trackWhatsAppLead(source);
+      }
+    });
+  }
+  bindPrimaryCta(waDesktop, 'pdp_whatsapp_desktop');
+  bindPrimaryCta(waMobile, 'pdp_whatsapp_mobile');
   if (waFooter)  waFooter.addEventListener('click',  function () { trackWhatsAppLead('pdp_whatsapp_footer'); });
 })();

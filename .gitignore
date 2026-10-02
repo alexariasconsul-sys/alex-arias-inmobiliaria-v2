@@ -11,6 +11,8 @@ views.db
 views.db~
 leads.db
 leads.db~
+contacts.db
+contacts.db~
 reviews.db
 reviews.db~
 profiles.db
